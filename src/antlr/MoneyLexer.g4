@@ -14,10 +14,11 @@ Yeet: 'yeet';
 Unnamed: '_';
 Loop: 'loop';
 // Identifiers/Literals
-UntypedIdent: [a-zA-Z][a-zA-Z0-9]*;
 StrLit: '"' .*? '"';
 IntLit: [0-9]+;
 FloatLit: [0-9]+'.'[0-9]+;
+BoolLit: 'true' | 'false';
+UntypedIdent: [a-zA-Z][a-zA-Z0-9]*;
 // Operators
 Eq: '=';
 Gt: '>';

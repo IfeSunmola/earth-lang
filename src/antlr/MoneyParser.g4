@@ -57,7 +57,7 @@ expr
 
 primary
     : LParen expr RParen #groupedExpr
-    | (IntLit | FloatLit | StrLit)  #literalExpr
+    | (IntLit | FloatLit | StrLit | BoolLit)  #literalExpr
     | UntypedIdent #untypedIdentExpr
     | UntypedIdent LParen exprList RParen #fnCallExpr
     ;
