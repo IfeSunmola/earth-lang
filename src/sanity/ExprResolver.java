@@ -137,4 +137,36 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 
 
 	}
+
+	@Override
+	public MoneyType visitAndExpr(AndExprContext ctx) {
+		// &&
+		// The operands must be boolean. Result is a boolean
+		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType rightType = visit(ctx.expr(1));
+
+		if (leftType == Base.BOOL && rightType == Base.BOOL) return Base.BOOL;
+
+		throw new MoneyException(
+			"`&&` is not a valid operator on %s and %s"
+				.formatted(leftType, rightType),
+			ctx.getStart().getLine()
+		);
+	}
+
+	@Override
+	public MoneyType visitOrExpr(OrExprContext ctx) {
+		// ||
+		// The operands must be boolean. Result is a boolean
+		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType rightType = visit(ctx.expr(1));
+
+		if (leftType == Base.BOOL && rightType == Base.BOOL) return Base.BOOL;
+
+		throw new MoneyException(
+			"`||` is not a valid operator on %s and %s"
+				.formatted(leftType, rightType),
+			ctx.getStart().getLine()
+		);
+	}
 }
