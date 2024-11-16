@@ -66,7 +66,7 @@ specialExpr
     : literals
     | untypedIdentExpr
     ;
-mathExpr: specialExpr (Plus | Minus | Star | Slash) specialExpr;
+mathExpr: specialExpr (Plus | Minus | Star | Slash | Mod) specialExpr;
 comparisonExpr: specialExpr (Gt | Lt | Gte | Lte | EqEq | BangEq) specialExpr;
 logicalExpr: specialExpr (And | Else) specialExpr;
 unaryExpr: Bang specialExpr;

@@ -30,6 +30,7 @@ Plus: '+';
 Minus: '-';
 Star: '*';
 Slash: '/';
+Mod: '%';
 Bang: '!';
 And: '&&';
 Or: '||';
