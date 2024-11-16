@@ -68,7 +68,7 @@ specialExpr
     ;
 mathExpr: specialExpr (Plus | Minus | Star | Slash | Mod) specialExpr;
 comparisonExpr: specialExpr (Gt | Lt | Gte | Lte | EqEq | BangEq) specialExpr;
-logicalExpr: specialExpr (And | Else) specialExpr;
+logicalExpr: specialExpr (And | Or) specialExpr;
 unaryExpr: Bang specialExpr;
 
 fnCallExpr: UntypedIdent LParen exprList RParen;
