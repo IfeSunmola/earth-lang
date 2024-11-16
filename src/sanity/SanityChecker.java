@@ -1,7 +1,8 @@
 package sanity;
 
-import antlr.MoneyParser;
+import antlr.MoneyParser.DeclStmtContext;
 import antlr.MoneyParser.ExprContext;
+import antlr.MoneyParser.ReassignStmtContext;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
 
@@ -10,7 +11,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	private final TypeResolver typeResolver = new TypeResolver();
 
 	@Override
-	public Void visitDeclStmt(MoneyParser.DeclStmtContext ctx) {
+	public Void visitDeclStmt(DeclStmtContext ctx) {
 		String name = ctx.typedIdentExpr().UntypedIdent(0).getText();
 		String type = ctx.typedIdentExpr().UntypedIdent(1).getText();
 		int line = ctx.getStart().getLine();
@@ -19,6 +20,29 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		MoneyType exprType = checkDeclValidity(name, type, line, ctx.expr());
 		Kind kind = ctx.Let() != null ? Kind.ImmutDecl : Kind.MutDecl;
 		table.addSymbol(name, line, kind, exprType);
+		return null;
+	}
+
+	@Override
+	public Void visitReassignStmt(ReassignStmtContext ctx) {
+		String name = ctx.UntypedIdent().getText();
+		int line = ctx.getStart().getLine();
+
+		// first, check that the name is declared
+		Symbol variable = table.findInAllScopes(name)
+			.orElseThrow(() -> new MoneyException(("`%s`s not a known identifier")
+				.formatted(name), line));
+
+		// second, resolve the type of the new expression
+		MoneyType newType = typeResolver.visit(ctx.expr());
+
+		// third, check that the type of the new expression matches the type of the
+		// variable being reassigned
+		if (!newType.equals(variable.type())) {
+			var msg = "`%s` has type `%s` but the expression has type `%s`"
+				.formatted(name, variable.type(), newType);
+			throw new MoneyException(msg, line);
+		}
 		return null;
 	}
 

@@ -11,7 +11,7 @@ import static antlr.MoneyParser.ProgramContext;
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
 		let age: int = 23
-		var age2: int = 23
+		age = 24
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));
@@ -21,7 +21,7 @@ void main() {
 		ProgramContext program = parser.program();
 		//		TreeUtils.toPrettyTree(program, parser.getRuleNames());
 		sanityChecker.visit(program);
-				System.out.println(SymbolTable.instance);
+//		System.out.println(SymbolTable.instance);
 	}
 	catch (MoneyException e) {
 		System.err.println(e.getMessage());
