@@ -10,8 +10,7 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		let age: int = 23
-		age = 24
+		let sum: int = !true
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

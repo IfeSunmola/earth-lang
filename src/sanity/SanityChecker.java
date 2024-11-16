@@ -8,7 +8,7 @@ import money.MoneyException;
 
 public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
-	private final TypeResolver typeResolver = new TypeResolver();
+	private final ExprResolver exprResolver = new ExprResolver();
 
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
@@ -34,7 +34,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 				.formatted(name), line));
 
 		// second, resolve the type of the new expression
-		MoneyType newType = typeResolver.visit(ctx.expr());
+		MoneyType newType = exprResolver.visit(ctx.expr());
 
 		// third, check that the type of the new expression matches the type of the
 		// variable being reassigned
@@ -76,7 +76,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		}
 
 		// third, resolve the type of the expression
-		MoneyType exprType = typeResolver.visit(exprCtx);
+		MoneyType exprType = exprResolver.visit(exprCtx);
 
 		// fourth, check that the type of the expression matches the type attached
 		// to the name
