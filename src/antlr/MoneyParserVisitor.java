@@ -29,25 +29,11 @@ public interface MoneyParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStmt(MoneyParser.StmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MoneyParser#letStmt}.
+	 * Visit a parse tree produced by {@link MoneyParser#declStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLetStmt(MoneyParser.LetStmtContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code varWithInit}
-	 * labeled alternative in {@link MoneyParser#varStmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVarWithInit(MoneyParser.VarWithInitContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code varWithoutInit}
-	 * labeled alternative in {@link MoneyParser#varStmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVarWithoutInit(MoneyParser.VarWithoutInitContext ctx);
+	T visitDeclStmt(MoneyParser.DeclStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MoneyParser#reassignStmt}.
 	 * @param ctx the parse tree

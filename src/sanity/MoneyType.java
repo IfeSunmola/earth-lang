@@ -1,6 +1,16 @@
 package sanity;
 
 public sealed interface MoneyType {
+	static MoneyType fromString(String type) {
+		return switch (type) {
+			case "int" -> Base.INT;
+			case "float" -> Base.FLOAT;
+			case "str" -> Base.STRING;
+			case "bool" -> Base.BOOL;
+			default -> throw new IllegalArgumentException("Unknown type: " + type);
+		};
+	}
+
 	default boolean stringEquals(String strType) {
 		return toString().equals(strType);
 	}

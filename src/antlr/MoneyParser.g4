@@ -6,8 +6,7 @@ program: stmtList EOF;
 stmtList: stmt*;
 
 stmt
-    : letStmt
-    | varStmt
+    : declStmt
     | reassignStmt
     | whenElseStmt // if, else if, else if ... else
     | yeetStmt
@@ -17,11 +16,7 @@ stmt
     ;
 
 // statements
-letStmt: Let typedIdentExpr Eq expr ;
-varStmt
-    : Var typedIdentExpr Eq expr #varWithInit
-    | Var typedIdentExpr #varWithoutInit
-    ;
+declStmt: (Let | Var) typedIdentExpr Eq expr;
 reassignStmt: UntypedIdent Eq expr;
 // the condition must evaluate to a boolean. Sanity checker will enforce this
 whenElseStmt: When expr LBrace
@@ -38,7 +33,7 @@ fnDefStmt: Fn UntypedIdent LParen typedIdentList RParen UntypedIdent?
 unnamedStmt: Unnamed Eq expr;
 // In sanity checker, assert that the varStmt is initialized, and expr is a bool
 loopStmt:
-    Loop varStmt Comma expr Comma reassignStmt LBrace stmtList RBrace
+    Loop declStmt Comma expr Comma reassignStmt LBrace stmtList RBrace
     ;
 
 // expressions. Hevaily stolen from ... erm ... inspired by:
