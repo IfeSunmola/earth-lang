@@ -54,7 +54,7 @@ UntypedIdent
 StrLit
 IntLit
 FloatLit
-Equal
+Eq
 Gt
 Lt
 Gte
@@ -92,7 +92,7 @@ UntypedIdent
 StrLit
 IntLit
 FloatLit
-Equal
+Eq
 Gt
 Lt
 Gte

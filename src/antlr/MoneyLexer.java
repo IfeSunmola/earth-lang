@@ -19,7 +19,7 @@ public class MoneyLexer extends Lexer {
 	public static final int
 		Whitespace=1, SingleLineComment=2, MultiLineComment=3, Let=4, Var=5, When=6, 
 		Else=7, Fn=8, Yeet=9, Unnamed=10, Loop=11, UntypedIdent=12, StrLit=13, 
-		IntLit=14, FloatLit=15, Equal=16, Gt=17, Lt=18, Gte=19, Lte=20, EqEq=21, 
+		IntLit=14, FloatLit=15, Eq=16, Gt=17, Lt=18, Gte=19, Lte=20, EqEq=21, 
 		BangEq=22, Plus=23, Minus=24, Star=25, Slash=26, Mod=27, Bang=28, And=29, 
 		Or=30, Colon=31, Comma=32, LParen=33, RParen=34, LBrace=35, RBrace=36;
 	public static String[] channelNames = {
@@ -34,7 +34,7 @@ public class MoneyLexer extends Lexer {
 		return new String[] {
 			"Whitespace", "SingleLineComment", "MultiLineComment", "Let", "Var", 
 			"When", "Else", "Fn", "Yeet", "Unnamed", "Loop", "UntypedIdent", "StrLit", 
-			"IntLit", "FloatLit", "Equal", "Gt", "Lt", "Gte", "Lte", "EqEq", "BangEq", 
+			"IntLit", "FloatLit", "Eq", "Gt", "Lt", "Gte", "Lte", "EqEq", "BangEq", 
 			"Plus", "Minus", "Star", "Slash", "Mod", "Bang", "And", "Or", "Colon", 
 			"Comma", "LParen", "RParen", "LBrace", "RBrace"
 		};
@@ -54,7 +54,7 @@ public class MoneyLexer extends Lexer {
 		return new String[] {
 			null, "Whitespace", "SingleLineComment", "MultiLineComment", "Let", "Var", 
 			"When", "Else", "Fn", "Yeet", "Unnamed", "Loop", "UntypedIdent", "StrLit", 
-			"IntLit", "FloatLit", "Equal", "Gt", "Lt", "Gte", "Lte", "EqEq", "BangEq", 
+			"IntLit", "FloatLit", "Eq", "Gt", "Lt", "Gte", "Lte", "EqEq", "BangEq", 
 			"Plus", "Minus", "Star", "Slash", "Mod", "Bang", "And", "Or", "Colon", 
 			"Comma", "LParen", "RParen", "LBrace", "RBrace"
 		};

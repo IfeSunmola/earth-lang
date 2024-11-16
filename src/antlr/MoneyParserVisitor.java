@@ -85,17 +85,96 @@ public interface MoneyParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLoopStmt(MoneyParser.LoopStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MoneyParser#expr}.
+	 * Visit a parse tree produced by the {@code notExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpr(MoneyParser.ExprContext ctx);
+	T visitNotExpr(MoneyParser.NotExprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MoneyParser#exprList}.
+	 * Visit a parse tree produced by the {@code primaryExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExprList(MoneyParser.ExprListContext ctx);
+	T visitPrimaryExpr(MoneyParser.PrimaryExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code negExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNegExpr(MoneyParser.NegExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code multiplicationExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMultiplicationExpr(MoneyParser.MultiplicationExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code orExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrExpr(MoneyParser.OrExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code additiveExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAdditiveExpr(MoneyParser.AdditiveExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code relationalExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRelationalExpr(MoneyParser.RelationalExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code equalityExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEqualityExpr(MoneyParser.EqualityExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code andExpr}
+	 * labeled alternative in {@link MoneyParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAndExpr(MoneyParser.AndExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code groupedExpr}
+	 * labeled alternative in {@link MoneyParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGroupedExpr(MoneyParser.GroupedExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code literalExpr}
+	 * labeled alternative in {@link MoneyParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLiteralExpr(MoneyParser.LiteralExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code untypedIdentExpr}
+	 * labeled alternative in {@link MoneyParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUntypedIdentExpr(MoneyParser.UntypedIdentExprContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code fnCallExpr}
+	 * labeled alternative in {@link MoneyParser#primary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFnCallExpr(MoneyParser.FnCallExprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MoneyParser#typedIdentExpr}.
 	 * @param ctx the parse tree
@@ -109,51 +188,9 @@ public interface MoneyParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypedIdentList(MoneyParser.TypedIdentListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MoneyParser#untypedIdentExpr}.
+	 * Visit a parse tree produced by {@link MoneyParser#exprList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUntypedIdentExpr(MoneyParser.UntypedIdentExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#literals}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLiterals(MoneyParser.LiteralsContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#specialExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSpecialExpr(MoneyParser.SpecialExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#mathExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMathExpr(MoneyParser.MathExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#comparisonExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitComparisonExpr(MoneyParser.ComparisonExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#logicalExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLogicalExpr(MoneyParser.LogicalExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#unaryExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitUnaryExpr(MoneyParser.UnaryExprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MoneyParser#fnCallExpr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFnCallExpr(MoneyParser.FnCallExprContext ctx);
+	T visitExprList(MoneyParser.ExprListContext ctx);
 }

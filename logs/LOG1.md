@@ -38,4 +38,12 @@
    This looks like it would get ugly quick but as I said earlier, I like
    fucking around and finding out
 
-7. 
+7. I just got the most nasty idea. What if ... operators like +, -, <=, >=,
+   e.t.c. were not directly baked into the language but instead, they're
+   built as functions? AHHHHHH. I think I've seen it in another language
+   before. Scala?
+    1. This would mean I have to have a concept of infix functions. So, for
+       example, the `+` function would be an infix function.
+        1. An infix function is a function that can be called without the
+           dot and parentheses. E.g. `a + b` instead of `a.+(b)`
+    2. Nope, too complicated, I'm not doing this. 

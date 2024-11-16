@@ -17,12 +17,12 @@ stmt
     ;
 
 // statements
-letStmt: Let typedIdentExpr Equal expr ;
+letStmt: Let typedIdentExpr Eq expr ;
 varStmt
-    : Var typedIdentExpr Equal expr #varWithInit
+    : Var typedIdentExpr Eq expr #varWithInit
     | Var typedIdentExpr #varWithoutInit
     ;
-reassignStmt: untypedIdentExpr Equal expr;
+reassignStmt: UntypedIdent Eq expr;
 // the condition must evaluate to a boolean. Sanity checker will enforce this
 whenElseStmt: When expr LBrace
         stmtList
@@ -35,40 +35,34 @@ yeetStmt: Yeet expr;
 // statements, trailing comma is allowed in argument list.
 fnDefStmt: Fn UntypedIdent LParen typedIdentList RParen UntypedIdent?
     LBrace stmtList RBrace;
-unnamedStmt: Unnamed Equal expr;
+unnamedStmt: Unnamed Eq expr;
 // In sanity checker, assert that the varStmt is initialized, and expr is a bool
 loopStmt:
     Loop varStmt Comma expr Comma reassignStmt LBrace stmtList RBrace
     ;
-// expressions
+
+// expressions. Hevaily stolen from ... erm ... inspired by:
+// https://stackoverflow.com/a/15614911/18902234
 expr
-    : typedIdentExpr
-    | untypedIdentExpr
-    | literals
-    | mathExpr
-    | comparisonExpr
-    | logicalExpr
-    | unaryExpr
-    | fnCallExpr
+    : Minus expr                           #negExpr
+    | Bang expr                            #notExpr
+    | expr op=(Star | Slash | Mod) expr    #multiplicationExpr
+    | expr op=(Plus | Minus) expr          #additiveExpr
+    | expr op=(Lte | Gte | Lt | Gt) expr   #relationalExpr
+    | expr op=(EqEq | BangEq) expr           #equalityExpr
+    | expr And expr                        #andExpr
+    | expr Or expr                         #orExpr
+    | primary                                 #primaryExpr
     ;
-exprList: (expr (Comma expr)* Comma?)?;
-// identifiers
+
+primary
+    : LParen expr RParen #groupedExpr
+    | (IntLit | FloatLit | StrLit)  #literalExpr
+    | UntypedIdent #untypedIdentExpr
+    | UntypedIdent LParen exprList RParen #fnCallExpr
+    ;
+
+//// identifiers
 typedIdentExpr: UntypedIdent Colon UntypedIdent;
 typedIdentList: (typedIdentExpr (Comma typedIdentExpr)* Comma?)?;
-untypedIdentExpr: UntypedIdent;
-
-// literals
-literals: StrLit | IntLit | FloatLit;
-// I don't have a better name for these but these are expressions that can be
-// used in math operations, comparision, logical, and unary operations. The
-// Sanity checker will handle any mismatch
-specialExpr
-    : literals
-    | untypedIdentExpr
-    ;
-mathExpr: specialExpr (Plus | Minus | Star | Slash | Mod) specialExpr;
-comparisonExpr: specialExpr (Gt | Lt | Gte | Lte | EqEq | BangEq) specialExpr;
-logicalExpr: specialExpr (And | Or) specialExpr;
-unaryExpr: Bang specialExpr;
-
-fnCallExpr: UntypedIdent LParen exprList RParen;
+exprList: (expr (Comma expr)* Comma?)?;

@@ -19,7 +19,7 @@ StrLit: '"' .*? '"';
 IntLit: [0-9]+;
 FloatLit: [0-9]+'.'[0-9]+;
 // Operators
-Equal: '=';
+Eq: '=';
 Gt: '>';
 Lt: '<';
 Gte: '>=';
