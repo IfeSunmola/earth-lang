@@ -9,15 +9,7 @@ import static sanity.MoneyType.Base;
 /// Resolves expressions by validating them, and returning the type if it's
 /// valid, or throwing an exception if it's not.
 class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
-	@Override
-	public MoneyType visitLiteralExpr(LiteralExprContext ctx) {
-		if (ctx.FloatLit() != null) return Base.FLOAT;
-		if (ctx.IntLit() != null) return Base.INT;
-		if (ctx.StrLit() != null) return Base.STRING;
-		if (ctx.BoolLit() != null) return Base.BOOL;
-
-		throw new RuntimeException("Should not reach here");
-	}
+	private final SymbolTable table = SymbolTable.instance;
 
 	@Override
 	public MoneyType visitNegExpr(NegExprContext ctx) {
@@ -168,5 +160,33 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 				.formatted(leftType, rightType),
 			ctx.getStart().getLine()
 		);
+	}
+
+	@Override
+	public MoneyType visitGroupedExpr(GroupedExprContext ctx) {
+		// (expr)
+		return visit(ctx.expr());
+	}
+
+	@Override
+	public MoneyType visitLiteralExpr(LiteralExprContext ctx) {
+		if (ctx.FloatLit() != null) return Base.FLOAT;
+		if (ctx.IntLit() != null) return Base.INT;
+		if (ctx.StrLit() != null) return Base.STRING;
+		if (ctx.BoolLit() != null) return Base.BOOL;
+
+		throw new RuntimeException("Should not reach here");
+	}
+
+	@Override
+	public MoneyType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
+		String name = ctx.UntypedIdent().getText();
+
+		return table.findInAllScopes(name)
+			.map(Symbol::type)
+			.orElseThrow(() -> new MoneyException(
+				"Could not resolve type of `%s`. Has it been declared?".formatted(name),
+				ctx.getStart().getLine()
+			));
 	}
 }

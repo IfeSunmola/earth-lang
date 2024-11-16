@@ -9,9 +9,8 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		let sumStr: str = "23" + "23"
-		let sumInt: int = 23 + 23
-		let sumFloat: bool = 23.0 == 43
+		let sum: int = 10
+		let sumStr: int = sum + "23"
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));
