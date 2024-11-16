@@ -1,20 +1,20 @@
 package sanity;
 
-import antlr.MoneyParser;
-import antlr.MoneyParser.LiteralExprContext;
-import antlr.MoneyParser.NegExprContext;
+import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
+
+import static sanity.MoneyType.Base;
 
 /// Resolves expressions by validating them, and returning the type if it's
 /// valid, or throwing an exception if it's not.
 class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 	@Override
 	public MoneyType visitLiteralExpr(LiteralExprContext ctx) {
-		if (ctx.FloatLit() != null) return MoneyType.Base.FLOAT;
-		if (ctx.IntLit() != null) return MoneyType.Base.INT;
-		if (ctx.StrLit() != null) return MoneyType.Base.STRING;
-		if (ctx.BoolLit() != null) return MoneyType.Base.BOOL;
+		if (ctx.FloatLit() != null) return Base.FLOAT;
+		if (ctx.IntLit() != null) return Base.INT;
+		if (ctx.StrLit() != null) return Base.STRING;
+		if (ctx.BoolLit() != null) return Base.BOOL;
 
 		throw new RuntimeException("Should not reach here");
 	}
@@ -23,23 +23,75 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 	public MoneyType visitNegExpr(NegExprContext ctx) {
 		// -23, -23.0, -[ident], where ident is an int or float
 		MoneyType exprType = visit(ctx.expr());
-		if (exprType == MoneyType.Base.INT || exprType == MoneyType.Base.FLOAT)
+		if (exprType == Base.INT || exprType == Base.FLOAT)
 			return exprType;
 
 		throw new MoneyException(
-			"Cannot apply `-` to a non-numeric type",
+			"`-` is not a valid operator on %s".formatted(exprType),
 			ctx.getStart().getLine()
 		);
 	}
 
 	@Override
-	public MoneyType visitNotExpr(MoneyParser.NotExprContext ctx) {
+	public MoneyType visitNotExpr(NotExprContext ctx) {
 		// !true, !false, ![expr], where expr is a boolean
 		MoneyType exprType = visit(ctx.expr());
-		if (exprType == MoneyType.Base.BOOL) return MoneyType.Base.BOOL;
+		if (exprType == Base.BOOL) return Base.BOOL;
 
 		throw new MoneyException(
-			"Cannot negate a non-boolean type",
+			"`!` is not a valid operator on %s".formatted(exprType),
+			ctx.getStart().getLine()
+		);
+	}
+
+	@Override
+	public MoneyType visitMultiplicationExpr(MultiplicationExprContext ctx) {
+		// *, /, %, where both operands are int or float
+		// If one of the operands is a float, the result is a float
+		// if one of the operands is not a float or int, throw an exception
+		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType rightType = visit(ctx.expr(1));
+
+		if (leftType == Base.INT && rightType == Base.INT)
+			return Base.INT;
+
+		if (leftType == Base.FLOAT || rightType == Base.FLOAT)
+			return Base.FLOAT;
+
+		throw new MoneyException(
+			"`%s` is not a valid operator on %s and %s"
+				.formatted(ctx.op.getText(), leftType, rightType),
+			ctx.getStart().getLine()
+		);
+	}
+
+	@Override
+	public MoneyType visitAdditiveExpr(AdditiveExprContext ctx) {
+		// + and -
+		// plus supports string concatenation
+		// Aside from string concatenation, the operands must be either an int or
+		// a float.
+
+		MoneyType leftType = visit(ctx.expr(0));
+		String op = ctx.op.getText();
+		MoneyType rightType = visit(ctx.expr(1));
+
+		// string concatenation
+		if (op.equals("+") && leftType == Base.STRING && rightType == Base.STRING)
+			return Base.STRING;
+
+		// checking that the operands are either int or float
+		if ((leftType == Base.INT || leftType == Base.FLOAT) &&
+		    (rightType == Base.INT || rightType == Base.FLOAT)) {
+			// if one of the operands is a float, the result is a float
+			if (leftType == Base.FLOAT || rightType == Base.FLOAT) return Base.FLOAT;
+			// otherwise, the result is an int
+			return Base.INT;
+		}
+
+		throw new MoneyException(
+			"`%s` is not a valid operator on %s and %s"
+				.formatted(op, leftType, rightType),
 			ctx.getStart().getLine()
 		);
 	}
