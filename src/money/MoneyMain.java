@@ -11,7 +11,7 @@ void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
 		let sumStr: str = "23" + "23"
 		let sumInt: int = 23 + 23
-		let sumFloat: float = 23.0 + 23
+		let sumFloat: bool = 23.0 == 43
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

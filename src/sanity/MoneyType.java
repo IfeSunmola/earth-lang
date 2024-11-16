@@ -15,6 +15,10 @@ public sealed interface MoneyType {
 		return toString().equals(strType);
 	}
 
+	default boolean isBase() {
+		return this instanceof Base;
+	}
+
 	static boolean isKnown(String strType) {
 		return switch (strType) {
 			case "int", "float", "str", "bool" -> true;

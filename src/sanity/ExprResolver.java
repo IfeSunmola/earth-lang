@@ -95,4 +95,46 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 			ctx.getStart().getLine()
 		);
 	}
+
+	@Override
+	public MoneyType visitRelationalExpr(RelationalExprContext ctx) {
+		// <, <=, >, >=
+		// The operands must be either an int or a float. Result is a boolean
+		MoneyType leftType = visit(ctx.expr(0));
+		String op = ctx.op.getText();
+		MoneyType rightType = visit(ctx.expr(1));
+
+		// checking that the operands are either int or float
+		if ((leftType == Base.INT || leftType == Base.FLOAT) &&
+		    (rightType == Base.INT || rightType == Base.FLOAT)) {
+			return Base.BOOL;
+		}
+
+		throw new MoneyException(
+			"`%s` is not a valid operator on %s and %s"
+				.formatted(op, leftType, rightType),
+			ctx.getStart().getLine()
+		);
+	}
+
+	@Override
+	public MoneyType visitEqualityExpr(EqualityExprContext ctx) {
+		// ==, !=
+		// The operands must be of the same type.
+		// The operands must be a base type (int, float, string, or boolean).
+		// Result is a boolean
+		MoneyType leftType = visit(ctx.expr(0));
+		String op = ctx.op.getText();
+		MoneyType rightType = visit(ctx.expr(1));
+
+		if (leftType == rightType && leftType.isBase()) return Base.BOOL;
+
+		throw new MoneyException(
+			"`%s` is not a valid operator on %s and %s"
+				.formatted(op, leftType, rightType),
+			ctx.getStart().getLine()
+		);
+
+
+	}
 }
