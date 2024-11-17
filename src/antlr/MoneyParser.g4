@@ -16,8 +16,8 @@ stmt
     ;
 
 // statements
-declStmt: (Let | Var) typedIdentExpr Eq expr;
-reassignStmt: UntypedIdent Eq expr;
+declStmt: letType=(Let | Var) typedIdentExpr Eq expr;
+reassignStmt: ident=UntypedIdent Eq expr;
 // the condition must evaluate to a boolean. Sanity checker will enforce this
 whenElseStmt: When expr LBrace
         stmtList
@@ -28,12 +28,18 @@ whenElseStmt: When expr LBrace
 yeetStmt: Yeet expr;
 // function definitions, optional return type, 0 or more arguments, 0 or more
 // statements, trailing comma is allowed in argument list.
-fnDefStmt: Fn UntypedIdent LParen typedIdentList RParen UntypedIdent?
-    LBrace stmtList RBrace;
+fnDefStmt: Fn name=UntypedIdent
+    LParen params=typedIdentList RParen
+    retType=UntypedIdent?
+    LBrace body=stmtList RBrace;
 unnamedStmt: Unnamed Eq expr;
 // In sanity checker, assert that the varStmt is initialized, and expr is a bool
 loopStmt:
-    Loop declStmt Comma expr Comma reassignStmt LBrace stmtList RBrace
+    Loop
+    initializer=declStmt Comma
+    condition=expr Comma
+    update=reassignStmt
+    LBrace body=stmtList RBrace
     ;
 
 // expressions. Hevaily stolen from ... erm ... inspired by:
@@ -58,6 +64,6 @@ primary
     ;
 
 //// identifiers
-typedIdentExpr: UntypedIdent Colon UntypedIdent;
+typedIdentExpr: name=UntypedIdent Colon type=UntypedIdent;
 typedIdentList: (typedIdentExpr (Comma typedIdentExpr)* Comma?)?;
 exprList: (expr (Comma expr)* Comma?)?;

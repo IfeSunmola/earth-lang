@@ -18,19 +18,19 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
-		String name = ctx.typedIdentExpr().UntypedIdent(0).getText();
-		String type = ctx.typedIdentExpr().UntypedIdent(1).getText();
+		String name = ctx.typedIdentExpr().name.getText();
+		String type = ctx.typedIdentExpr().type.getText();
 		int line = ctx.getStart().getLine();
 
 		MoneyType exprType = checkDeclValidity(name, type, line, ctx.expr());
-		Kind kind = ctx.Let() != null ? Kind.ImmutDecl : Kind.MutDecl;
+		Kind kind = ctx.letType.getType() == Let ? Kind.ImmutDecl : Kind.MutDecl;
 		table.addSymbol(name, line, kind, exprType);
 		return null;
 	}
 
 	@Override
 	public Void visitReassignStmt(ReassignStmtContext ctx) {
-		String name = ctx.UntypedIdent().getText();
+		String name = ctx.ident.getText();
 		int line = ctx.getStart().getLine();
 
 		// first, check that the name is declared
@@ -48,21 +48,6 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 				.formatted(name, variable.type(), newType);
 			throw new MoneyException(msg, line);
 		}
-		return null;
-	}
-
-	@Override
-	public Void visitYeetStmt(YeetStmtContext ctx) {
-		// yeet stmt -> return stmt -> yeet 23
-		// simply validate that the expression is a valid expression
-		exprResolver.visit(ctx.expr());
-		return null;
-	}
-
-	@Override
-	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
-		// simply validate that the expression is a valid expression
-		exprResolver.visit(ctx.expr());
 		return null;
 	}
 
@@ -104,6 +89,21 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 			visit(elseBody);
 			table.exitScope();
 		}
+		return null;
+	}
+
+	@Override
+	public Void visitYeetStmt(YeetStmtContext ctx) {
+		// yeet stmt -> return stmt -> yeet 23
+		// simply validate that the expression is a valid expression
+		exprResolver.visit(ctx.expr());
+		return null;
+	}
+
+	@Override
+	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
+		// simply validate that the expression is a valid expression
+		exprResolver.visit(ctx.expr());
 		return null;
 	}
 

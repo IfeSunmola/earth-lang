@@ -306,6 +306,7 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class DeclStmtContext extends ParserRuleContext {
+		public Token letType;
 		public TypedIdentExprContext typedIdentExpr() {
 			return getRuleContext(TypedIdentExprContext.class,0);
 		}
@@ -334,9 +335,10 @@ public class MoneyParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(48);
+			((DeclStmtContext)_localctx).letType = _input.LT(1);
 			_la = _input.LA(1);
 			if ( !(_la==Let || _la==Var) ) {
-			_errHandler.recoverInline(this);
+				((DeclStmtContext)_localctx).letType = (Token)_errHandler.recoverInline(this);
 			}
 			else {
 				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -364,11 +366,12 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class ReassignStmtContext extends ParserRuleContext {
-		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
+		public Token ident;
 		public TerminalNode Eq() { return getToken(MoneyParser.Eq, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
+		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
 		public ReassignStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -387,7 +390,7 @@ public class MoneyParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(53);
-			match(UntypedIdent);
+			((ReassignStmtContext)_localctx).ident = match(UntypedIdent);
 			setState(54);
 			match(Eq);
 			setState(55);
@@ -561,21 +564,25 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class FnDefStmtContext extends ParserRuleContext {
+		public Token name;
+		public TypedIdentListContext params;
+		public Token retType;
+		public StmtListContext body;
 		public TerminalNode Fn() { return getToken(MoneyParser.Fn, 0); }
+		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
+		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
+		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
+		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
 		public List<TerminalNode> UntypedIdent() { return getTokens(MoneyParser.UntypedIdent); }
 		public TerminalNode UntypedIdent(int i) {
 			return getToken(MoneyParser.UntypedIdent, i);
 		}
-		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
 		public TypedIdentListContext typedIdentList() {
 			return getRuleContext(TypedIdentListContext.class,0);
 		}
-		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
-		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
 		public StmtListContext stmtList() {
 			return getRuleContext(StmtListContext.class,0);
 		}
-		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
 		public FnDefStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -597,11 +604,11 @@ public class MoneyParser extends Parser {
 			setState(84);
 			match(Fn);
 			setState(85);
-			match(UntypedIdent);
+			((FnDefStmtContext)_localctx).name = match(UntypedIdent);
 			setState(86);
 			match(LParen);
 			setState(87);
-			typedIdentList();
+			((FnDefStmtContext)_localctx).params = typedIdentList();
 			setState(88);
 			match(RParen);
 			setState(90);
@@ -610,14 +617,14 @@ public class MoneyParser extends Parser {
 			if (_la==UntypedIdent) {
 				{
 				setState(89);
-				match(UntypedIdent);
+				((FnDefStmtContext)_localctx).retType = match(UntypedIdent);
 				}
 			}
 
 			setState(92);
 			match(LBrace);
 			setState(93);
-			stmtList();
+			((FnDefStmtContext)_localctx).body = stmtList();
 			setState(94);
 			match(RBrace);
 			}
@@ -678,13 +685,19 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class LoopStmtContext extends ParserRuleContext {
+		public DeclStmtContext initializer;
+		public ExprContext condition;
+		public ReassignStmtContext update;
+		public StmtListContext body;
 		public TerminalNode Loop() { return getToken(MoneyParser.Loop, 0); }
-		public DeclStmtContext declStmt() {
-			return getRuleContext(DeclStmtContext.class,0);
-		}
 		public List<TerminalNode> Comma() { return getTokens(MoneyParser.Comma); }
 		public TerminalNode Comma(int i) {
 			return getToken(MoneyParser.Comma, i);
+		}
+		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
+		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
+		public DeclStmtContext declStmt() {
+			return getRuleContext(DeclStmtContext.class,0);
 		}
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
@@ -692,11 +705,9 @@ public class MoneyParser extends Parser {
 		public ReassignStmtContext reassignStmt() {
 			return getRuleContext(ReassignStmtContext.class,0);
 		}
-		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
 		public StmtListContext stmtList() {
 			return getRuleContext(StmtListContext.class,0);
 		}
-		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
 		public LoopStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -717,19 +728,19 @@ public class MoneyParser extends Parser {
 			setState(100);
 			match(Loop);
 			setState(101);
-			declStmt();
+			((LoopStmtContext)_localctx).initializer = declStmt();
 			setState(102);
 			match(Comma);
 			setState(103);
-			expr(0);
+			((LoopStmtContext)_localctx).condition = expr(0);
 			setState(104);
 			match(Comma);
 			setState(105);
-			reassignStmt();
+			((LoopStmtContext)_localctx).update = reassignStmt();
 			setState(106);
 			match(LBrace);
 			setState(107);
-			stmtList();
+			((LoopStmtContext)_localctx).body = stmtList();
 			setState(108);
 			match(RBrace);
 			}
@@ -1240,11 +1251,13 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class TypedIdentExprContext extends ParserRuleContext {
+		public Token name;
+		public Token type;
+		public TerminalNode Colon() { return getToken(MoneyParser.Colon, 0); }
 		public List<TerminalNode> UntypedIdent() { return getTokens(MoneyParser.UntypedIdent); }
 		public TerminalNode UntypedIdent(int i) {
 			return getToken(MoneyParser.UntypedIdent, i);
 		}
-		public TerminalNode Colon() { return getToken(MoneyParser.Colon, 0); }
 		public TypedIdentExprContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1263,11 +1276,11 @@ public class MoneyParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(154);
-			match(UntypedIdent);
+			((TypedIdentExprContext)_localctx).name = match(UntypedIdent);
 			setState(155);
 			match(Colon);
 			setState(156);
-			match(UntypedIdent);
+			((TypedIdentExprContext)_localctx).type = match(UntypedIdent);
 			}
 		}
 		catch (RecognitionException re) {
