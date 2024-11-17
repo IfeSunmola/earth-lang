@@ -21,6 +21,13 @@ public sealed interface MoneyType {
 		return this instanceof Base;
 	}
 
+	default boolean is(MoneyType type) {
+		return switch (type) {
+			case Base base -> base == this;
+			case Func func -> func.equals(this);
+		};
+	}
+
 	static boolean isKnown(String strType) {
 		return switch (strType) {
 			case "int", "float", "str", "bool" -> true;

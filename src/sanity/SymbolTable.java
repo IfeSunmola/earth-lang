@@ -17,6 +17,7 @@ public enum SymbolTable {
 	// Stack of symbol tables, with the top being the current scope
 	// Each stack contains a map of symbol names to symbols
 	private final Stack<Map<String, Symbol>> scopes;
+	private int scopeNum = 0; // only for debugging.
 
 	SymbolTable() {
 		scopes = new Stack<>();
@@ -28,14 +29,16 @@ public enum SymbolTable {
 	}
 
 	void enterScope() {
+		scopeNum++;
 		scopes.push(new HashMap<>());
+		System.out.println("Entered scope " + scopeNum);
 	}
 
 	void exitScope() {
 		assert scopes.size() > 1 : "Cannot exit the global scope";
-		System.out.println("----Exiting Scope----");
+		System.out.println("Exiting scope " + scopeNum);
 		System.out.println(this);
-		System.out.println("----Exited----");
+		System.out.println("----------------------------------");
 		scopes.pop();
 	}
 

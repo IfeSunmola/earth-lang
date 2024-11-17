@@ -1,14 +1,10 @@
 package sanity;
 
-import antlr.MoneyParser;
-import antlr.MoneyParser.DeclStmtContext;
-import antlr.MoneyParser.ExprContext;
-import antlr.MoneyParser.ReassignStmtContext;
-import antlr.MoneyParser.YeetStmtContext;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
 
-import static antlr.MoneyParser.StmtListContext;
+import static antlr.MoneyParser.*;
+import static sanity.MoneyType.Base.BOOL;
 
 public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
@@ -25,7 +21,6 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		String name = ctx.typedIdentExpr().UntypedIdent(0).getText();
 		String type = ctx.typedIdentExpr().UntypedIdent(1).getText();
 		int line = ctx.getStart().getLine();
-
 
 		MoneyType exprType = checkDeclValidity(name, type, line, ctx.expr());
 		Kind kind = ctx.Let() != null ? Kind.ImmutDecl : Kind.MutDecl;
@@ -65,18 +60,73 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitUnnamedStmt(MoneyParser.UnnamedStmtContext ctx) {
+	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
 		// simply validate that the expression is a valid expression
 		exprResolver.visit(ctx.expr());
 		return null;
 	}
 
+	@Override
+	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
+		// First, check that the condition in the when stmt is a boolean expression
+		ExprContext whenCondition = ctx.expr().getFirst();
+		assertType(exprResolver.visit(whenCondition),
+			BOOL, "when condition",
+			whenCondition.getStart().getLine()
+		);
+
+		// Second, validate the body of the when stmt
+		table.enterScope();
+		visit(ctx.stmtList().getFirst());
+		table.exitScope();
+
+		// Third, handle elseWhen condition (if it exists), and the body
+		// skip 1 because the first expr is the when condition
+		ctx.expr().stream().skip(1).forEach(exprCtx -> {
+			MoneyType elseWhenType = exprResolver.visit(exprCtx);
+			assertType(elseWhenType, BOOL, "elseWhen condition",
+				exprCtx.getStart().getLine()
+			);
+
+			// the index of the exprCtx in the expr list is the same as the index
+			// of the stmtList in the stmtList list
+			StmtListContext elseWhenBody =
+				ctx.stmtList().get(ctx.expr().indexOf(exprCtx));
+
+			table.enterScope();
+			visit(elseWhenBody);
+			table.exitScope();
+		});
+		// Fourth, handle the else condition (if it exists)
+		if (ctx.Else() != null) {
+			StmtListContext elseBody = ctx.stmtList().getLast();
+			table.enterScope();
+			visit(elseBody);
+			table.exitScope();
+		}
+		return null;
+	}
+
+	/// Asserts that the type of the expression is the same as the expected type.
+	///
+	/// @throws MoneyException if the types do not match
+	private void assertType(MoneyType type, MoneyType expected,
+	                        String in, int line) {
+		if (!type.equals(expected)) {
+			var msg = "Expected a `%s` in %s but got `%s`"
+				.formatted(expected, in, type);
+			throw new MoneyException(msg, line);
+		}
+	}
+
 	/// Does a few checks to ensure that the variable can be declared.
 	/// Returns the type of the expression if it's valid or throws an exception
-	/// on any error.
+	/// on any error.\
 	/// Note that if `exprCtx` is null, the type of the expression is not
-	/// resolved (because there's no expression). In this case, the type
-	/// attached to the name will be returned as a `MoneyType`.
+	/// resolved (because there's no expression). In this case, the `type`
+	/// parameter will be returned as a `MoneyType`.
+	///
+	/// @throws MoneyException if the variable cannot be declared
 	private MoneyType checkDeclValidity(String name, String type,
 	                                    int line, ExprContext exprCtx) {
 		// first, check that the letName is not already declared
