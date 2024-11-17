@@ -3,6 +3,7 @@ package sanity;
 import antlr.MoneyParser.DeclStmtContext;
 import antlr.MoneyParser.ExprContext;
 import antlr.MoneyParser.ReassignStmtContext;
+import antlr.MoneyParser.YeetStmtContext;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
 
@@ -43,6 +44,15 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 				.formatted(name, variable.type(), newType);
 			throw new MoneyException(msg, line);
 		}
+		return null;
+	}
+
+
+	@Override
+	public Void visitYeetStmt(YeetStmtContext ctx) {
+		// yeet stmt -> return stmt -> yeet 23
+		// simply validate that the expression is a valid expression
+		exprResolver.visit(ctx.expr());
 		return null;
 	}
 

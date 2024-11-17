@@ -1,5 +1,7 @@
 package sanity;
 
+import java.util.stream.Stream;
+
 public sealed interface MoneyType {
 	static MoneyType fromString(String type) {
 		return switch (type) {
@@ -41,6 +43,17 @@ public sealed interface MoneyType {
 		@Override
 		public String toString() {
 			return type;
+		}
+	}
+
+	record Func(Base returnType, Base... params) implements MoneyType {
+		@Override
+		public String toString() {
+			return "fn(%s)%s".formatted(
+				String.join(", ",
+					Stream.of(params).map(Base::toString).toArray(String[]::new)),
+				returnType
+			);
 		}
 	}
 }

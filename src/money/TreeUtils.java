@@ -1,5 +1,6 @@
 package money;
 
+import antlr.MoneyParser;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
@@ -19,18 +20,14 @@ public class TreeUtils {
 	public static final String Indents = "  ";
 	private static int level;
 
-	private TreeUtils() {
-	}
-
 	/**
 	 * Pretty print out a whole tree. @link #getNodeText} is used on the node
 	 * payloads to get the text
 	 * for the nodes. (Derived from Trees.toStringTree(....))
 	 */
-	public static void toPrettyTree(final Tree t,
-	                                final String[] ruleNames) {
+	public static void toPrettyTree(Tree t) {
 		level = 0;
-		List<String> ruleNamesList = List.of(ruleNames);
+		var ruleNamesList = List.of(MoneyParser.ruleNames);
 
 		System.out.println(process(t, ruleNamesList)
 			.replaceAll("(?m)^\\s+$", "")

@@ -1,0 +1,9 @@
+	/*
+// if/else if/else stmt -> when/else if/else stmt
+		// ctx.When(n) -> returns literal `when` at index n
+		// 0th ctx.expr -> 1st if condition
+		// 1st ctx.expr -> 2nd if (else when) condition
+		// 2nd ctx.expr -> 3rd if (else when) condition
+		// if you try accessing ctx.expr when there's no more else/when, exception.
+		// Same with ctx.stmtList.
+ */
