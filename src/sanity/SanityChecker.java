@@ -1,5 +1,6 @@
 package sanity;
 
+import antlr.MoneyParser;
 import antlr.MoneyParser.DeclStmtContext;
 import antlr.MoneyParser.ExprContext;
 import antlr.MoneyParser.ReassignStmtContext;
@@ -7,9 +8,17 @@ import antlr.MoneyParser.YeetStmtContext;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
 
+import static antlr.MoneyParser.StmtListContext;
+
 public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
 	private final ExprResolver exprResolver = new ExprResolver();
+
+	@Override
+	public Void visitStmtList(StmtListContext ctx) {
+		ctx.stmt().forEach(this::visit);
+		return null;
+	}
 
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
@@ -47,10 +56,16 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		return null;
 	}
 
-
 	@Override
 	public Void visitYeetStmt(YeetStmtContext ctx) {
 		// yeet stmt -> return stmt -> yeet 23
+		// simply validate that the expression is a valid expression
+		exprResolver.visit(ctx.expr());
+		return null;
+	}
+
+	@Override
+	public Void visitUnnamedStmt(MoneyParser.UnnamedStmtContext ctx) {
 		// simply validate that the expression is a valid expression
 		exprResolver.visit(ctx.expr());
 		return null;
