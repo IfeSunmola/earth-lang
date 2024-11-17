@@ -26,6 +26,7 @@ public enum SymbolTable {
 		addSymbol(FLOAT.toString(), 0, Kind.Builtin, FLOAT);
 		addSymbol(STRING.toString(), 0, Kind.Builtin, STRING);
 		addSymbol(BOOL.toString(), 0, Kind.Builtin, BOOL);
+		addSymbol(VOID.toString(), 0, Kind.Builtin, VOID);
 	}
 
 	void enterScope() {

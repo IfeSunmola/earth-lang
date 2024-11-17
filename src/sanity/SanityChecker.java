@@ -2,9 +2,13 @@ package sanity;
 
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
+import sanity.MoneyType.Func;
+
+import java.util.List;
 
 import static antlr.MoneyParser.*;
 import static sanity.MoneyType.Base.BOOL;
+import static sanity.MoneyType.Base.VOID;
 
 public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
@@ -55,7 +59,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
 		// First, check that the condition in the when stmt is a boolean expression
 		ExprContext whenCondition = ctx.expr().getFirst();
-		assertType(exprResolver.visit(whenCondition),
+		assertSameType(exprResolver.visit(whenCondition),
 			BOOL, "when condition",
 			whenCondition.getStart().getLine()
 		);
@@ -69,7 +73,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		// skip 1 because the first expr is the when condition
 		ctx.expr().stream().skip(1).forEach(exprCtx -> {
 			MoneyType elseWhenType = exprResolver.visit(exprCtx);
-			assertType(elseWhenType, BOOL, "elseWhen condition",
+			assertSameType(elseWhenType, BOOL, "elseWhen condition",
 				exprCtx.getStart().getLine()
 			);
 
@@ -101,17 +105,127 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
+	public Void visitFnDefStmt(FnDefStmtContext ctx) {
+		String name = ctx.name.getText();
+		TypedIdentListContext paramsCtx = ctx.params;
+		String temp;
+		if (ctx.retType != null) temp = ctx.retType.getText();
+		else temp = "void";
+		MoneyType retType = assertValidType(temp, ctx.start.getLine());
+
+		// First, check that the name has not been declared AS A FUNCTION
+		table.findInCurrentScope(name)
+			.ifPresent(symbol -> {
+				if (symbol.kind() != Kind.Function) return;
+
+				var msg = "";
+				if (symbol.declaredOn() == 0)
+					msg = "`%s` is a builtin function".formatted(name);
+				else
+					msg = "%s has already been declared as a function on line %d"
+						.formatted(name, symbol.declaredOn());
+				throw new MoneyException(msg, ctx.getStart().getLine());
+			});
+
+		// Second, enter a new scope
+		table.enterScope();
+		// Third, add the parameters to the symbol table. It's a new scope, so no
+		// need to check if the parameters have been declared before.
+		paramsCtx.typedIdentExpr().forEach(typedIdentExprContext -> {
+			String paramName = typedIdentExprContext.name.getText();
+			String paramType = typedIdentExprContext.type.getText();
+			int line = typedIdentExprContext.getStart().getLine();
+
+			MoneyType type = checkDeclValidity(paramName, paramType, line, null);
+			table.addSymbol(paramName, line, Kind.ImmutDecl, type);
+		});
+
+		// Fourth, sanity check the function body
+		visit(ctx.body);
+
+		List<StmtContext> fnBody = ctx.body.stmt();
+		// Fifth, if the function is empty, the return type must be void
+		if (fnBody.isEmpty() && !retType.is(VOID)) {
+			throw new MoneyException(
+				"Function `%s` returns `%s` but has an empty body"
+					.formatted(name, temp), ctx.retType.getLine()
+			);
+		}
+
+		// Sixth, Function does not return anything, but the last statement is a
+		// return statement
+		if (retType.is(VOID) && !fnBody.isEmpty()) {
+			StmtContext lastStmt = fnBody.getLast();
+			if (lastStmt.yeetStmt() != null) {
+				throw new MoneyException("""
+					Function `%s` does not return anything, but the last statement
+					is a return statement"""
+					.formatted(name), lastStmt.yeetStmt().getStart().getLine()
+				);
+			}
+		}
+
+		// Seventh, check that the type of the expression in return is the same as
+		// the return type
+		if (!fnBody.isEmpty()) {
+			StmtContext lastStmt = fnBody.getLast();
+			if (lastStmt.yeetStmt() != null) {
+				YeetStmtContext yeetStmt = lastStmt.yeetStmt();
+				MoneyType returnType = exprResolver.visit(yeetStmt.expr());
+				if (!returnType.equals(retType)) {
+					var msg = """
+						Function `%s` returns `%s` but the return statement has type `%s`"""
+						.formatted(name, temp, returnType);
+					throw new MoneyException(msg, yeetStmt.getStart().getLine());
+				}
+			}
+		}
+		// happy path
+		table.exitScope();
+
+		// Eighth, add the function to the symbol table
+		List<MoneyType.Base> list = paramsCtx.typedIdentExpr()
+			.stream()
+			.map(context -> {
+				MoneyType type = MoneyType.fromString(context.type.getText());
+				if (type instanceof MoneyType.Base) return (MoneyType.Base) type;
+
+				throw new MoneyException("Function parameters must be base types",
+					context.getStart().getLine());
+			})
+			.toList();
+
+		if (!(retType instanceof MoneyType.Base retTypeBase))
+			throw new MoneyException(
+				"Function return type must be a base type", ctx.retType.getLine()
+			);
+
+		Func fnType = new Func(list, retTypeBase);
+
+		table.addSymbol(name, ctx.getStart().getLine(), Kind.Function, fnType);
+		return null;
+	}
+
+	@Override
 	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
 		// simply validate that the expression is a valid expression
 		exprResolver.visit(ctx.expr());
 		return null;
 	}
 
+	private MoneyType assertValidType(String type, int line) {
+		if (!MoneyType.isKnown(type)) {
+			throw new MoneyException("Unknown type `%s`".formatted(type), line);
+		}
+		// Doing double work here
+		return MoneyType.fromString(type);
+	}
+
 	/// Asserts that the type of the expression is the same as the expected type.
 	///
 	/// @throws MoneyException if the types do not match
-	private void assertType(MoneyType type, MoneyType expected,
-	                        String in, int line) {
+	private void assertSameType(MoneyType type, MoneyType expected,
+	                            String in, int line) {
 		if (!type.equals(expected)) {
 			var msg = "Expected a `%s` in %s but got `%s`"
 				.formatted(expected, in, type);
@@ -141,9 +255,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 			});
 
 		// second, check that the type is a valid type
-		if (!MoneyType.isKnown(type)) {
-			throw new MoneyException("Unknown type `%s`".formatted(type), line);
-		}
+		assertValidType(type, line);
 
 		if (exprCtx == null) { // most likely a var decl without an expression
 			// surely, I could do better than basically repeating the if stmt above

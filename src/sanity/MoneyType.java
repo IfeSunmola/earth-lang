@@ -1,6 +1,6 @@
 package sanity;
 
-import java.util.stream.Stream;
+import java.util.List;
 
 public sealed interface MoneyType {
 	static MoneyType fromString(String type) {
@@ -9,6 +9,7 @@ public sealed interface MoneyType {
 			case "float" -> Base.FLOAT;
 			case "str" -> Base.STRING;
 			case "bool" -> Base.BOOL;
+			case "void" -> Base.VOID;
 			default -> throw new IllegalArgumentException("Unknown type: " + type);
 		};
 	}
@@ -30,7 +31,7 @@ public sealed interface MoneyType {
 
 	static boolean isKnown(String strType) {
 		return switch (strType) {
-			case "int", "float", "str", "bool" -> true;
+			case "int", "float", "str", "bool", "void" -> true;
 			default -> false;
 		};
 	}
@@ -39,7 +40,8 @@ public sealed interface MoneyType {
 		INT("int"),
 		FLOAT("float"),
 		STRING("str"),
-		BOOL("bool");
+		BOOL("bool"),
+		VOID("void");
 
 		private final String type; // access with toString() for consistency
 
@@ -53,12 +55,14 @@ public sealed interface MoneyType {
 		}
 	}
 
-	record Func(Base returnType, Base... params) implements MoneyType {
+	record Func(List<Base> params, Base returnType) implements MoneyType {
 		@Override
 		public String toString() {
 			return "fn(%s)%s".formatted(
-				String.join(", ",
-					Stream.of(params).map(Base::toString).toArray(String[]::new)),
+				params.stream()
+					.map(MoneyType::toString)
+					.reduce((a, b) -> a + ", " + b)
+					.orElse(""),
 				returnType
 			);
 		}
