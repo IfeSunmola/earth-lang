@@ -39,7 +39,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 
 		// first, check that the name is declared
 		Symbol variable = table.findInAllScopes(name)
-			.orElseThrow(() -> new MoneyException(("`%s`s not a known identifier")
+			.orElseThrow(() -> new MoneyException(("`%s` is not a known identifier")
 				.formatted(name), line));
 
 		// second, resolve the type of the new expression
@@ -210,6 +210,31 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
 		// simply validate that the expression is a valid expression
 		exprResolver.visit(ctx.expr());
+		return null;
+	}
+
+	@Override
+	public Void visitLoopStmt(LoopStmtContext ctx) {
+		table.enterScope();
+		// Null check not needed because antlr will have reported an error
+		// First, validate the initializer.
+		visitDeclStmt(ctx.initializer);
+
+		// Second, validate the condition
+		ExprContext condition = ctx.condition;
+		MoneyType conditionType = exprResolver.visit(condition);
+		assertSameType(conditionType, BOOL, "loop condition",
+			condition.getStart().getLine()
+		);
+
+
+		// Third, validate the reassignment stmt
+		visitReassignStmt(ctx.update);
+
+		// Fourth, validate the body
+		visitStmtList(ctx.body);
+
+		table.exitScope();
 		return null;
 	}
 

@@ -10,10 +10,20 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		fn name (age: int, age: str) str {
-				yeet "23"
-		}
-		
+		loop var i: int = 0, i < 100, x = i + 1 {
+		       when i % 3 == 0 && i % 5 == 0{
+		           _ = println("FizzBuzz")
+		       }
+		       else when i % 3 == 0 {
+		           _ = println("Fizz")
+		       }
+		       else when i % 5 == 0 {
+		           _ = println("Buzz")
+		       }
+		       else {
+		           _ = println(i)
+		       }
+		    }
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));
