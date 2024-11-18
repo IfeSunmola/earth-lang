@@ -4,6 +4,7 @@ import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
 import money.MoneyException;
 
+import static money.MoneyUtils.ordinal;
 import static sanity.MoneyType.Base;
 
 /// Resolves expressions by validating them, and returning the type if it's
@@ -188,5 +189,55 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 				"Could not resolve type of `%s`. Has it been declared?".formatted(name),
 				ctx.getStart().getLine()
 			));
+	}
+
+	@Override
+	public MoneyType visitFnCallExpr(FnCallExprContext ctx) {
+		// first, check that the function is a valid function
+		String fnName = ctx.fnName.getText();
+		Symbol symbol = table.findInAllScopes(fnName)
+			.orElseThrow(() -> new MoneyException(
+				"`%s` is not a known identifier".formatted(fnName),
+				ctx.getStart().getLine()
+			));
+
+		// Second, It's an identifier, check if it's a function
+		if (symbol.kind() != Kind.Function ||
+		    !(symbol.type() instanceof MoneyType.Func fnType)) {
+			throw new MoneyException(
+				"`%s` is not a function".formatted(fnName),
+				ctx.getStart().getLine()
+			);
+		}
+
+		// Third, check that the number of arguments is correct
+		ExprListContext params = ctx.params;
+		// params is what the user passed
+		// fnType is what the function expects from the symbol table
+		if (params.expr().size() != fnType.params().size()) {
+			throw new MoneyException(
+				"Expected %d arguments but got %d. Required signature is %s".formatted(
+					fnType.params().size(), params.expr().size(), fnType
+				),
+				ctx.getStart().getLine()
+			);
+		}
+
+		// Fourth, check that the types of the arguments match the types of the
+		// parameters of the function signature
+		for (int i = 0; i < params.expr().size(); i++) {
+			MoneyType argType = visit(params.expr(i)); // type of argument
+			Base paramType = fnType.params().get(i);
+			if (argType != paramType) {
+				throw new MoneyException(
+					"""
+						Expected %s argument to be of type `%s` but got `%s`. \
+						Required signature is %s
+						""".formatted(ordinal(i + 1), paramType, argType, fnType),
+					ctx.getStart().getLine()
+				);
+			}
+		}
+		return fnType.returnType();
 	}
 }

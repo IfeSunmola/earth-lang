@@ -60,7 +60,7 @@ primary
     : LParen expr RParen #groupedExpr
     | (IntLit | FloatLit | StrLit | BoolLit)  #literalExpr
     | UntypedIdent #untypedIdentExpr
-    | UntypedIdent LParen exprList RParen #fnCallExpr
+    | fnName=UntypedIdent LParen params=exprList RParen #fnCallExpr
     ;
 
 //// identifiers

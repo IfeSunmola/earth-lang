@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MoneyMain" type="Application" factoryName="Application" nameIsGenerated="true">
+    <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
+    <option name="MAIN_CLASS_NAME" value="MoneyMain" />
+    <module name="money-lang" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

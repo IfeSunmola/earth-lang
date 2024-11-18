@@ -10,20 +10,15 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		loop var i: int = 0, i < 100, x = i + 1 {
-		       when i % 3 == 0 && i % 5 == 0{
-		           _ = println("FizzBuzz")
-		       }
-		       else when i % 3 == 0 {
-		           _ = println("Fizz")
-		       }
-		       else when i % 5 == 0 {
-		           _ = println("Buzz")
-		       }
-		       else {
-		           _ = println(i)
-		       }
-		    }
+		fn println(x: int) {
+			// print x
+		}
+		
+		fn intToStr(x: int) str {
+			yeet "23"
+		}
+		_ = println(23)
+		var age: str = intToStr(23)
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));
@@ -31,6 +26,7 @@ void main() {
 		SanityChecker sanityChecker = new SanityChecker();
 		ProgramContext program = parser.program();
 		sanityChecker.visit(program);
+		System.out.println("Final Scope: \n");
 		System.out.println(SymbolTable.instance);
 	}
 	catch (MoneyException e) {

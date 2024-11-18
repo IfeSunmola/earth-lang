@@ -1164,12 +1164,14 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class FnCallExprContext extends PrimaryContext {
-		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
+		public Token fnName;
+		public ExprListContext params;
 		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
+		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
+		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
 		public ExprListContext exprList() {
 			return getRuleContext(ExprListContext.class,0);
 		}
-		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
 		public FnCallExprContext(PrimaryContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -1227,11 +1229,11 @@ public class MoneyParser extends Parser {
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(147);
-				match(UntypedIdent);
+				((FnCallExprContext)_localctx).fnName = match(UntypedIdent);
 				setState(148);
 				match(LParen);
 				setState(149);
-				exprList();
+				((FnCallExprContext)_localctx).params = exprList();
 				setState(150);
 				match(RParen);
 				}

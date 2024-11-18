@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.Trees;
 import java.util.List;
 
 //https://stackoverflow.com/a/50068645/18902234
-public class TreeUtils {
+public class AntlrPrinter {
 
 	/**
 	 * Platform dependent end-of-line marker
