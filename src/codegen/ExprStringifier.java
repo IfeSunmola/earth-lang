@@ -11,7 +11,8 @@ public class ExprStringifier extends MoneyParserBaseVisitor<String> {
 		if (ctx.StrLit() != null) return ctx.StrLit().getText()
 			.substring(1, ctx.StrLit().getText().length() - 1); // remove quotes
 
-		if (ctx.BoolLit() != null) return ctx.BoolLit().getText();
+		if (ctx.BoolLit() != null)
+			return ctx.BoolLit().getText().equals("true") ? "1" : "0";
 
 		throw new RuntimeException("Should not reach here");
 	}

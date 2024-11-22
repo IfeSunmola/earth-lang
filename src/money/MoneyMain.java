@@ -12,8 +12,10 @@ void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
 		let age: int = 23
 		var name: str = "John"
-		let married: bool = false
-		let salary: float = 1000.0
+		age = 24
+		name = "Doe"
+		// let married: bool = false
+		// let salary: float = 1000.0
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

@@ -1,8 +1,9 @@
 package codegen;
 
 import antlr.MoneyParser;
-import antlr.MoneyParser.ExprContext;
+import antlr.MoneyParser.ReassignStmtContext;
 import antlr.MoneyParserBaseVisitor;
+import sanity.MoneyType;
 
 import java.io.IOException;
 import java.lang.classfile.ClassBuilder;
@@ -14,12 +15,14 @@ import java.nio.file.Path;
 
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
+import static sanity.MoneyType.Base.*;
+
 
 @SuppressWarnings("preview")
 public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 	private final ExprStringifier exprStringifier = new ExprStringifier();
-	private ClassDesc outputDesc = ClassDesc.of("Output");
-	private String outputStr = outputDesc.displayName();
+	private final ClassDesc outputDesc = ClassDesc.of("Output");
+	private final String outputStr = outputDesc.displayName();
 
 	private Method methodBuilder; // current method being built
 	private ClassBuilder classBuilder;
@@ -55,26 +58,53 @@ public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitDeclStmt(MoneyParser.DeclStmtContext ctx) {
-		String type = ctx.typedIdentExpr().type.getText();
-		ExprContext expr = ctx.expr();
-		String strExpr = exprStringifier.visit(expr);
+		String name = ctx.typedIdentExpr().name.getText();
+		MoneyType type =
+			MoneyType.fromString(ctx.typedIdentExpr().type.getText());
+		String strExpr = exprStringifier.visit(ctx.expr());
 
 		switch (type) {
-			case "int" -> methodBuilder.builder
+			case INT, BOOL -> methodBuilder.builder
 				.ldc(Integer.parseInt(strExpr))
 				.istore(methodBuilder.slot++);
-
-			case "bool" -> methodBuilder.builder
-				.ldc(strExpr.equals("true") ? 1 : 0)
-				.istore(methodBuilder.slot++);
-
-			case "float" -> methodBuilder.builder
+			case FLOAT -> methodBuilder.builder
 				.ldc(Float.parseFloat(strExpr))
 				.fstore(methodBuilder.slot++);
-
-			case "str" -> methodBuilder.builder
-				.ldc(strExpr.translateEscapes())
+			case STRING -> methodBuilder.builder
+				.ldc(strExpr)
 				.astore(methodBuilder.slot++);
+
+			case VOID -> throw new RuntimeException();
+			case MoneyType.Func func -> throw new RuntimeException();
+		}
+
+		methodBuilder.variables.add(new Variable(name, type,
+			methodBuilder.slot - 1));
+		return null;
+	}
+
+	@Override
+	public Void visitReassignStmt(ReassignStmtContext ctx) {
+		String name = ctx.ident.getText();
+		String strExpr = exprStringifier.visit(ctx.expr());
+
+		Variable variable = methodBuilder.variables.stream()
+			.filter(v -> v.name().equals(name))
+			.findFirst()
+			.orElseThrow();
+
+		switch (variable.type()) {
+			case INT, BOOL -> methodBuilder.builder
+				.ldc(Integer.parseInt(strExpr))
+				.istore(variable.slot());
+			case FLOAT -> methodBuilder.builder
+				.ldc(Float.parseFloat(strExpr))
+				.fstore(variable.slot());
+			case STRING -> methodBuilder.builder
+				.ldc(strExpr)
+				.astore(variable.slot());
+			case VOID -> throw new RuntimeException();
+			case MoneyType.Func func -> throw new RuntimeException();
 		}
 
 		return null;
