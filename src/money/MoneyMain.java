@@ -1,6 +1,6 @@
 import antlr.MoneyLexer;
 import antlr.MoneyParser;
-import codegen.JVMCodeGen;
+import codegen.StmtCodeGen;
 import money.MoneyException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -24,7 +24,7 @@ void main() {
 		ProgramContext program = parser.program();
 		sanityChecker.visit(program);
 
-		new JVMCodeGen(program); // no need to call visit()
+		new StmtCodeGen(program); // no need to call visit()
 	}
 	catch (MoneyException e) {
 		System.err.println(e.getMessage());

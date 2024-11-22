@@ -19,15 +19,15 @@ import static sanity.MoneyType.Base.*;
 
 
 @SuppressWarnings("preview")
-public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
-	private final ExprStringifier exprStringifier = new ExprStringifier();
+public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
+	private ExprCodegen exprCodegen;
 	private final ClassDesc outputDesc = ClassDesc.of("Output");
 	private final String outputStr = outputDesc.displayName();
 
 	private Method methodBuilder; // current method being built
 	private ClassBuilder classBuilder;
 
-	public JVMCodeGen(MoneyParser.ProgramContext program) {
+	public StmtCodeGen(MoneyParser.ProgramContext program) {
 		try {
 			ClassFile.of().buildTo(Path.of(outputStr + ".class"), outputDesc,
 				(ClassBuilder classBuilder) -> {
@@ -44,6 +44,7 @@ public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 							MethodTypeDesc.of(CD_void, CD_String.arrayType()),
 							ACC_PUBLIC | ACC_STATIC, mainBuilder -> {
 								methodBuilder = new Method(mainBuilder, 1);
+								exprCodegen = new ExprCodegen(methodBuilder.builder);
 								visit(program);
 								mainBuilder.return_();
 							}
@@ -61,17 +62,14 @@ public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 		String name = ctx.typedIdentExpr().name.getText();
 		MoneyType type =
 			MoneyType.fromString(ctx.typedIdentExpr().type.getText());
-		String strExpr = exprStringifier.visit(ctx.expr());
+		exprCodegen.visit(ctx.expr());
 
 		switch (type) {
 			case INT, BOOL -> methodBuilder.builder
-				.ldc(Integer.parseInt(strExpr))
 				.istore(methodBuilder.slot++);
 			case FLOAT -> methodBuilder.builder
-				.ldc(Float.parseFloat(strExpr))
 				.fstore(methodBuilder.slot++);
 			case STRING -> methodBuilder.builder
-				.ldc(strExpr)
 				.astore(methodBuilder.slot++);
 
 			case VOID -> throw new RuntimeException();
@@ -86,7 +84,7 @@ public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 	@Override
 	public Void visitReassignStmt(ReassignStmtContext ctx) {
 		String name = ctx.ident.getText();
-		String strExpr = exprStringifier.visit(ctx.expr());
+		exprCodegen.visit(ctx.expr());
 
 		Variable variable = methodBuilder.variables.stream()
 			.filter(v -> v.name().equals(name))
@@ -95,13 +93,10 @@ public class JVMCodeGen extends MoneyParserBaseVisitor<Void> {
 
 		switch (variable.type()) {
 			case INT, BOOL -> methodBuilder.builder
-				.ldc(Integer.parseInt(strExpr))
 				.istore(variable.slot());
 			case FLOAT -> methodBuilder.builder
-				.ldc(Float.parseFloat(strExpr))
 				.fstore(variable.slot());
 			case STRING -> methodBuilder.builder
-				.ldc(strExpr)
 				.astore(variable.slot());
 			case VOID -> throw new RuntimeException();
 			case MoneyType.Func func -> throw new RuntimeException();
