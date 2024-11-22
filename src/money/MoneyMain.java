@@ -10,12 +10,8 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		let age: int = 23
-		var name: str = "John"
-		age = 24
-		name = "Doe"
-		// let married: bool = false
-		// let salary: float = 1000.0
+		let isDone: bool = 50.9 >= 100
+		
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

@@ -9,7 +9,7 @@ import static sanity.MoneyType.Base;
 
 /// Resolves expressions by validating them, and returning the type if it's
 /// valid, or throwing an exception if it's not.
-class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
+public class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 	private final SymbolTable table = SymbolTable.instance;
 
 	@Override
