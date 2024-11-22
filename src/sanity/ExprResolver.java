@@ -42,8 +42,8 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 		// *, /, %, where both operands are int or float
 		// If one of the operands is a float, the result is a float
 		// if one of the operands is not a float or int, throw an exception
-		MoneyType leftType = visit(ctx.expr(0));
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType leftType = visit(ctx.left);
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType == Base.INT && rightType == Base.INT)
 			return Base.INT;
@@ -65,9 +65,9 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 		// Aside from string concatenation, the operands must be either an int or
 		// a float.
 
-		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType leftType = visit(ctx.left);
 		String op = ctx.op.getText();
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType rightType = visit(ctx.right);
 
 		// string concatenation
 		if (op.equals("+") && leftType == Base.STRING && rightType == Base.STRING)
@@ -93,9 +93,9 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 	public MoneyType visitRelationalExpr(RelationalExprContext ctx) {
 		// <, <=, >, >=
 		// The operands must be either an int or a float. Result is a boolean
-		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType leftType = visit(ctx.left);
 		String op = ctx.op.getText();
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType rightType = visit(ctx.right);
 
 		// checking that the operands are either int or float
 		if ((leftType == Base.INT || leftType == Base.FLOAT) &&
@@ -116,9 +116,9 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 		// The operands must be of the same type.
 		// The operands must be a base type (int, float, string, or boolean).
 		// Result is a boolean
-		MoneyType leftType = visit(ctx.expr(0));
+		MoneyType leftType = visit(ctx.left);
 		String op = ctx.op.getText();
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType == rightType && leftType.isBase()) return Base.BOOL;
 
@@ -127,16 +127,14 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 				.formatted(op, leftType, rightType),
 			ctx.getStart().getLine()
 		);
-
-
 	}
 
 	@Override
 	public MoneyType visitAndExpr(AndExprContext ctx) {
 		// &&
 		// The operands must be boolean. Result is a boolean
-		MoneyType leftType = visit(ctx.expr(0));
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType leftType = visit(ctx.left);
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType == Base.BOOL && rightType == Base.BOOL) return Base.BOOL;
 
@@ -151,8 +149,8 @@ class ExprResolver extends MoneyParserBaseVisitor<MoneyType> {
 	public MoneyType visitOrExpr(OrExprContext ctx) {
 		// ||
 		// The operands must be boolean. Result is a boolean
-		MoneyType leftType = visit(ctx.expr(0));
-		MoneyType rightType = visit(ctx.expr(1));
+		MoneyType leftType = visit(ctx.left);
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType == Base.BOOL && rightType == Base.BOOL) return Base.BOOL;
 

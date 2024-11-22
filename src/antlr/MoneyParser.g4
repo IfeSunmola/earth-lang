@@ -45,21 +45,21 @@ loopStmt:
 // expressions. Hevaily stolen from ... erm ... inspired by:
 // https://stackoverflow.com/a/15614911/18902234
 expr
-    : Minus expr                           #negExpr
-    | Bang expr                            #notExpr
-    | expr op=(Star | Slash | Mod) expr    #multiplicationExpr
-    | expr op=(Plus | Minus) expr          #additiveExpr
-    | expr op=(Lte | Gte | Lt | Gt) expr   #relationalExpr
-    | expr op=(EqEq | BangEq) expr           #equalityExpr
-    | expr And expr                        #andExpr
-    | expr Or expr                         #orExpr
-    | primary                                 #primaryExpr
+    : Minus expr                                        #negExpr
+    | Bang expr                                         #notExpr
+    | left=expr op=(Star | Slash | Mod) right=expr      #multiplicationExpr
+    | left=expr op=(Plus | Minus) right=expr            #additiveExpr
+    | left=expr op=(Lte | Gte | Lt | Gt) right=expr     #relationalExpr
+    | left=expr op=(EqEq | BangEq) right=expr           #equalityExpr
+    | left=expr And right=expr                          #andExpr
+    | left=expr Or right=expr                           #orExpr
+    | primary                                           #primaryExpr
     ;
 
 primary
-    : LParen expr RParen #groupedExpr
-    | (IntLit | FloatLit | StrLit | BoolLit)  #literalExpr
-    | UntypedIdent #untypedIdentExpr
+    : LParen expr RParen                                #groupedExpr
+    | (IntLit | FloatLit | StrLit | BoolLit)            #literalExpr
+    | UntypedIdent                                      #untypedIdentExpr
     | fnName=UntypedIdent LParen params=exprList RParen #fnCallExpr
     ;
 

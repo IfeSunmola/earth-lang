@@ -808,7 +808,9 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class MultiplicationExprContext extends ExprContext {
+		public ExprContext left;
 		public Token op;
+		public ExprContext right;
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -827,13 +829,15 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class OrExprContext extends ExprContext {
+		public ExprContext left;
+		public ExprContext right;
+		public TerminalNode Or() { return getToken(MoneyParser.Or, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode Or() { return getToken(MoneyParser.Or, 0); }
 		public OrExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -843,7 +847,9 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class AdditiveExprContext extends ExprContext {
+		public ExprContext left;
 		public Token op;
+		public ExprContext right;
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -861,7 +867,9 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class RelationalExprContext extends ExprContext {
+		public ExprContext left;
 		public Token op;
+		public ExprContext right;
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -881,7 +889,9 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class EqualityExprContext extends ExprContext {
+		public ExprContext left;
 		public Token op;
+		public ExprContext right;
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -899,13 +909,15 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class AndExprContext extends ExprContext {
+		public ExprContext left;
+		public ExprContext right;
+		public TerminalNode And() { return getToken(MoneyParser.And, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode And() { return getToken(MoneyParser.And, 0); }
 		public AndExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
@@ -988,6 +1000,7 @@ public class MoneyParser extends Parser {
 					case 1:
 						{
 						_localctx = new MultiplicationExprContext(new ExprContext(_parentctx, _parentState));
+						((MultiplicationExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(118);
 						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
@@ -1003,12 +1016,13 @@ public class MoneyParser extends Parser {
 							consume();
 						}
 						setState(120);
-						expr(8);
+						((MultiplicationExprContext)_localctx).right = expr(8);
 						}
 						break;
 					case 2:
 						{
 						_localctx = new AdditiveExprContext(new ExprContext(_parentctx, _parentState));
+						((AdditiveExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(121);
 						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
@@ -1024,12 +1038,13 @@ public class MoneyParser extends Parser {
 							consume();
 						}
 						setState(123);
-						expr(7);
+						((AdditiveExprContext)_localctx).right = expr(7);
 						}
 						break;
 					case 3:
 						{
 						_localctx = new RelationalExprContext(new ExprContext(_parentctx, _parentState));
+						((RelationalExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(124);
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
@@ -1045,12 +1060,13 @@ public class MoneyParser extends Parser {
 							consume();
 						}
 						setState(126);
-						expr(6);
+						((RelationalExprContext)_localctx).right = expr(6);
 						}
 						break;
 					case 4:
 						{
 						_localctx = new EqualityExprContext(new ExprContext(_parentctx, _parentState));
+						((EqualityExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(127);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
@@ -1066,31 +1082,33 @@ public class MoneyParser extends Parser {
 							consume();
 						}
 						setState(129);
-						expr(5);
+						((EqualityExprContext)_localctx).right = expr(5);
 						}
 						break;
 					case 5:
 						{
 						_localctx = new AndExprContext(new ExprContext(_parentctx, _parentState));
+						((AndExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(130);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(131);
 						match(And);
 						setState(132);
-						expr(4);
+						((AndExprContext)_localctx).right = expr(4);
 						}
 						break;
 					case 6:
 						{
 						_localctx = new OrExprContext(new ExprContext(_parentctx, _parentState));
+						((OrExprContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(133);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(134);
 						match(Or);
 						setState(135);
-						expr(3);
+						((OrExprContext)_localctx).right = expr(3);
 						}
 						break;
 					}
