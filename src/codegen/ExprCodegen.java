@@ -1,5 +1,6 @@
 package codegen;
 
+import antlr.MoneyParser.EqualityExprContext;
 import antlr.MoneyParser.LiteralExprContext;
 import antlr.MoneyParser.RelationalExprContext;
 import antlr.MoneyParserBaseVisitor;
@@ -10,12 +11,17 @@ import sanity.MoneyType.Base;
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
 import java.lang.classfile.Opcode;
+import java.lang.constant.MethodTypeDesc;
 import java.util.function.Consumer;
+
+import static java.lang.constant.ConstantDescs.*;
 
 @SuppressWarnings("preview")
 public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 	private final CodeBuilder methodBuilder;
 	private final ExprResolver exprResolver = new ExprResolver();
+	private final Consumer<BlockCodeBuilder> setTrue = CodeBuilder::iconst_1;
+	private final Consumer<BlockCodeBuilder> setFalse = CodeBuilder::iconst_0;
 
 	public ExprCodegen(CodeBuilder builder) {
 		methodBuilder = builder;
@@ -52,9 +58,6 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 		// Otherwise, integer comparison is done
 		MoneyType leftType = exprResolver.visit(ctx.left);
 		MoneyType rightType = exprResolver.visit(ctx.right);
-
-		Consumer<BlockCodeBuilder> setTrue = CodeBuilder::iconst_1;
-		Consumer<BlockCodeBuilder> setFalse = CodeBuilder::iconst_0;
 
 		if (leftType.is(Base.FLOAT) || rightType.is(Base.FLOAT)) {
 			visit(ctx.left);
@@ -96,6 +99,39 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 		};
 
 		methodBuilder.ifThenElse(op, setTrue, setFalse);
+		return null;
+	}
+
+	@Override
+	public Void visitEqualityExpr(EqualityExprContext ctx) {
+		// recall that the operands must be of the same type
+		// ExprResolver would throw an error if they're not
+		MoneyType leftType = exprResolver.visit(ctx.left);
+		boolean isEquals = ctx.op.getText().equals("==");
+
+		// load the values of the left and right expressions onto the stack
+		visit(ctx.left);
+		visit(ctx.right);
+		switch (leftType) {
+			case Base.INT, Base.BOOL -> {
+				Opcode opcode = isEquals ? Opcode.IF_ICMPEQ : Opcode.IF_ICMPNE;
+				methodBuilder.ifThenElse(opcode, setTrue, setFalse);
+			}
+			case Base.FLOAT -> {
+				Opcode opcode = isEquals ? Opcode.IFEQ : Opcode.IFNE;
+				methodBuilder.fcmpl().ifThenElse(opcode, setTrue, setFalse);
+			}
+			case Base.STRING -> {
+				// call .equals. 1st item on the stack is the left string. 2nd item on
+				// the stack is the right string. i.e. left.equals(right)
+				methodBuilder.invokevirtual(CD_String, "equals",
+					MethodTypeDesc.of(CD_boolean, CD_Object));
+
+				// xor with 1 to negate if evaluating !=
+				if (!isEquals) methodBuilder.iconst_1().ixor();
+			}
+			default -> throw new RuntimeException("Well Shit");
+		}
 		return null;
 	}
 }
