@@ -144,28 +144,6 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitLiteralExpr(LiteralExprContext ctx) {
-		if (ctx.FloatLit() != null)
-			methodBuilder.ldc(Float.parseFloat(ctx.FloatLit().getText()));
-
-		else if (ctx.IntLit() != null)
-			methodBuilder.ldc(Integer.parseInt(ctx.IntLit().getText()));
-
-		else if (ctx.StrLit() != null)
-			methodBuilder.ldc(ctx.StrLit().getText()
-				.substring(1, ctx.StrLit().getText().length() - 1)); // remove quotes
-
-		else if (ctx.BoolLit() != null)
-			if (ctx.BoolLit().getText().equals("true")) methodBuilder.iconst_1();
-			else methodBuilder.iconst_0();
-
-		else
-			throw new RuntimeException("Should not reach here");
-
-		return null;
-	}
-
-	@Override
 	public Void visitRelationalExpr(RelationalExprContext ctx) {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
 		// If either left or right is float, floating point comparison is done
@@ -247,6 +225,80 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 			}
 			default -> throw new RuntimeException("Well Shit");
 		}
+		return null;
+	}
+
+	@Override
+	public Void visitAndExpr(AndExprContext ctx) {
+		// val1 && val2, where val1 and val2 are booleans
+		// if val1 is false, result is false
+		// if val2 is false, result is false
+		// else result is true
+
+		visit(ctx.left);
+		// recall that IFEQ compares with 0
+		methodBuilder.ifThenElse(
+			Opcode.IFEQ,
+			setFalse,
+			elseBlock -> {
+				visit(ctx.right);
+				elseBlock.ifThenElse(
+					Opcode.IFEQ,
+					setFalse,
+					setTrue
+				);
+			});
+
+		return null;
+	}
+
+	@Override
+	public Void visitOrExpr(OrExprContext ctx) {
+		// val1 || val2, where val1 and val2 are booleans
+		// if val1 is true, result is true
+		// if val2 is true, result is true
+		// else false
+
+		visit(ctx.left);
+		methodBuilder.ifThenElse(
+			Opcode.IFEQ,
+			ifBlock -> {
+				visit(ctx.right);
+				ifBlock.ifThenElse(
+					Opcode.IFEQ,
+					setFalse,
+					setTrue
+				);
+			},
+			setTrue
+		);
+		return null;
+	}
+
+	@Override
+	public Void visitGroupedExpr(GroupedExprContext ctx) {
+		return visit(ctx.expr());
+	}
+
+	@Override
+	public Void visitLiteralExpr(LiteralExprContext ctx) {
+		if (ctx.FloatLit() != null)
+			methodBuilder.ldc(Float.parseFloat(ctx.FloatLit().getText()));
+
+		else if (ctx.IntLit() != null)
+			methodBuilder.ldc(Integer.parseInt(ctx.IntLit().getText()));
+
+		else if (ctx.StrLit() != null)
+			methodBuilder.ldc(ctx.StrLit().getText()
+				.substring(1, ctx.StrLit().getText().length() - 1)); // remove quotes
+
+		else if (ctx.BoolLit() != null)
+			if (ctx.BoolLit().getText().equals("true")) methodBuilder.iconst_1();
+			else methodBuilder.iconst_0();
+
+		else
+			throw new RuntimeException("Should not reach here");
+
 		return null;
 	}
 
