@@ -169,7 +169,7 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 		// the return type
 		if (!fnBody.isEmpty()) {
 			StmtContext lastStmt = fnBody.getLast();
-			if (lastStmt.yeetStmt() != null) {
+			if (lastStmt.yeetStmt() != null) { // there is a return stmt
 				YeetStmtContext yeetStmt = lastStmt.yeetStmt();
 				MoneyType returnType = exprResolver.visit(yeetStmt.expr());
 				if (!returnType.equals(retType)) {
@@ -178,6 +178,12 @@ public class SanityChecker extends MoneyParserBaseVisitor<Void> {
 						.formatted(name, temp, returnType);
 					throw new MoneyException(msg, yeetStmt.getStart().getLine());
 				}
+			}
+			else {
+				// no return stmt
+				var msg = "Function `%s` returns `%s` but has no return statement"
+					.formatted(name, retType);
+				throw new MoneyException(msg, ctx.retType.getLine());
 			}
 		}
 		// happy path
