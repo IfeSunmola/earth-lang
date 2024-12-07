@@ -10,12 +10,9 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		let var1: bool = "today" != "tomorrow"
-		let var2: bool = "today" == "tomorrow"
-		let var3: bool = 23 == 90
-		let var4: bool = 23 != 90
-		let var5: bool = 90.21 == 90.21
-		let var6: bool = 45.21 != 0.23
+		fn sayHello(name: str, age: int) int {
+			yeet 23
+		}
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));
