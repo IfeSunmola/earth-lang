@@ -1,5 +1,7 @@
 package sanity;
 
+import money.MoneyUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public enum SymbolTable {
 	}
 
 	void exitScope() {
-		assert scopes.size() > 1 : "Cannot exit the global scope";
+		MoneyUtils.ensure(scopes.size() > 1, "Cannot exit the global scope");
 		System.out.println("Exiting scope " + scopeNum);
 		System.out.println(this);
 		System.out.println("----------------------------------");

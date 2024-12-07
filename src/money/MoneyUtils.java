@@ -28,4 +28,9 @@ public class MoneyUtils {
 		if (!condition)
 			throw new AssertionError("Assertion Failed");
 	}
+
+	public static void ensure(boolean condition, String msg) {
+		if (!condition)
+			throw new AssertionError("Assertion Failed: " + msg);
+	}
 }
