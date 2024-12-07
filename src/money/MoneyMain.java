@@ -10,10 +10,10 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		let isTrue: bool = true
-		let isFalse: bool = true
-		
-		let and: bool = isTrue || isFalse
+		fn sum(num1: int, num2: int) str{
+			let total: int = 23 + 23
+			yeet "Hello there"
+		}
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

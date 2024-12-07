@@ -1,7 +1,9 @@
 package sanity;
 
+import java.lang.classfile.TypeKind;
 import java.util.List;
 
+@SuppressWarnings("preview")
 public sealed interface MoneyType {
 	static MoneyType fromString(String type) {
 		return switch (type) {
@@ -16,6 +18,17 @@ public sealed interface MoneyType {
 
 	default boolean stringEquals(String strType) {
 		return toString().equals(strType);
+	}
+
+	default TypeKind toTypeKind() {
+		return switch (this) {
+			case Base.INT -> TypeKind.IntType;
+			case Base.FLOAT -> TypeKind.FloatType;
+			case Base.STRING -> TypeKind.ReferenceType;
+			case Base.BOOL -> TypeKind.BooleanType;
+			case Base.VOID -> throw new RuntimeException();
+			case Func _ -> throw new RuntimeException();
+		};
 	}
 
 	default boolean isBase() {

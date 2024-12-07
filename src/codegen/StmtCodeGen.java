@@ -1,10 +1,7 @@
 package codegen;
 
 import antlr.MoneyParser;
-import antlr.MoneyParser.FnDefStmtContext;
-import antlr.MoneyParser.ReassignStmtContext;
-import antlr.MoneyParser.TypedIdentExprContext;
-import antlr.MoneyParser.YeetStmtContext;
+import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
 import sanity.MoneyType;
 
@@ -22,7 +19,6 @@ import java.util.Stack;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
-import static sanity.MoneyType.Base.*;
 
 
 @SuppressWarnings("preview")
@@ -65,40 +61,20 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitDeclStmt(MoneyParser.DeclStmtContext ctx) {
+	public Void visitDeclStmt(DeclStmtContext ctx) {
 		String name = ctx.typedIdentExpr().name.getText();
-		MoneyType type =
-			MoneyType.fromString(ctx.typedIdentExpr().type.getText());
+		TypeKind type = MoneyType
+			.fromString(ctx.typedIdentExpr().type.getText())
+			.toTypeKind();
+
+		// load the expression to store on the stack
 		currentMethod.exprCodegen.visit(ctx.expr());
 
 		int slot = currentMethod.slot++;
-		TypeKind tk = switch (type) {
-			case INT -> {
-				currentMethod.builder
-					.storeLocal(IntType, slot);
-				yield IntType;
-			}
-			case BOOL -> {
-				currentMethod.builder
-					.storeLocal(BooleanType, slot);
-				yield BooleanType;
-			}
-			case FLOAT -> {
-				currentMethod.builder
-					.storeLocal(FloatType, slot);
-				yield FloatType;
-			}
-			case STRING -> {
-				currentMethod.builder
-					.storeLocal(ReferenceType, slot);
-				yield ReferenceType;
-			}
-			case VOID -> throw new RuntimeException();
-			case Func _ -> throw new RuntimeException();
-		};
+		currentMethod.builder.storeLocal(type, slot);
 
 		currentMethod.exprCodegen.variables.add(
-			new Variable(name, tk, slot)
+			new Variable(name, type, slot)
 		);
 		return null;
 	}
@@ -143,6 +119,17 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				prevMethods.push(currentMethod);
 
 				currentMethod = new Method(builder, methodDesc.parameterCount());
+				// add the method parameters to the local variables
+				for (int i = 0; i < params.size(); i++) {
+					TypedIdentExprContext param = params.get(i);
+					String name = param.name.getText();
+					TypeKind type = MoneyType.fromString(param.type.getText())
+						.toTypeKind();
+					currentMethod.exprCodegen.variables.add(
+						new Variable(name, type, i)
+					);
+				}
+
 				visit(ctx.body);
 
 				ClassDesc retDesc = methodDesc.returnType();
