@@ -1,8 +1,6 @@
 package codegen;
 
-import antlr.MoneyParser.EqualityExprContext;
-import antlr.MoneyParser.LiteralExprContext;
-import antlr.MoneyParser.RelationalExprContext;
+import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
 import sanity.ExprResolver;
 import sanity.MoneyType;
@@ -15,7 +13,10 @@ import java.lang.constant.MethodTypeDesc;
 import java.util.function.Consumer;
 
 import static java.lang.constant.ConstantDescs.*;
+import static money.MoneyUtils.CD_StringBuilder;
 
+/// The main purpose of the methods in this class is simply to load the
+/// expression onto the stack, AND nothing else.
 @SuppressWarnings("preview")
 public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 	private final CodeBuilder methodBuilder;
@@ -27,7 +28,117 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 		methodBuilder = builder;
 	}
 
-	/// Loads the value of the literal onto the stack
+	@Override
+	public Void visitNegExpr(NegExprContext ctx) {
+		// -value where value is an int OR float
+		visit(ctx.expr()); // load the value onto the stack
+
+		MoneyType type = exprResolver.visitNegExpr(ctx);
+		if (type == Base.INT) methodBuilder.ineg();
+		else methodBuilder.fneg();
+
+		return null;
+	}
+
+	@Override
+	public Void visitNotExpr(NotExprContext ctx) {
+		// !value, where value is a boolean
+		visit(ctx.expr()); // load the value onto the stack
+		methodBuilder.iconst_1().ixor(); // xor with 1 to negate the value
+		return null;
+	}
+
+	@Override
+	public Void visitMultiplicationExpr(MultiplicationExprContext ctx) {
+		// val1 op val2 where op is '*' or '/'or '%'
+		// val1 and val2 are either int or float
+		// If one of the operands is a float, the result is a float
+
+		MoneyType leftType = exprResolver.visit(ctx.left);
+		String op = ctx.op.getText();
+		MoneyType rightType = exprResolver.visit(ctx.right);
+
+		if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
+			visit(ctx.left);
+			visit(ctx.right);
+			switch (op) {
+				case "*" -> methodBuilder.imul();
+				case "/" -> methodBuilder.idiv();
+				case "%" -> methodBuilder.irem();
+			}
+		}
+		else {
+			visit(ctx.left);
+			if (leftType.is(Base.INT)) methodBuilder.i2f();
+
+			visit(ctx.right);
+			if (rightType.is(Base.INT)) methodBuilder.i2f();
+
+			switch (op) {
+				case "*" -> methodBuilder.fmul();
+				case "/" -> methodBuilder.fdiv();
+				case "%" -> methodBuilder.frem();
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public Void visitAdditiveExpr(AdditiveExprContext ctx) {
+		// val1 op val2 where op is '+' or '-'
+		// val1 and val2 are either int or float
+		// if op is '+', val1 AND val2 are strings, then string concat is done
+		// int + float = float
+		// int + int = int
+
+		MoneyType leftType = exprResolver.visit(ctx.left);
+		MoneyType rightType = exprResolver.visit(ctx.right);
+		Consumer<String> numbersOp = op -> {
+			if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
+				visit(ctx.left);
+				visit(ctx.right);
+				if (op.equals("+")) methodBuilder.iadd();
+				else methodBuilder.isub();
+			}
+			else { // one of the operands is a float
+				visit(ctx.left);
+				if (leftType.is(Base.INT)) methodBuilder.i2f();
+
+				visit(ctx.right);
+				if (rightType.is(Base.INT)) methodBuilder.i2f();
+
+				if (op.equals("+")) methodBuilder.fadd();
+				else methodBuilder.fsub();
+			}
+		};
+		switch (ctx.op.getText()) {
+			case "+" -> {
+				if (leftType.is(Base.STRING) && rightType.is(Base.STRING)) {
+					methodBuilder
+						.new_(CD_StringBuilder)
+						.dup()
+						.invokespecial(CD_StringBuilder, INIT_NAME, MTD_void);
+
+					visit(ctx.left);
+					methodBuilder.invokevirtual(CD_StringBuilder, "append",
+						MethodTypeDesc.of(CD_StringBuilder, CD_String));
+
+					visit(ctx.right);
+					methodBuilder.invokevirtual(CD_StringBuilder, "append",
+						MethodTypeDesc.of(CD_StringBuilder, CD_String));
+
+					methodBuilder.invokevirtual(CD_StringBuilder, "toString",
+						MethodTypeDesc.of(CD_String));
+				}
+				else numbersOp.accept("+");
+			}
+			case "-" -> numbersOp.accept("-");
+		}
+
+		return null;
+	}
+
 	@Override
 	public Void visitLiteralExpr(LiteralExprContext ctx) {
 		if (ctx.FloatLit() != null)
@@ -50,7 +161,6 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 		return null;
 	}
 
-	/// Stack will be 0 if the comparison is false, 1 if true
 	@Override
 	public Void visitRelationalExpr(RelationalExprContext ctx) {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
@@ -122,7 +232,8 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 				methodBuilder.fcmpl().ifThenElse(opcode, setTrue, setFalse);
 			}
 			case Base.STRING -> {
-				// call .equals. 1st item on the stack is the left string. 2nd item on
+				// call .equals. 1st item on the stack is the left string. 2nd
+				// item on
 				// the stack is the right string. i.e. left.equals(right)
 				methodBuilder.invokevirtual(CD_String, "equals",
 					MethodTypeDesc.of(CD_boolean, CD_Object));

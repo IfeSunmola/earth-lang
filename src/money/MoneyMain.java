@@ -10,9 +10,7 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		fn sayHello(name: str, age: int) int {
-			yeet 23
-		}
+		let x: str = "Hello " + "world"
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

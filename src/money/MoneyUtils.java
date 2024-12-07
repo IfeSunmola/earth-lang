@@ -1,6 +1,11 @@
 package money;
 
+import java.lang.constant.ClassDesc;
+
 public class MoneyUtils {
+	public static final ClassDesc CD_StringBuilder =
+		ClassDesc.ofInternalName("java/lang/StringBuilder");
+
 	public static String ordinal(int n) {
 		if (n >= 10 && n <= 20) return n + "th";
 		switch (n % 10) {
@@ -17,5 +22,10 @@ public class MoneyUtils {
 				return n + "th";
 			}
 		}
+	}
+
+	public static void ensure(boolean condition) {
+		if (!condition)
+			throw new AssertionError("Assertion Failed");
 	}
 }
