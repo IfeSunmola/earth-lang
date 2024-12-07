@@ -14,6 +14,7 @@ void main() {
 			let total: int = 23 + 23
 			yeet "Hello there"
 		}
+		 _ = sum(5, 10)
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

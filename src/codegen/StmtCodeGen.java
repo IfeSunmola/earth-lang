@@ -106,6 +106,18 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
+	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
+		throw new RuntimeException("visitWhenElseStmt has not been implemented");
+	}
+
+	@Override
+	public Void visitYeetStmt(YeetStmtContext ctx) {
+		// simply load the expression to yeet (return) onto the stack
+		currentMethod.exprCodegen.visit(ctx.expr());
+		return null;
+	}
+
+	@Override
 	public Void visitFnDefStmt(FnDefStmtContext ctx) {
 		List<TypedIdentExprContext> params = ctx.params.typedIdentExpr();
 		MethodTypeDesc methodDesc = createDesc(params,
@@ -146,10 +158,14 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitYeetStmt(YeetStmtContext ctx) {
-		// simply load the expression to yeet (return) onto the stack
+	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
 		currentMethod.exprCodegen.visit(ctx.expr());
 		return null;
+	}
+
+	@Override
+	public Void visitLoopStmt(LoopStmtContext ctx) {
+		throw new RuntimeException("visitLoopStmt has not been implemented");
 	}
 
 	private MethodTypeDesc createDesc(List<TypedIdentExprContext> params,
