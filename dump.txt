@@ -1,31 +1,17 @@
-	/*
-// if/else if/else stmt -> when/else if/else stmt
-		// ctx.When(n) -> returns literal `when` at index n
-		// 0th ctx.expr -> 1st if condition
-		// 1st ctx.expr -> 2nd if (else when) condition
-		// 2nd ctx.expr -> 3rd if (else when) condition
-		// if you try accessing ctx.expr when there's no more else/when, exception.
-		// Same with ctx.stmtList.
- */
-
-
- /*
- 		* when 34 % 3 == 0 && 20 % 5 == 0{
- 		 _ = 0
- 		}
- 		else when 2 == 23 && 34 == 23{
- 		_ = 1
- 		}
-
- 		else when "My name" == "Ife"{
- 		_ = 2
- 		}
- 		else{
-
- 		}
- 		* */
- 		// if; else if; else if; else
- 		// validate the condition
- 		//		System.out.println(ctx.When()); // literal `When` printed
- 		//		System.out.println(ctx.Else()); // literal `Else` printed
- 		System.out.println("Number of else when: " + (ctx.expr().size() - 1));
+methodBuilder.invokedynamic(
+    DynamicCallSiteDesc.of(
+        MethodHandleDesc.ofMethod(
+            DirectMethodHandleDesc.Kind.STATIC,
+            ClassDesc.ofInternalName("java/lang/invoke" +
+                                     "/StringConcatFactory"),
+            "makeConcatWithConstants",
+            MethodTypeDesc.of(
+                CD_CallSite, CD_MethodHandles_Lookup, CD_String,
+                CD_MethodType, CD_String, CD_Object.arrayType()
+            )
+        ),
+        "makeConcatWithConstants",
+        // below is next to the invokedynamic call in .class
+        MethodTypeDesc.of(CD_String, CD_String, CD_String)
+    )
+);

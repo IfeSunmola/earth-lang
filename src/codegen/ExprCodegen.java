@@ -10,6 +10,8 @@ import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
 import java.lang.classfile.Opcode;
 import java.lang.constant.MethodTypeDesc;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static java.lang.constant.ConstantDescs.*;
@@ -23,9 +25,11 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 	private final ExprResolver exprResolver = new ExprResolver();
 	private final Consumer<BlockCodeBuilder> setTrue = CodeBuilder::iconst_1;
 	private final Consumer<BlockCodeBuilder> setFalse = CodeBuilder::iconst_0;
+	final List<Variable> variables;
 
 	public ExprCodegen(CodeBuilder builder) {
 		methodBuilder = builder;
+		variables = new ArrayList<>();
 	}
 
 	@Override
@@ -243,6 +247,17 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 			}
 			default -> throw new RuntimeException("Well Shit");
 		}
+		return null;
+	}
+
+	@Override
+	public Void visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
+		// Load the value of the untyped identifier onto the stack.
+		Variable ident = variables.stream()
+			.filter(v -> v.name().equals(ctx.UntypedIdent().getText()))
+			.findFirst().orElseThrow();
+
+		methodBuilder.loadLocal(ident.type(), ident.slot());
 		return null;
 	}
 }

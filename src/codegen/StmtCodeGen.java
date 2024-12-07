@@ -11,6 +11,7 @@ import sanity.MoneyType;
 import java.io.IOException;
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
+import java.lang.classfile.TypeKind;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Stack;
 
 import static java.lang.classfile.ClassFile.*;
+import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
 import static sanity.MoneyType.Base.*;
 
@@ -69,20 +71,35 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			MoneyType.fromString(ctx.typedIdentExpr().type.getText());
 		currentMethod.exprCodegen.visit(ctx.expr());
 
-		switch (type) {
-			case INT, BOOL -> currentMethod.builder
-				.istore(currentMethod.slot++);
-			case FLOAT -> currentMethod.builder
-				.fstore(currentMethod.slot++);
-			case STRING -> currentMethod.builder
-				.astore(currentMethod.slot++);
-
+		int slot = currentMethod.slot++;
+		TypeKind tk = switch (type) {
+			case INT -> {
+				currentMethod.builder
+					.storeLocal(IntType, slot);
+				yield IntType;
+			}
+			case BOOL -> {
+				currentMethod.builder
+					.storeLocal(BooleanType, slot);
+				yield BooleanType;
+			}
+			case FLOAT -> {
+				currentMethod.builder
+					.storeLocal(FloatType, slot);
+				yield FloatType;
+			}
+			case STRING -> {
+				currentMethod.builder
+					.storeLocal(ReferenceType, slot);
+				yield ReferenceType;
+			}
 			case VOID -> throw new RuntimeException();
-			case MoneyType.Func func -> throw new RuntimeException();
-		}
+			case Func _ -> throw new RuntimeException();
+		};
 
-		currentMethod.variables.add(new Variable(name, type,
-			currentMethod.slot - 1));
+		currentMethod.exprCodegen.variables.add(
+			new Variable(name, tk, slot)
+		);
 		return null;
 	}
 
@@ -91,22 +108,24 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 		String name = ctx.ident.getText();
 		currentMethod.exprCodegen.visit(ctx.expr());
 
-		Variable variable = currentMethod.variables.stream()
+		Variable variable = currentMethod.exprCodegen
+			.variables.stream()
 			.filter(v -> v.name().equals(name))
 			.findFirst()
 			.orElseThrow();
 
+		int slot = variable.slot();
 		switch (variable.type()) {
-			case INT, BOOL -> currentMethod.builder
-				.istore(variable.slot());
-			case FLOAT -> currentMethod.builder
-				.fstore(variable.slot());
-			case STRING -> currentMethod.builder
-				.astore(variable.slot());
-			case VOID -> throw new RuntimeException();
-			case MoneyType.Func func -> throw new RuntimeException();
+			case IntType -> currentMethod.builder
+				.storeLocal(IntType, slot);
+			case BooleanType -> currentMethod.builder
+				.storeLocal(BooleanType, slot);
+			case FloatType -> currentMethod.builder
+				.storeLocal(FloatType, slot);
+			case ReferenceType -> currentMethod.builder
+				.storeLocal(ReferenceType, slot);
+			default -> throw new RuntimeException();
 		}
-
 		return null;
 	}
 
