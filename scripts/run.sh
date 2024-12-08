@@ -18,6 +18,6 @@ javac --enable-preview -source 23  \
 # Run the main class
 java --enable-preview \
   -cp $lib:$outDir \
-  MoneyMain $@
+  EarthMain $@
 
 rm -rf $outDir

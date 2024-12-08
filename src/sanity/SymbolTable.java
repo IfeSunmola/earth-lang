@@ -1,14 +1,14 @@
 package sanity;
 
-import money.MoneyUtils;
+import earth.EarthUtils;
 
 import java.util.*;
 
-import static sanity.MoneyType.Base.*;
+import static sanity.EarthType.Base.*;
 
 enum Kind {MutDecl, ImmutDecl, Function, Builtin}
 
-record Symbol(String name, int declaredOn, Kind kind, MoneyType type) {
+record Symbol(String name, int declaredOn, Kind kind, EarthType type) {
 }
 
 public enum SymbolTable {
@@ -16,7 +16,6 @@ public enum SymbolTable {
 	// Stack of symbol tables, with the top being the current scope
 	// Each stack contains a map of symbol names to symbols
 	private final Stack<Map<String, Symbol>> scopes;
-	private int scopeNum = 0; // only for debugging.
 
 	SymbolTable() {
 		scopes = new Stack<>();
@@ -36,17 +35,16 @@ public enum SymbolTable {
 	}
 
 	void enterScope() {
-		scopeNum++;
 		scopes.push(new HashMap<>());
 	}
 
 	void exitScope() {
-		MoneyUtils.ensure(scopes.size() > 1, "Cannot exit the global scope");
+		EarthUtils.ensure(scopes.size() > 1, "Cannot exit the global scope");
 		scopes.pop();
 	}
 
 	/// Method assumes that the caller has done the necessary checks
-	void addSymbol(String name, int declaredOn, Kind kind, MoneyType type) {
+	void addSymbol(String name, int declaredOn, Kind kind, EarthType type) {
 		scopes.peek().put(name, new Symbol(name, declaredOn, kind, type));
 	}
 

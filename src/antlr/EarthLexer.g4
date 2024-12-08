@@ -1,4 +1,4 @@
-lexer grammar MoneyLexer;
+lexer grammar EarthLexer;
 
 Whitespace: [ \t\r\n]+ -> skip;
 SingleLineComment: '//' ~[\r\n]* -> skip;

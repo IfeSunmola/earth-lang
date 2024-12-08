@@ -1,20 +1,10 @@
-# The earth language
-
-A toy compiler written in Java and generates JVM bytecode.
-
-Most of the decisions made was based off vibes and feelings so don't ask why
-something is the way it is.
-
-## Valid sample code
-
-```
 let name: str = "John" // let declaration, cannot be reassigned
 var age: int = 20 // var declaration, can be reassigned
 age = 21 // valid, reassigning a var
 let isAdult: bool = age >= 18 // valid, let declaration with expression
 when name == "John" {
     /*
-    function calls are expressions, and all expressions must be bound to a 
+    function calls are expressions, and all expressions must be bound to a
     statement. Since println returns void, we can just ignore it with an unnamed
     statement.
     */
@@ -22,10 +12,10 @@ when name == "John" {
 }
 else when name == "Doe" {
     _ = println("Hello Doe")
-}  
+}
 else {
     let greeting: str = "Hello" + name
-    _ = println(greeting)  
+    _ = println(greeting)
 }
 
 fn add(a: int, b: int) int {
@@ -33,10 +23,9 @@ fn add(a: int, b: int) int {
 }
 
 let sum: int = add(1, 2)
-// println can only take a string, so convert. There's floatToStr and boolToStr. 
+// println can only take a string, so convert. There's floatToStr and boolToStr.
 _ = println(intToStr(sum))
 
 loop var i : int = 0, i < 23, i = i + 1 {
     // code
 }
-```

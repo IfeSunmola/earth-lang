@@ -1,9 +1,9 @@
 package codegen;
 
-import antlr.MoneyParser.*;
-import antlr.MoneyParserBaseVisitor;
-import money.MoneyUtils;
-import sanity.MoneyType;
+import antlr.EarthParser.*;
+import antlr.EarthParserBaseVisitor;
+import earth.EarthUtils;
+import sanity.EarthType;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.attribute.SourceFileAttribute;
@@ -20,7 +20,7 @@ import static java.lang.constant.ConstantDescs.*;
 
 
 @SuppressWarnings("preview")
-public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
+public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
 	// Stack class is synchronized!!
@@ -44,7 +44,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				generateBuiltins();
 
 				classBuilder
-					.with(SourceFileAttribute.of(filePath + ".money"))
+					.with(SourceFileAttribute.of(filePath + ".earth"))
 					.withFlags(ACC_PUBLIC | ACC_FINAL)
 					.withMethodBody(INIT_NAME, MTD_void, ACC_PUBLIC, builder -> builder
 						.aload(0)
@@ -71,8 +71,8 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
 		String name = ctx.typedIdentExpr().name.getText();
-		var moneyType = MoneyType.fromString(ctx.typedIdentExpr().type.getText());
-		var typeKind = moneyType.toTypeKind();
+		var earthType = EarthType.fromString(ctx.typedIdentExpr().type.getText());
+		var typeKind = earthType.toTypeKind();
 
 		// load the expression to store on the stack
 		currentMethod.exprCodegen.visit(ctx.expr());
@@ -81,7 +81,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 		currentMethod.builder.storeLocal(typeKind, slot);
 
 		currentMethod.exprCodegen.variables.add(
-			new Variable(name, moneyType, typeKind, slot)
+			new Variable(name, earthType, typeKind, slot)
 		);
 		return null;
 	}
@@ -130,7 +130,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 		MethodTypeDesc methodDesc = createSignature(params,
 			ctx.retType == null ? "" : ctx.retType.getText()
 		);
-		MoneyUtils.ensure(methodDesc.parameterCount() == params.size());
+		EarthUtils.ensure(methodDesc.parameterCount() == params.size());
 		methodSignatures.put(ctx.name.getText(), methodDesc);
 
 		classBuilder.withMethodBody(
@@ -148,10 +148,10 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				for (int i = 0; i < params.size(); i++) {
 					TypedIdentExprContext param = params.get(i);
 					String name = param.name.getText();
-					var moneyType = MoneyType.fromString(param.type.getText());
-					var typeKind = moneyType.toTypeKind();
+					var earthType = EarthType.fromString(param.type.getText());
+					var typeKind = earthType.toTypeKind();
 					currentMethod.exprCodegen.variables.add(
-						new Variable(name, moneyType, typeKind, i)
+						new Variable(name, earthType, typeKind, i)
 					);
 				}
 

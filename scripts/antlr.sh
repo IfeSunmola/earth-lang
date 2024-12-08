@@ -2,8 +2,8 @@
 # Run from root like: ./scripts/antlr.sh
 
 antlr_dir="./src/antlr"
-lexer="${antlr_dir}/MoneyLexer.g4"
-parser="${antlr_dir}/MoneyParser.g4"
+lexer="${antlr_dir}/EarthLexer.g4"
+parser="${antlr_dir}/EarthParser.g4"
 
 # check if first argument passed is "clean"
 

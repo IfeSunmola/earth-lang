@@ -1,10 +1,10 @@
 package codegen;
 
-import antlr.MoneyParser.*;
-import antlr.MoneyParserBaseVisitor;
-import money.MoneyUtils;
-import sanity.MoneyType;
-import sanity.MoneyType.Base;
+import antlr.EarthParser.*;
+import antlr.EarthParserBaseVisitor;
+import earth.EarthUtils;
+import sanity.EarthType;
+import sanity.EarthType.Base;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
@@ -24,7 +24,7 @@ import static java.lang.constant.ConstantDescs.*;
 /// expression onto the stack, and return the type of the expression that was
 /// loaded
 @SuppressWarnings("preview")
-public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
+public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 	private final CodeBuilder methodBuilder;
 	private static final Consumer<BlockCodeBuilder> setTrue =
 		CodeBuilder::iconst_1;
@@ -40,9 +40,9 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitNegExpr(NegExprContext ctx) {
+	public EarthType visitNegExpr(NegExprContext ctx) {
 		// -value where value is an int OR float
-		MoneyType type = visit(ctx.expr()); // load the value onto the stack
+		EarthType type = visit(ctx.expr()); // load the value onto the stack
 
 		if (type == Base.INT) methodBuilder.ineg();
 		else methodBuilder.fneg();
@@ -51,7 +51,7 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitNotExpr(NotExprContext ctx) {
+	public EarthType visitNotExpr(NotExprContext ctx) {
 		// !value, where value is a boolean
 		visit(ctx.expr()); // load the value onto the stack
 		methodBuilder.iconst_1().ixor(); // xor with 1 to negate the value
@@ -59,14 +59,14 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitMultiplicationExpr(MultiplicationExprContext ctx) {
+	public EarthType visitMultiplicationExpr(MultiplicationExprContext ctx) {
 		// val1 op val2 where op is '*' or '/'or '%'
 		// val1 and val2 are either int or float
 		// If one of the operands is a float, the result is a float
 
-		MoneyType leftType = visit(ctx.left);
+		EarthType leftType = visit(ctx.left);
 		String op = ctx.op.getText();
-		MoneyType rightType = visit(ctx.right);
+		EarthType rightType = visit(ctx.right);
 
 		if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 			visit(ctx.left);
@@ -96,16 +96,16 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitAdditiveExpr(AdditiveExprContext ctx) {
+	public EarthType visitAdditiveExpr(AdditiveExprContext ctx) {
 		// val1 op val2 where op is '+' or '-'
 		// val1 and val2 are either int or float
 		// if op is '+', val1 AND val2 are strings, then string concat is done
 		// int + float = float
 		// int + int = int
 
-		MoneyType leftType = visit(ctx.left);
-		MoneyType rightType = visit(ctx.right);
-		Function<String, MoneyType> numbersOp = op -> {
+		EarthType leftType = visit(ctx.left);
+		EarthType rightType = visit(ctx.right);
+		Function<String, EarthType> numbersOp = op -> {
 			if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 				visit(ctx.left);
 				visit(ctx.right);
@@ -155,12 +155,12 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitRelationalExpr(RelationalExprContext ctx) {
+	public EarthType visitRelationalExpr(RelationalExprContext ctx) {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
 		// If either left or right is float, floating point comparison is done
 		// Otherwise, integer comparison is done
-		MoneyType leftType = visit(ctx.left);
-		MoneyType rightType = visit(ctx.right);
+		EarthType leftType = visit(ctx.left);
+		EarthType rightType = visit(ctx.right);
 
 		if (leftType.is(Base.FLOAT) || rightType.is(Base.FLOAT)) {
 			visit(ctx.left);
@@ -207,13 +207,13 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitEqualityExpr(EqualityExprContext ctx) {
+	public EarthType visitEqualityExpr(EqualityExprContext ctx) {
 		// recall that the operands must be of the same type
 		// ExprResolver would throw an error if they're not
 
 		// load the values of the left expression onto the stack
 		boolean isEquals = ctx.op.getText().equals("==");
-		MoneyType leftType = visit(ctx.left);
+		EarthType leftType = visit(ctx.left);
 		visit(ctx.right);
 
 		switch (leftType) {
@@ -241,7 +241,7 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitAndExpr(AndExprContext ctx) {
+	public EarthType visitAndExpr(AndExprContext ctx) {
 		// val1 && val2, where val1 and val2 are booleans
 		// if val1 is false, result is false
 		// if val2 is false, result is false
@@ -265,7 +265,7 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitOrExpr(OrExprContext ctx) {
+	public EarthType visitOrExpr(OrExprContext ctx) {
 		// val1 || val2, where val1 and val2 are booleans
 		// if val1 is true, result is true
 		// if val2 is true, result is true
@@ -288,12 +288,12 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitGroupedExpr(GroupedExprContext ctx) {
+	public EarthType visitGroupedExpr(GroupedExprContext ctx) {
 		return visit(ctx.expr());
 	}
 
 	@Override
-	public MoneyType visitLiteralExpr(LiteralExprContext ctx) {
+	public EarthType visitLiteralExpr(LiteralExprContext ctx) {
 		if (ctx.FloatLit() != null) {
 			methodBuilder.ldc(Float.parseFloat(ctx.FloatLit().getText()));
 			return Base.FLOAT;
@@ -321,26 +321,26 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	}
 
 	@Override
-	public MoneyType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
+	public EarthType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
 		// Load the value of the untyped identifier onto the stack.
 		Variable ident = variables.stream()
 			.filter(v -> v.name().equals(ctx.UntypedIdent().getText()))
 			.findFirst().orElseThrow();
 
 		methodBuilder.loadLocal(ident.typeKind(), ident.slot());
-		return ident.moneyType();
+		return ident.earthType();
 	}
 
 	@Override
-	public MoneyType visitFnCallExpr(FnCallExprContext ctx) {
+	public EarthType visitFnCallExpr(FnCallExprContext ctx) {
 		// load all the expressions on the stack
 		ctx.exprList().expr().forEach(this::visit);
 
 		String fnName = ctx.fnName.getText();
 		MethodTypeDesc desc = methodSignatures.get(fnName);
-		MoneyUtils.ensure(desc != null);
+		EarthUtils.ensure(desc != null);
 
 		methodBuilder.invokestatic(classDesc, fnName, desc);
-		return MoneyType.fromClassDesc(desc.returnType());
+		return EarthType.fromClassDesc(desc.returnType());
 	}
 }

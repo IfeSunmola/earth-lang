@@ -1,10 +1,10 @@
-package money;
+package earth;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class MoneyUtils {
+public class EarthUtils {
 	private static final String JAVA_PATH = "java-runtime/bin/java";
 
 	/// Returns the ordinal suffix for a number. E.g. 1 -> "1st", 2 -> "2nd"
@@ -110,7 +110,7 @@ public class MoneyUtils {
 		}
 		catch (IOException | InterruptedException e) {
 			System.err.println("""
-				Money's Java Runtime not found.
+				Earth's Java Runtime not found.
 				Make sure it's in the same directory as the compiler.
 				"""
 			);

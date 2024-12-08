@@ -1,6 +1,6 @@
-package money;
+package earth;
 
-import antlr.MoneyParser;
+import antlr.EarthParser;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.Tree;
 import org.antlr.v4.runtime.tree.Trees;
@@ -27,7 +27,7 @@ public class AntlrPrinter {
 	 */
 	public static void toPrettyTree(Tree t) {
 		level = 0;
-		var ruleNamesList = List.of(MoneyParser.ruleNames);
+		var ruleNamesList = List.of(EarthParser.ruleNames);
 
 		System.out.println(process(t, ruleNamesList)
 			.replaceAll("(?m)^\\s+$", "")

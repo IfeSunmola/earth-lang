@@ -7,7 +7,7 @@ lib="lib/*" # Any used libraries goes in lib directory
 
 outDir="java_out" # stores .class files
 
-bin="money" # native image name
+bin="earth" # native image name
 
 javaFiles=$(find "src" -name "*.java") # All .java files in src directory
 
@@ -22,6 +22,6 @@ native-image --enable-preview \
   -cp $outDir \
   -cp $lib \
   -o $bin \
-  -H:Class=MoneyMain
+  -H:Class=EarthMain
 
 rm -rf $outDir

@@ -1,21 +1,20 @@
-import antlr.MoneyLexer;
-import antlr.MoneyParser;
+import antlr.EarthLexer;
+import antlr.EarthParser;
+import antlr.EarthParser.ProgramContext;
 import codegen.StmtCodeGen;
-import money.MoneyException;
-import money.MoneyUtils;
+import earth.EarthException;
+import earth.EarthUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import sanity.SanityChecker;
 
-import static antlr.MoneyParser.ProgramContext;
-
 void main(String... args) {
 	if (args.length == 0) {
-		System.err.println("Usage: money <file>");
+		System.err.println("Usage: earth <file>");
 		return;
 	}
 
-	MoneyUtils.validateJavaRuntime();
+	EarthUtils.validateJavaRuntime();
 
 	Path filePath = Path.of(args[0]);
 
@@ -24,18 +23,18 @@ void main(String... args) {
 	Path fPathNoExt = filePath.resolveSibling(temp);
 
 	try {
-		var lexer = new MoneyLexer(CharStreams.fromPath(filePath));
-		var parser = new MoneyParser(new CommonTokenStream(lexer));
+		var lexer = new EarthLexer(CharStreams.fromPath(filePath));
+		var parser = new EarthParser(new CommonTokenStream(lexer));
 
 		SanityChecker sanityChecker = new SanityChecker();
 		ProgramContext program = parser.program();
 		sanityChecker.visit(program);
 
 		byte[] classFile = new StmtCodeGen(program, fPathNoExt).getClassFile();
-		Path classFilePath = MoneyUtils.writeToFile(classFile, fPathNoExt);
-		MoneyUtils.runClassFile(classFilePath);
+		Path classFilePath = EarthUtils.writeToFile(classFile, fPathNoExt);
+		EarthUtils.runClassFile(classFilePath);
 	}
-	catch (MoneyException e) {
+	catch (EarthException e) {
 		System.err.println(e.getMessage());
 	}
 	catch (IOException e) {

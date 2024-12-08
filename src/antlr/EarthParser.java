@@ -1,16 +1,19 @@
-// Generated from ./src/antlr/MoneyParser.g4 by ANTLR 4.13.2
+// Generated from ./src/antlr/EarthParser.g4 by ANTLR 4.13.2
 package antlr;
-import org.antlr.v4.runtime.atn.*;
-import org.antlr.v4.runtime.dfa.DFA;
+
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.*;
-import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import java.util.List;
-import java.util.Iterator;
-import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue", "this-escape"})
-public class MoneyParser extends Parser {
+public class EarthParser extends Parser {
 	static { RuntimeMetaData.checkVersion("4.13.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
@@ -89,7 +92,7 @@ public class MoneyParser extends Parser {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "MoneyParser.g4"; }
+	public String getGrammarFileName() { return "EarthParser.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
@@ -100,7 +103,7 @@ public class MoneyParser extends Parser {
 	@Override
 	public ATN getATN() { return _ATN; }
 
-	public MoneyParser(TokenStream input) {
+	public EarthParser(TokenStream input) {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
@@ -110,14 +113,14 @@ public class MoneyParser extends Parser {
 		public StmtListContext stmtList() {
 			return getRuleContext(StmtListContext.class,0);
 		}
-		public TerminalNode EOF() { return getToken(MoneyParser.EOF, 0); }
+		public TerminalNode EOF() { return getToken(EarthParser.EOF, 0); }
 		public ProgramContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_program; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitProgram(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitProgram(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -159,7 +162,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_stmtList; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitStmtList(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitStmtList(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -227,7 +230,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_stmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -310,19 +313,19 @@ public class MoneyParser extends Parser {
 		public TypedIdentExprContext typedIdentExpr() {
 			return getRuleContext(TypedIdentExprContext.class,0);
 		}
-		public TerminalNode Eq() { return getToken(MoneyParser.Eq, 0); }
+		public TerminalNode Eq() { return getToken(EarthParser.Eq, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode Let() { return getToken(MoneyParser.Let, 0); }
-		public TerminalNode Var() { return getToken(MoneyParser.Var, 0); }
+		public TerminalNode Let() { return getToken(EarthParser.Let, 0); }
+		public TerminalNode Var() { return getToken(EarthParser.Var, 0); }
 		public DeclStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_declStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitDeclStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitDeclStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -367,18 +370,18 @@ public class MoneyParser extends Parser {
 	@SuppressWarnings("CheckReturnValue")
 	public static class ReassignStmtContext extends ParserRuleContext {
 		public Token ident;
-		public TerminalNode Eq() { return getToken(MoneyParser.Eq, 0); }
+		public TerminalNode Eq() { return getToken(EarthParser.Eq, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
+		public TerminalNode UntypedIdent() { return getToken(EarthParser.UntypedIdent, 0); }
 		public ReassignStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_reassignStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitReassignStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitReassignStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -410,9 +413,9 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class WhenElseStmtContext extends ParserRuleContext {
-		public List<TerminalNode> When() { return getTokens(MoneyParser.When); }
+		public List<TerminalNode> When() { return getTokens(EarthParser.When); }
 		public TerminalNode When(int i) {
-			return getToken(MoneyParser.When, i);
+			return getToken(EarthParser.When, i);
 		}
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
@@ -420,9 +423,9 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public List<TerminalNode> LBrace() { return getTokens(MoneyParser.LBrace); }
+		public List<TerminalNode> LBrace() { return getTokens(EarthParser.LBrace); }
 		public TerminalNode LBrace(int i) {
-			return getToken(MoneyParser.LBrace, i);
+			return getToken(EarthParser.LBrace, i);
 		}
 		public List<StmtListContext> stmtList() {
 			return getRuleContexts(StmtListContext.class);
@@ -430,13 +433,13 @@ public class MoneyParser extends Parser {
 		public StmtListContext stmtList(int i) {
 			return getRuleContext(StmtListContext.class,i);
 		}
-		public List<TerminalNode> RBrace() { return getTokens(MoneyParser.RBrace); }
+		public List<TerminalNode> RBrace() { return getTokens(EarthParser.RBrace); }
 		public TerminalNode RBrace(int i) {
-			return getToken(MoneyParser.RBrace, i);
+			return getToken(EarthParser.RBrace, i);
 		}
-		public List<TerminalNode> Else() { return getTokens(MoneyParser.Else); }
+		public List<TerminalNode> Else() { return getTokens(EarthParser.Else); }
 		public TerminalNode Else(int i) {
-			return getToken(MoneyParser.Else, i);
+			return getToken(EarthParser.Else, i);
 		}
 		public WhenElseStmtContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -444,7 +447,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_whenElseStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitWhenElseStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitWhenElseStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -524,7 +527,7 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class YeetStmtContext extends ParserRuleContext {
-		public TerminalNode Yeet() { return getToken(MoneyParser.Yeet, 0); }
+		public TerminalNode Yeet() { return getToken(EarthParser.Yeet, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
@@ -534,7 +537,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_yeetStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitYeetStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitYeetStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -568,14 +571,14 @@ public class MoneyParser extends Parser {
 		public TypedIdentListContext params;
 		public Token retType;
 		public StmtListContext body;
-		public TerminalNode Fn() { return getToken(MoneyParser.Fn, 0); }
-		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
-		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
-		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
-		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
-		public List<TerminalNode> UntypedIdent() { return getTokens(MoneyParser.UntypedIdent); }
+		public TerminalNode Fn() { return getToken(EarthParser.Fn, 0); }
+		public TerminalNode LParen() { return getToken(EarthParser.LParen, 0); }
+		public TerminalNode RParen() { return getToken(EarthParser.RParen, 0); }
+		public TerminalNode LBrace() { return getToken(EarthParser.LBrace, 0); }
+		public TerminalNode RBrace() { return getToken(EarthParser.RBrace, 0); }
+		public List<TerminalNode> UntypedIdent() { return getTokens(EarthParser.UntypedIdent); }
 		public TerminalNode UntypedIdent(int i) {
-			return getToken(MoneyParser.UntypedIdent, i);
+			return getToken(EarthParser.UntypedIdent, i);
 		}
 		public TypedIdentListContext typedIdentList() {
 			return getRuleContext(TypedIdentListContext.class,0);
@@ -589,7 +592,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_fnDefStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitFnDefStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitFnDefStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -642,8 +645,8 @@ public class MoneyParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class UnnamedStmtContext extends ParserRuleContext {
-		public TerminalNode Unnamed() { return getToken(MoneyParser.Unnamed, 0); }
-		public TerminalNode Eq() { return getToken(MoneyParser.Eq, 0); }
+		public TerminalNode Unnamed() { return getToken(EarthParser.Unnamed, 0); }
+		public TerminalNode Eq() { return getToken(EarthParser.Eq, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
@@ -653,7 +656,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_unnamedStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitUnnamedStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitUnnamedStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -689,13 +692,13 @@ public class MoneyParser extends Parser {
 		public ExprContext condition;
 		public ReassignStmtContext update;
 		public StmtListContext body;
-		public TerminalNode Loop() { return getToken(MoneyParser.Loop, 0); }
-		public List<TerminalNode> Comma() { return getTokens(MoneyParser.Comma); }
+		public TerminalNode Loop() { return getToken(EarthParser.Loop, 0); }
+		public List<TerminalNode> Comma() { return getTokens(EarthParser.Comma); }
 		public TerminalNode Comma(int i) {
-			return getToken(MoneyParser.Comma, i);
+			return getToken(EarthParser.Comma, i);
 		}
-		public TerminalNode LBrace() { return getToken(MoneyParser.LBrace, 0); }
-		public TerminalNode RBrace() { return getToken(MoneyParser.RBrace, 0); }
+		public TerminalNode LBrace() { return getToken(EarthParser.LBrace, 0); }
+		public TerminalNode RBrace() { return getToken(EarthParser.RBrace, 0); }
 		public DeclStmtContext declStmt() {
 			return getRuleContext(DeclStmtContext.class,0);
 		}
@@ -714,7 +717,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_loopStmt; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitLoopStmt(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitLoopStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -770,14 +773,14 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class NotExprContext extends ExprContext {
-		public TerminalNode Bang() { return getToken(MoneyParser.Bang, 0); }
+		public TerminalNode Bang() { return getToken(EarthParser.Bang, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public NotExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitNotExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitNotExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -789,20 +792,20 @@ public class MoneyParser extends Parser {
 		public PrimaryExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitPrimaryExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitPrimaryExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class NegExprContext extends ExprContext {
-		public TerminalNode Minus() { return getToken(MoneyParser.Minus, 0); }
+		public TerminalNode Minus() { return getToken(EarthParser.Minus, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public NegExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitNegExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitNegExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -817,13 +820,13 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode Star() { return getToken(MoneyParser.Star, 0); }
-		public TerminalNode Slash() { return getToken(MoneyParser.Slash, 0); }
-		public TerminalNode Mod() { return getToken(MoneyParser.Mod, 0); }
+		public TerminalNode Star() { return getToken(EarthParser.Star, 0); }
+		public TerminalNode Slash() { return getToken(EarthParser.Slash, 0); }
+		public TerminalNode Mod() { return getToken(EarthParser.Mod, 0); }
 		public MultiplicationExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitMultiplicationExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitMultiplicationExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -831,7 +834,7 @@ public class MoneyParser extends Parser {
 	public static class OrExprContext extends ExprContext {
 		public ExprContext left;
 		public ExprContext right;
-		public TerminalNode Or() { return getToken(MoneyParser.Or, 0); }
+		public TerminalNode Or() { return getToken(EarthParser.Or, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -841,7 +844,7 @@ public class MoneyParser extends Parser {
 		public OrExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitOrExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitOrExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -856,12 +859,12 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode Plus() { return getToken(MoneyParser.Plus, 0); }
-		public TerminalNode Minus() { return getToken(MoneyParser.Minus, 0); }
+		public TerminalNode Plus() { return getToken(EarthParser.Plus, 0); }
+		public TerminalNode Minus() { return getToken(EarthParser.Minus, 0); }
 		public AdditiveExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitAdditiveExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitAdditiveExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -876,14 +879,14 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode Lte() { return getToken(MoneyParser.Lte, 0); }
-		public TerminalNode Gte() { return getToken(MoneyParser.Gte, 0); }
-		public TerminalNode Lt() { return getToken(MoneyParser.Lt, 0); }
-		public TerminalNode Gt() { return getToken(MoneyParser.Gt, 0); }
+		public TerminalNode Lte() { return getToken(EarthParser.Lte, 0); }
+		public TerminalNode Gte() { return getToken(EarthParser.Gte, 0); }
+		public TerminalNode Lt() { return getToken(EarthParser.Lt, 0); }
+		public TerminalNode Gt() { return getToken(EarthParser.Gt, 0); }
 		public RelationalExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitRelationalExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitRelationalExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -898,12 +901,12 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode EqEq() { return getToken(MoneyParser.EqEq, 0); }
-		public TerminalNode BangEq() { return getToken(MoneyParser.BangEq, 0); }
+		public TerminalNode EqEq() { return getToken(EarthParser.EqEq, 0); }
+		public TerminalNode BangEq() { return getToken(EarthParser.BangEq, 0); }
 		public EqualityExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitEqualityExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitEqualityExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -911,7 +914,7 @@ public class MoneyParser extends Parser {
 	public static class AndExprContext extends ExprContext {
 		public ExprContext left;
 		public ExprContext right;
-		public TerminalNode And() { return getToken(MoneyParser.And, 0); }
+		public TerminalNode And() { return getToken(EarthParser.And, 0); }
 		public List<ExprContext> expr() {
 			return getRuleContexts(ExprContext.class);
 		}
@@ -921,7 +924,7 @@ public class MoneyParser extends Parser {
 		public AndExprContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitAndExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitAndExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1145,38 +1148,38 @@ public class MoneyParser extends Parser {
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class GroupedExprContext extends PrimaryContext {
-		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
+		public TerminalNode LParen() { return getToken(EarthParser.LParen, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
+		public TerminalNode RParen() { return getToken(EarthParser.RParen, 0); }
 		public GroupedExprContext(PrimaryContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitGroupedExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitGroupedExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class LiteralExprContext extends PrimaryContext {
-		public TerminalNode IntLit() { return getToken(MoneyParser.IntLit, 0); }
-		public TerminalNode FloatLit() { return getToken(MoneyParser.FloatLit, 0); }
-		public TerminalNode StrLit() { return getToken(MoneyParser.StrLit, 0); }
-		public TerminalNode BoolLit() { return getToken(MoneyParser.BoolLit, 0); }
+		public TerminalNode IntLit() { return getToken(EarthParser.IntLit, 0); }
+		public TerminalNode FloatLit() { return getToken(EarthParser.FloatLit, 0); }
+		public TerminalNode StrLit() { return getToken(EarthParser.StrLit, 0); }
+		public TerminalNode BoolLit() { return getToken(EarthParser.BoolLit, 0); }
 		public LiteralExprContext(PrimaryContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitLiteralExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitLiteralExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class UntypedIdentExprContext extends PrimaryContext {
-		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
+		public TerminalNode UntypedIdent() { return getToken(EarthParser.UntypedIdent, 0); }
 		public UntypedIdentExprContext(PrimaryContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitUntypedIdentExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitUntypedIdentExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1184,16 +1187,16 @@ public class MoneyParser extends Parser {
 	public static class FnCallExprContext extends PrimaryContext {
 		public Token fnName;
 		public ExprListContext params;
-		public TerminalNode LParen() { return getToken(MoneyParser.LParen, 0); }
-		public TerminalNode RParen() { return getToken(MoneyParser.RParen, 0); }
-		public TerminalNode UntypedIdent() { return getToken(MoneyParser.UntypedIdent, 0); }
+		public TerminalNode LParen() { return getToken(EarthParser.LParen, 0); }
+		public TerminalNode RParen() { return getToken(EarthParser.RParen, 0); }
+		public TerminalNode UntypedIdent() { return getToken(EarthParser.UntypedIdent, 0); }
 		public ExprListContext exprList() {
 			return getRuleContext(ExprListContext.class,0);
 		}
 		public FnCallExprContext(PrimaryContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitFnCallExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitFnCallExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1273,10 +1276,10 @@ public class MoneyParser extends Parser {
 	public static class TypedIdentExprContext extends ParserRuleContext {
 		public Token name;
 		public Token type;
-		public TerminalNode Colon() { return getToken(MoneyParser.Colon, 0); }
-		public List<TerminalNode> UntypedIdent() { return getTokens(MoneyParser.UntypedIdent); }
+		public TerminalNode Colon() { return getToken(EarthParser.Colon, 0); }
+		public List<TerminalNode> UntypedIdent() { return getTokens(EarthParser.UntypedIdent); }
 		public TerminalNode UntypedIdent(int i) {
-			return getToken(MoneyParser.UntypedIdent, i);
+			return getToken(EarthParser.UntypedIdent, i);
 		}
 		public TypedIdentExprContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1284,7 +1287,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_typedIdentExpr; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitTypedIdentExpr(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitTypedIdentExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1322,9 +1325,9 @@ public class MoneyParser extends Parser {
 		public TypedIdentExprContext typedIdentExpr(int i) {
 			return getRuleContext(TypedIdentExprContext.class,i);
 		}
-		public List<TerminalNode> Comma() { return getTokens(MoneyParser.Comma); }
+		public List<TerminalNode> Comma() { return getTokens(EarthParser.Comma); }
 		public TerminalNode Comma(int i) {
-			return getToken(MoneyParser.Comma, i);
+			return getToken(EarthParser.Comma, i);
 		}
 		public TypedIdentListContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1332,7 +1335,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_typedIdentList; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitTypedIdentList(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitTypedIdentList(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1404,9 +1407,9 @@ public class MoneyParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public List<TerminalNode> Comma() { return getTokens(MoneyParser.Comma); }
+		public List<TerminalNode> Comma() { return getTokens(EarthParser.Comma); }
 		public TerminalNode Comma(int i) {
-			return getToken(MoneyParser.Comma, i);
+			return getToken(EarthParser.Comma, i);
 		}
 		public ExprListContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1414,7 +1417,7 @@ public class MoneyParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_exprList; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MoneyParserVisitor ) return ((MoneyParserVisitor<? extends T>)visitor).visitExprList(this);
+			if ( visitor instanceof EarthParserVisitor ) return ((EarthParserVisitor<? extends T>)visitor).visitExprList(this);
 			else return visitor.visitChildren(this);
 		}
 	}

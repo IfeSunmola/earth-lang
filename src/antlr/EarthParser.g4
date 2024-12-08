@@ -1,5 +1,5 @@
-parser grammar MoneyParser;
-options { tokenVocab=MoneyLexer; }
+parser grammar EarthParser;
+options { tokenVocab=EarthLexer; }
 
 program: stmtList EOF;
 

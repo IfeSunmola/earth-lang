@@ -5,8 +5,8 @@ import java.lang.constant.ClassDesc;
 import java.util.List;
 
 @SuppressWarnings("preview")
-public sealed interface MoneyType {
-	static MoneyType fromString(String type) {
+public sealed interface EarthType {
+	static EarthType fromString(String type) {
 		return switch (type) {
 			case "int" -> Base.INT;
 			case "float" -> Base.FLOAT;
@@ -17,7 +17,7 @@ public sealed interface MoneyType {
 		};
 	}
 
-	static MoneyType fromClassDesc(ClassDesc classDesc) {
+	static EarthType fromClassDesc(ClassDesc classDesc) {
 		return switch (classDesc.displayName()) {
 			case "int" -> Base.INT;
 			case "float" -> Base.FLOAT;
@@ -48,7 +48,7 @@ public sealed interface MoneyType {
 		return this instanceof Base;
 	}
 
-	default boolean is(MoneyType type) {
+	default boolean is(EarthType type) {
 		return switch (type) {
 			case Base base -> base == this;
 			case Func func -> func.equals(this);
@@ -62,7 +62,7 @@ public sealed interface MoneyType {
 		};
 	}
 
-	enum Base implements MoneyType {
+	enum Base implements EarthType {
 		INT("int"),
 		FLOAT("float"),
 		STRING("str"),
@@ -81,12 +81,12 @@ public sealed interface MoneyType {
 		}
 	}
 
-	record Func(List<Base> params, Base returnType) implements MoneyType {
+	record Func(List<Base> params, Base returnType) implements EarthType {
 		@Override
 		public String toString() {
 			return "fn(%s)%s".formatted(
 				params.stream()
-					.map(MoneyType::toString)
+					.map(EarthType::toString)
 					.reduce((a, b) -> a + ", " + b)
 					.orElse(""),
 				returnType
