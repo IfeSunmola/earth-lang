@@ -1,11 +1,15 @@
 package earth;
 
 import java.io.IOException;
+import java.lang.classfile.ClassFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
+@SuppressWarnings("preview")
 public class EarthUtils {
 	private static final String JAVA_PATH = "java-runtime/bin/java";
+	public static final String COMPILER_NAME_VERSION = "Earth Compiler V0.0.1";
 
 	/// Returns the ordinal suffix for a number. E.g. 1 -> "1st", 2 -> "2nd"
 	///
@@ -56,16 +60,17 @@ public class EarthUtils {
 	/// but with a .class extension
 	///
 	/// @param bytes The bytes to write to the file
-	/// @param path  The path to the file to write to; will be appended with
-	///
-	///
-	///
-	///                                              .class
+	/// @param path  The path to write to; will be appended with .class
 	/// @return The path to the written file
-	public static Path writeToFile(byte[] bytes, Path path) {
+	public static Path writeToFile(byte[] bytes, Path path, boolean printMsg) {
 		try {
 			path = path.resolveSibling(path.getFileName() + ".class");
-			return Files.write(path, bytes);
+			Files.write(path, bytes);
+			if (printMsg) System.out.printf("""
+				Compiled to: %s
+				Run with: earth run %s
+				""", path, path);
+			return path;
 		}
 		catch (IOException e) {
 			System.err.println("Failed to write class file: " + e.getMessage());
@@ -78,6 +83,24 @@ public class EarthUtils {
 	///
 	/// @param path The path to the class file to run
 	public static void runClassFile(Path path) {
+		if (!Files.exists(path)) {
+			System.err.println("File not found: " + path);
+			System.exit(1);
+		}
+
+		try {
+			List<VerifyError> verify = ClassFile.of().verify(path);
+			if (!verify.isEmpty()) {
+				System.err.println("Invalid class file for the following reasons: ");
+				verify.forEach(e -> System.err.println("  " + e.getMessage()));
+				System.exit(1);
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Could not verify class file: " + e.getMessage());
+			System.exit(1);
+		}
+
 		Path parent = path.getParent();
 		String cp = parent != null ? parent.toString() : "";
 
@@ -112,7 +135,7 @@ public class EarthUtils {
 			System.err.println("""
 				Earth's Java Runtime not found.
 				Make sure it's in the same directory as the compiler.
-				"""
+				""".strip()
 			);
 			System.exit(1);
 		}
