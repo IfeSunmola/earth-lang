@@ -1,11 +1,10 @@
 package money;
 
-import java.lang.constant.ClassDesc;
-
 public class MoneyUtils {
-	public static final ClassDesc CD_StringBuilder =
-		ClassDesc.ofInternalName("java/lang/StringBuilder");
-
+	/// Returns the ordinal suffix for a number. E.g. 1 -> "1st", 2 -> "2nd"
+	///
+	/// @param n The number to get the suffix for
+	/// @return The ordinal suffix for the number
 	public static String ordinal(int n) {
 		if (n >= 10 && n <= 20) return n + "th";
 		switch (n % 10) {
@@ -24,11 +23,24 @@ public class MoneyUtils {
 		}
 	}
 
+	/// Ensures that a condition is true, otherwise throws an AssertionError
+	/// with the message "Assertion Failed"
+	///
+	/// @param condition The condition to check
+	/// @throws AssertionError If the condition is false
+	/// @see #ensure(boolean, String)
 	public static void ensure(boolean condition) {
 		if (!condition)
 			throw new AssertionError("Assertion Failed");
 	}
 
+	/// Ensures that a condition is true, otherwise throws an AssertionError
+	/// with the given message
+	///
+	/// @param condition The condition to check
+	/// @param msg       The message to include in the AssertionError
+	/// @throws AssertionError If the condition is false
+	/// @see #ensure(boolean)
 	public static void ensure(boolean condition, String msg) {
 		if (!condition)
 			throw new AssertionError("Assertion Failed: " + msg);

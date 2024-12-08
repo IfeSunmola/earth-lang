@@ -2,10 +2,7 @@ package sanity;
 
 import money.MoneyUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 
 import static sanity.MoneyType.Base.*;
 
@@ -29,6 +26,13 @@ public enum SymbolTable {
 		addSymbol(STRING.toString(), 0, Kind.Builtin, STRING);
 		addSymbol(BOOL.toString(), 0, Kind.Builtin, BOOL);
 		addSymbol(VOID.toString(), 0, Kind.Builtin, VOID);
+
+		addSymbol("intToStr", 0, Kind.Function, new Func(List.of(INT), STRING));
+		addSymbol("floatToStr", 0, Kind.Function, new Func(List.of(FLOAT),
+			STRING));
+		addSymbol("boolToStr", 0, Kind.Function, new Func(List.of(BOOL), STRING));
+		addSymbol("print", 0, Kind.Function, new Func(List.of(STRING), VOID));
+		addSymbol("println", 0, Kind.Function, new Func(List.of(STRING), VOID));
 	}
 
 	void enterScope() {

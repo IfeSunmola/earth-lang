@@ -14,6 +14,7 @@ void main() {
 			yeet num1 + num2
 		}
 		 let sum2: int = sum(5, 10)
+		 _ = println(intToStr(sum2))
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

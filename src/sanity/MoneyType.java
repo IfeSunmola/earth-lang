@@ -23,6 +23,7 @@ public sealed interface MoneyType {
 			case "float" -> Base.FLOAT;
 			case "String" -> Base.STRING;
 			case "boolean" -> Base.BOOL;
+			case "void" -> Base.VOID;
 			default ->
 				throw new IllegalStateException("Unexpected value: " + classDesc.displayName());
 		};

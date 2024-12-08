@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import static codegen.CodegenUtils.CD_PrintStream;
+import static codegen.CodegenUtils.CD_System;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
@@ -41,6 +43,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			ClassFile.of().buildTo(Path.of(OUTPUT_STR + ".class"), OUTPUT_DESC,
 				classBuilder -> {
 					this.classBuilder = classBuilder;
+					generateBuiltins();
 					classBuilder
 						.with(SourceFileAttribute.of(OUTPUT_STR + ".java"))
 						.withFlags(ACC_PUBLIC | ACC_FINAL)
@@ -58,8 +61,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 								visit(program);
 								currentMethod.builder.return_();
 							}
-						)
-					;
+						);
 				});
 		}
 		catch (IOException e) {
@@ -205,5 +207,51 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			})
 			.toList();
 		return MethodTypeDesc.of(retTypeDesc, paramTypes);
+	}
+
+	private void generateBuiltins() {
+		var intToStringDesc = MethodTypeDesc.of(CD_String, CD_int);
+		var floatToStringDesc = MethodTypeDesc.of(CD_String, CD_float);
+		var boolToStringDesc = MethodTypeDesc.of(CD_String, CD_boolean);
+		var printDesc = MethodTypeDesc.of(CD_void, CD_String);
+		var printlnDesc = MethodTypeDesc.of(CD_void, CD_String);
+
+		methodSignatures.put("intToStr", intToStringDesc);
+		methodSignatures.put("floatToStr", floatToStringDesc);
+		methodSignatures.put("boolToStr", boolToStringDesc);
+		methodSignatures.put("print", printDesc);
+		methodSignatures.put("println", printlnDesc);
+
+		classBuilder.withMethodBody("intToStr", intToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.iload(0)
+				.invokestatic(CD_Integer, "toString", intToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("floatToStr", floatToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.fload(0)
+				.invokestatic(CD_Float, "toString", floatToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("boolToStr", boolToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.iload(0)
+				.invokestatic(CD_Boolean, "toString", boolToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("print", printDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.getstatic(CD_System, "out", CD_PrintStream)
+				.aload(0)
+				.invokevirtual(CD_PrintStream, "print", printDesc)
+				.return_());
+
+		classBuilder.withMethodBody("println", printlnDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.getstatic(CD_System, "out", CD_PrintStream)
+				.aload(0)
+				.invokevirtual(CD_PrintStream, "println", printlnDesc)
+				.return_());
 	}
 }
