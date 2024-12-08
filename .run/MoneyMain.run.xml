@@ -3,6 +3,7 @@
     <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
     <option name="MAIN_CLASS_NAME" value="MoneyMain" />
     <module name="money-lang" />
+    <option name="PROGRAM_PARAMETERS" value="samples/test.money" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

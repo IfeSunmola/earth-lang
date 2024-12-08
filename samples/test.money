@@ -1,0 +1,6 @@
+fn sum(num1: int, num2: int) int{
+    yeet num1 + num2
+}
+
+let sum2: int = sum(5, 10)
+_ = println(intToStr(sum2))

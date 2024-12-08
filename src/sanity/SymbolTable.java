@@ -38,14 +38,10 @@ public enum SymbolTable {
 	void enterScope() {
 		scopeNum++;
 		scopes.push(new HashMap<>());
-		System.out.println("Entered scope " + scopeNum);
 	}
 
 	void exitScope() {
 		MoneyUtils.ensure(scopes.size() > 1, "Cannot exit the global scope");
-		System.out.println("Exiting scope " + scopeNum);
-		System.out.println(this);
-		System.out.println("----------------------------------");
 		scopes.pop();
 	}
 

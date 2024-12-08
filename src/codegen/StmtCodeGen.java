@@ -5,9 +5,7 @@ import antlr.MoneyParserBaseVisitor;
 import money.MoneyUtils;
 import sanity.MoneyType;
 
-import java.io.IOException;
 import java.lang.classfile.ClassBuilder;
-import java.lang.classfile.ClassFile;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -23,48 +21,51 @@ import static java.lang.constant.ConstantDescs.*;
 
 @SuppressWarnings("preview")
 public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
-	static final ClassDesc OUTPUT_DESC = ClassDesc.of("Output");
-	static final String OUTPUT_STR = OUTPUT_DESC.displayName();
 	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
 	// Stack class is synchronized!!
 	// All operations are Deque as a stack are on the last element
 	private final Deque<Method> prevMethods = new ArrayDeque<>();
+	private final Path filePath;
 	private Method currentMethod; // current method being built
 	private ClassBuilder classBuilder;
+	private final byte[] classBytes;
 
-	public StmtCodeGen(ProgramContext program) {
-		try {
-			MethodTypeDesc mainDesc = MethodTypeDesc.of(CD_void,
-				CD_String.arrayType());
+	public StmtCodeGen(ProgramContext program, Path fPathNoExt) {
+		// remove any extensions
+		filePath = fPathNoExt;
 
-			ClassFile.of().buildTo(Path.of(OUTPUT_STR + ".class"), OUTPUT_DESC,
-				classBuilder -> {
-					this.classBuilder = classBuilder;
-					generateBuiltins();
-					classBuilder
-						.with(SourceFileAttribute.of(OUTPUT_STR + ".java"))
-						.withFlags(ACC_PUBLIC | ACC_FINAL)
-						.withMethodBody(INIT_NAME, MTD_void, ACC_PUBLIC, builder -> builder
-							.aload(0)
-							.invokespecial(CD_Object, INIT_NAME, MTD_void)
-							.return_()
-						)
-						.withMethodBody("main",
-							mainDesc,
-							ACC_PUBLIC | ACC_STATIC, mainBuilder -> {
-								currentMethod = new Method(
-									mainBuilder, mainDesc.parameterCount(), mainDesc
-								);
-								visit(program);
-								currentMethod.builder.return_();
-							}
-						);
-				});
-		}
-		catch (IOException e) {
-			System.err.println("Could not write class file: " + e.getMessage());
-		}
+		var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
+		String fileName = filePath.getFileName().toString();
+
+		classBytes = of().build(ClassDesc.of(fileName),
+			classBuilder -> {
+				this.classBuilder = classBuilder;
+				generateBuiltins();
+
+				classBuilder
+					.with(SourceFileAttribute.of(filePath + ".money"))
+					.withFlags(ACC_PUBLIC | ACC_FINAL)
+					.withMethodBody(INIT_NAME, MTD_void, ACC_PUBLIC, builder -> builder
+						.aload(0)
+						.invokespecial(CD_Object, INIT_NAME, MTD_void)
+						.return_()
+					)
+					.withMethodBody("main",
+						mainDesc,
+						ACC_PUBLIC | ACC_STATIC, builder -> {
+							currentMethod = new Method(
+								builder, mainDesc.parameterCount(), mainDesc, fileName
+							);
+							visit(program);
+							currentMethod.builder.return_();
+						}
+					);
+			});
+	}
+
+	public byte[] getClassFile() {
+		return classBytes;
 	}
 
 	@Override
@@ -140,7 +141,8 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				prevMethods.addLast(currentMethod);
 
 				currentMethod = new Method(
-					builder, methodDesc.parameterCount(), methodDesc
+					builder, methodDesc.parameterCount(), methodDesc,
+					filePath.getFileName().toString()
 				);
 				// add the method parameters to the local variables
 				for (int i = 0; i < params.size(); i++) {

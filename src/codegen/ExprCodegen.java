@@ -9,6 +9,7 @@ import sanity.MoneyType.Base;
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
 import java.lang.classfile.Opcode;
+import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static codegen.CodegenUtils.CD_StringBuilder;
-import static codegen.StmtCodeGen.OUTPUT_DESC;
 import static codegen.StmtCodeGen.methodSignatures;
 import static java.lang.constant.ConstantDescs.*;
 
@@ -30,11 +30,13 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 		CodeBuilder::iconst_1;
 	private static final Consumer<BlockCodeBuilder> setFalse =
 		CodeBuilder::iconst_0;
+	private final ClassDesc classDesc;
 	final List<Variable> variables;
 
-	public ExprCodegen(CodeBuilder builder) {
+	public ExprCodegen(CodeBuilder builder, String fName) {
 		methodBuilder = builder;
 		variables = new ArrayList<>();
+		classDesc = ClassDesc.of(fName);
 	}
 
 	@Override
@@ -338,7 +340,7 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 		MethodTypeDesc desc = methodSignatures.get(fnName);
 		MoneyUtils.ensure(desc != null);
 
-		methodBuilder.invokestatic(OUTPUT_DESC, fnName, desc);
+		methodBuilder.invokestatic(classDesc, fnName, desc);
 		return MoneyType.fromClassDesc(desc.returnType());
 	}
 }

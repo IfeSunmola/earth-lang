@@ -23,10 +23,10 @@ final class Method {
 	final ExprCodegen exprCodegen;
 	final MethodTypeDesc signature;
 
-	Method(CodeBuilder builder, int slot, MethodTypeDesc sig) {
+	Method(CodeBuilder builder, int slot, MethodTypeDesc sig, String fName) {
 		this.builder = builder;
 		this.slot = slot;
-		this.exprCodegen = new ExprCodegen(builder);
+		this.exprCodegen = new ExprCodegen(builder, fName);
 		this.signature = sig;
 	}
 
