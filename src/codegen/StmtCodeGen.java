@@ -12,10 +12,7 @@ import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 import static codegen.CodegenUtils.CD_PrintStream;
 import static codegen.CodegenUtils.CD_System;
@@ -30,8 +27,9 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	static final String OUTPUT_STR = OUTPUT_DESC.displayName();
 	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
-	// should probably change to Deque since Stack is synchronized
-	private final Stack<Method> prevMethods = new Stack<>();
+	// Stack class is synchronized!!
+	// All operations are Deque as a stack are on the last element
+	private final Deque<Method> prevMethods = new ArrayDeque<>();
 	private Method currentMethod; // current method being built
 	private ClassBuilder classBuilder;
 
@@ -139,7 +137,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			methodDesc,
 			ACC_STATIC | ACC_PRIVATE,
 			builder -> {
-				prevMethods.push(currentMethod);
+				prevMethods.addLast(currentMethod);
 
 				currentMethod = new Method(
 					builder, methodDesc.parameterCount(), methodDesc
@@ -165,7 +163,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				else if (retDesc.equals(CD_float)) builder.freturn();
 				else throw new RuntimeException("Unknown return type: " + retDesc);
 
-				currentMethod = prevMethods.pop();
+				currentMethod = prevMethods.removeLast();
 			});
 		return null;
 	}
