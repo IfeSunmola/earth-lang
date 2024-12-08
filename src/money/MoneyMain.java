@@ -14,6 +14,9 @@ void main(String... args) {
 		System.err.println("Usage: money <file>");
 		return;
 	}
+
+	MoneyUtils.validateJavaRuntime();
+
 	Path filePath = Path.of(args[0]);
 
 	String temp = filePath.getFileName().toString();

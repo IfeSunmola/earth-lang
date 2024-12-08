@@ -58,6 +58,8 @@ public class MoneyUtils {
 	/// @param bytes The bytes to write to the file
 	/// @param path  The path to the file to write to; will be appended with
 	///
+	///
+	///
 	///                                              .class
 	/// @return The path to the written file
 	public static Path writeToFile(byte[] bytes, Path path) {
@@ -91,6 +93,27 @@ public class MoneyUtils {
 		}
 		catch (IOException | InterruptedException e) {
 			System.err.println("Failed to run class file: " + e.getMessage());
+			System.exit(1);
+		}
+	}
+
+	/// Validates that the custom Java runtime is available
+	/// Exits the program with an error message if it's not found
+	/// Otherwise, does nothing
+	public static void validateJavaRuntime() {
+		var processBuilder = new ProcessBuilder(JAVA_PATH, "--version");
+		processBuilder.redirectErrorStream(true);
+
+		try {
+			var process = processBuilder.start();
+			process.waitFor();
+		}
+		catch (IOException | InterruptedException e) {
+			System.err.println("""
+				Money's Java Runtime not found.
+				Make sure it's in the same directory as the compiler.
+				"""
+			);
 			System.exit(1);
 		}
 	}
