@@ -13,7 +13,7 @@ void main() {
 		fn sum(num1: int, num2: int) int{
 			yeet num1 + num2
 		}
-		 _ = sum(5, 10)
+		 let sum2: int = sum(5, 10)
 		"""
 	));
 	var parser = new MoneyParser(new CommonTokenStream(lexer));

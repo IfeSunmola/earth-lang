@@ -1,8 +1,8 @@
 package codegen;
 
-import antlr.MoneyParser;
 import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
+import money.MoneyUtils;
 import sanity.MoneyType;
 
 import java.io.IOException;
@@ -12,7 +12,9 @@ import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import static java.lang.classfile.ClassFile.*;
@@ -22,21 +24,25 @@ import static java.lang.constant.ConstantDescs.*;
 
 @SuppressWarnings("preview")
 public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
-	private final ClassDesc outputDesc = ClassDesc.of("Output");
-	private final String outputStr = outputDesc.displayName();
+	static final ClassDesc OUTPUT_DESC = ClassDesc.of("Output");
+	static final String OUTPUT_STR = OUTPUT_DESC.displayName();
+	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
 	// should probably change to Deque since Stack is synchronized
 	private final Stack<Method> prevMethods = new Stack<>();
 	private Method currentMethod; // current method being built
 	private ClassBuilder classBuilder;
 
-	public StmtCodeGen(MoneyParser.ProgramContext program) {
+	public StmtCodeGen(ProgramContext program) {
 		try {
-			ClassFile.of().buildTo(Path.of(outputStr + ".class"), outputDesc,
-				(ClassBuilder classBuilder) -> {
+			MethodTypeDesc mainDesc = MethodTypeDesc.of(CD_void,
+				CD_String.arrayType());
+
+			ClassFile.of().buildTo(Path.of(OUTPUT_STR + ".class"), OUTPUT_DESC,
+				classBuilder -> {
 					this.classBuilder = classBuilder;
 					classBuilder
-						.with(SourceFileAttribute.of(outputStr + ".java"))
+						.with(SourceFileAttribute.of(OUTPUT_STR + ".java"))
 						.withFlags(ACC_PUBLIC | ACC_FINAL)
 						.withMethodBody(INIT_NAME, MTD_void, ACC_PUBLIC, builder -> builder
 							.aload(0)
@@ -44,9 +50,11 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 							.return_()
 						)
 						.withMethodBody("main",
-							MethodTypeDesc.of(CD_void, CD_String.arrayType()),
+							mainDesc,
 							ACC_PUBLIC | ACC_STATIC, mainBuilder -> {
-								currentMethod = new Method(mainBuilder, 1);
+								currentMethod = new Method(
+									mainBuilder, mainDesc.parameterCount(), mainDesc
+								);
 								visit(program);
 								currentMethod.builder.return_();
 							}
@@ -118,9 +126,12 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	@Override
 	public Void visitFnDefStmt(FnDefStmtContext ctx) {
 		List<TypedIdentExprContext> params = ctx.params.typedIdentExpr();
-		MethodTypeDesc methodDesc = createDesc(params,
+		MethodTypeDesc methodDesc = createSignature(params,
 			ctx.retType == null ? "" : ctx.retType.getText()
 		);
+		MoneyUtils.ensure(methodDesc.parameterCount() == params.size());
+		methodSignatures.put(ctx.name.getText(), methodDesc);
+
 		classBuilder.withMethodBody(
 			ctx.name.getText(),
 			methodDesc,
@@ -128,7 +139,9 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			builder -> {
 				prevMethods.push(currentMethod);
 
-				currentMethod = new Method(builder, methodDesc.parameterCount());
+				currentMethod = new Method(
+					builder, methodDesc.parameterCount(), methodDesc
+				);
 				// add the method parameters to the local variables
 				for (int i = 0; i < params.size(); i++) {
 					TypedIdentExprContext param = params.get(i);
@@ -166,8 +179,8 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 		throw new RuntimeException("visitLoopStmt has not been implemented");
 	}
 
-	private MethodTypeDesc createDesc(List<TypedIdentExprContext> params,
-	                                  String retType) {
+	private MethodTypeDesc createSignature(List<TypedIdentExprContext> params,
+	                                       String retType) {
 		ClassDesc retTypeDesc = switch (retType) {
 			case "" -> CD_void;
 			case "int" -> CD_int;

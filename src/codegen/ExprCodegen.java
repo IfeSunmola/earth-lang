@@ -2,6 +2,7 @@ package codegen;
 
 import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
+import money.MoneyUtils;
 import sanity.MoneyType;
 import sanity.MoneyType.Base;
 
@@ -14,10 +15,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static codegen.StmtCodeGen.OUTPUT_DESC;
+import static codegen.StmtCodeGen.methodSignatures;
 import static java.lang.constant.ConstantDescs.*;
 import static money.MoneyUtils.CD_StringBuilder;
 
-/// The main purpose of the methods in this class is simply to load the
+/// The main purpose of the methods in this class is to load the
 /// expression onto the stack, and return the type of the expression that was
 /// loaded
 @SuppressWarnings("preview")
@@ -324,5 +327,18 @@ public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 
 		methodBuilder.loadLocal(ident.typeKind(), ident.slot());
 		return ident.moneyType();
+	}
+
+	@Override
+	public MoneyType visitFnCallExpr(FnCallExprContext ctx) {
+		// load all the expressions on the stack
+		ctx.exprList().expr().forEach(this::visit);
+
+		String fnName = ctx.fnName.getText();
+		MethodTypeDesc desc = methodSignatures.get(fnName);
+		MoneyUtils.ensure(desc != null);
+
+		methodBuilder.invokestatic(OUTPUT_DESC, fnName, desc);
+		return MoneyType.fromClassDesc(desc.returnType());
 	}
 }

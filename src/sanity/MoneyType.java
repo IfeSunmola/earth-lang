@@ -1,6 +1,7 @@
 package sanity;
 
 import java.lang.classfile.TypeKind;
+import java.lang.constant.ClassDesc;
 import java.util.List;
 
 @SuppressWarnings("preview")
@@ -13,6 +14,17 @@ public sealed interface MoneyType {
 			case "bool" -> Base.BOOL;
 			case "void" -> Base.VOID;
 			default -> throw new IllegalArgumentException("Unknown type: " + type);
+		};
+	}
+
+	static MoneyType fromClassDesc(ClassDesc classDesc) {
+		return switch (classDesc.displayName()) {
+			case "int" -> Base.INT;
+			case "float" -> Base.FLOAT;
+			case "String" -> Base.STRING;
+			case "boolean" -> Base.BOOL;
+			default ->
+				throw new IllegalStateException("Unexpected value: " + classDesc.displayName());
 		};
 	}
 
