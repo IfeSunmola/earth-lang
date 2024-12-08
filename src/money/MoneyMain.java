@@ -10,9 +10,8 @@ import static antlr.MoneyParser.ProgramContext;
 
 void main() {
 	var lexer = new MoneyLexer(CharStreams.fromString("""
-		fn sum(num1: int, num2: int) str{
-			let total: int = 23 + 23
-			yeet "Hello there"
+		fn sum(num1: int, num2: int) int{
+			yeet num1 + num2
 		}
 		 _ = sum(5, 10)
 		"""

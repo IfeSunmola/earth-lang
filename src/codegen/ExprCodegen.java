@@ -2,7 +2,6 @@ package codegen;
 
 import antlr.MoneyParser.*;
 import antlr.MoneyParserBaseVisitor;
-import sanity.ExprResolver;
 import sanity.MoneyType;
 import sanity.MoneyType.Base;
 
@@ -13,18 +12,21 @@ import java.lang.constant.MethodTypeDesc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.lang.constant.ConstantDescs.*;
 import static money.MoneyUtils.CD_StringBuilder;
 
 /// The main purpose of the methods in this class is simply to load the
-/// expression onto the stack, AND nothing else.
+/// expression onto the stack, and return the type of the expression that was
+/// loaded
 @SuppressWarnings("preview")
-public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
+public class ExprCodegen extends MoneyParserBaseVisitor<MoneyType> {
 	private final CodeBuilder methodBuilder;
-	private final ExprResolver exprResolver = new ExprResolver();
-	private final Consumer<BlockCodeBuilder> setTrue = CodeBuilder::iconst_1;
-	private final Consumer<BlockCodeBuilder> setFalse = CodeBuilder::iconst_0;
+	private static final Consumer<BlockCodeBuilder> setTrue =
+		CodeBuilder::iconst_1;
+	private static final Consumer<BlockCodeBuilder> setFalse =
+		CodeBuilder::iconst_0;
 	final List<Variable> variables;
 
 	public ExprCodegen(CodeBuilder builder) {
@@ -33,34 +35,33 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitNegExpr(NegExprContext ctx) {
+	public MoneyType visitNegExpr(NegExprContext ctx) {
 		// -value where value is an int OR float
-		visit(ctx.expr()); // load the value onto the stack
+		MoneyType type = visit(ctx.expr()); // load the value onto the stack
 
-		MoneyType type = exprResolver.visitNegExpr(ctx);
 		if (type == Base.INT) methodBuilder.ineg();
 		else methodBuilder.fneg();
 
-		return null;
+		return type;
 	}
 
 	@Override
-	public Void visitNotExpr(NotExprContext ctx) {
+	public MoneyType visitNotExpr(NotExprContext ctx) {
 		// !value, where value is a boolean
 		visit(ctx.expr()); // load the value onto the stack
 		methodBuilder.iconst_1().ixor(); // xor with 1 to negate the value
-		return null;
+		return Base.BOOL;
 	}
 
 	@Override
-	public Void visitMultiplicationExpr(MultiplicationExprContext ctx) {
+	public MoneyType visitMultiplicationExpr(MultiplicationExprContext ctx) {
 		// val1 op val2 where op is '*' or '/'or '%'
 		// val1 and val2 are either int or float
 		// If one of the operands is a float, the result is a float
 
-		MoneyType leftType = exprResolver.visit(ctx.left);
+		MoneyType leftType = visit(ctx.left);
 		String op = ctx.op.getText();
-		MoneyType rightType = exprResolver.visit(ctx.right);
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 			visit(ctx.left);
@@ -70,53 +71,57 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 				case "/" -> methodBuilder.idiv();
 				case "%" -> methodBuilder.irem();
 			}
-		}
-		else {
-			visit(ctx.left);
-			if (leftType.is(Base.INT)) methodBuilder.i2f();
-
-			visit(ctx.right);
-			if (rightType.is(Base.INT)) methodBuilder.i2f();
-
-			switch (op) {
-				case "*" -> methodBuilder.fmul();
-				case "/" -> methodBuilder.fdiv();
-				case "%" -> methodBuilder.frem();
-			}
+			return Base.INT;
 		}
 
-		return null;
+		// one of the operands is a float
+		visit(ctx.left);
+		if (leftType.is(Base.INT)) methodBuilder.i2f();
+
+		visit(ctx.right);
+		if (rightType.is(Base.INT)) methodBuilder.i2f();
+
+		switch (op) {
+			case "*" -> methodBuilder.fmul();
+			case "/" -> methodBuilder.fdiv();
+			case "%" -> methodBuilder.frem();
+		}
+
+		return Base.FLOAT;
 	}
 
 	@Override
-	public Void visitAdditiveExpr(AdditiveExprContext ctx) {
+	public MoneyType visitAdditiveExpr(AdditiveExprContext ctx) {
 		// val1 op val2 where op is '+' or '-'
 		// val1 and val2 are either int or float
 		// if op is '+', val1 AND val2 are strings, then string concat is done
 		// int + float = float
 		// int + int = int
 
-		MoneyType leftType = exprResolver.visit(ctx.left);
-		MoneyType rightType = exprResolver.visit(ctx.right);
-		Consumer<String> numbersOp = op -> {
+		MoneyType leftType = visit(ctx.left);
+		MoneyType rightType = visit(ctx.right);
+		Function<String, MoneyType> numbersOp = op -> {
 			if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 				visit(ctx.left);
 				visit(ctx.right);
 				if (op.equals("+")) methodBuilder.iadd();
 				else methodBuilder.isub();
+				return Base.INT;
 			}
-			else { // one of the operands is a float
-				visit(ctx.left);
-				if (leftType.is(Base.INT)) methodBuilder.i2f();
+			// one of the operands is a float
+			visit(ctx.left);
+			if (leftType.is(Base.INT)) methodBuilder.i2f();
 
-				visit(ctx.right);
-				if (rightType.is(Base.INT)) methodBuilder.i2f();
+			visit(ctx.right);
+			if (rightType.is(Base.INT)) methodBuilder.i2f();
 
-				if (op.equals("+")) methodBuilder.fadd();
-				else methodBuilder.fsub();
-			}
+			if (op.equals("+")) methodBuilder.fadd();
+			else methodBuilder.fsub();
+			return Base.FLOAT;
+
 		};
-		switch (ctx.op.getText()) {
+
+		return switch (ctx.op.getText()) {
 			case "+" -> {
 				if (leftType.is(Base.STRING) && rightType.is(Base.STRING)) {
 					methodBuilder
@@ -134,22 +139,23 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 
 					methodBuilder.invokevirtual(CD_StringBuilder, "toString",
 						MethodTypeDesc.of(CD_String));
+					yield Base.STRING;
 				}
-				else numbersOp.accept("+");
+				else yield numbersOp.apply("+");
 			}
-			case "-" -> numbersOp.accept("-");
-		}
-
-		return null;
+			case "-" -> numbersOp.apply("-");
+			default ->
+				throw new RuntimeException("Unexpected value: " + ctx.op.getText());
+		};
 	}
 
 	@Override
-	public Void visitRelationalExpr(RelationalExprContext ctx) {
+	public MoneyType visitRelationalExpr(RelationalExprContext ctx) {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
 		// If either left or right is float, floating point comparison is done
 		// Otherwise, integer comparison is done
-		MoneyType leftType = exprResolver.visit(ctx.left);
-		MoneyType rightType = exprResolver.visit(ctx.right);
+		MoneyType leftType = visit(ctx.left);
+		MoneyType rightType = visit(ctx.right);
 
 		if (leftType.is(Base.FLOAT) || rightType.is(Base.FLOAT)) {
 			visit(ctx.left);
@@ -176,9 +182,10 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 					setFalse
 				);
 			}
-			return null;
+			return Base.BOOL;
 		}
 
+		// both are ints
 		visit(ctx.left);
 		visit(ctx.right);
 		Opcode op = switch (ctx.op.getText()) {
@@ -191,19 +198,19 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 		};
 
 		methodBuilder.ifThenElse(op, setTrue, setFalse);
-		return null;
+		return Base.BOOL;
 	}
 
 	@Override
-	public Void visitEqualityExpr(EqualityExprContext ctx) {
+	public MoneyType visitEqualityExpr(EqualityExprContext ctx) {
 		// recall that the operands must be of the same type
 		// ExprResolver would throw an error if they're not
-		MoneyType leftType = exprResolver.visit(ctx.left);
-		boolean isEquals = ctx.op.getText().equals("==");
 
-		// load the values of the left and right expressions onto the stack
-		visit(ctx.left);
+		// load the values of the left expression onto the stack
+		boolean isEquals = ctx.op.getText().equals("==");
+		MoneyType leftType = visit(ctx.left);
 		visit(ctx.right);
+
 		switch (leftType) {
 			case Base.INT, Base.BOOL -> {
 				Opcode opcode = isEquals ? Opcode.IF_ICMPEQ : Opcode.IF_ICMPNE;
@@ -225,11 +232,11 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 			}
 			default -> throw new RuntimeException("Well Shit");
 		}
-		return null;
+		return Base.BOOL;
 	}
 
 	@Override
-	public Void visitAndExpr(AndExprContext ctx) {
+	public MoneyType visitAndExpr(AndExprContext ctx) {
 		// val1 && val2, where val1 and val2 are booleans
 		// if val1 is false, result is false
 		// if val2 is false, result is false
@@ -249,11 +256,11 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 				);
 			});
 
-		return null;
+		return Base.BOOL;
 	}
 
 	@Override
-	public Void visitOrExpr(OrExprContext ctx) {
+	public MoneyType visitOrExpr(OrExprContext ctx) {
 		// val1 || val2, where val1 and val2 are booleans
 		// if val1 is true, result is true
 		// if val2 is true, result is true
@@ -272,44 +279,50 @@ public class ExprCodegen extends MoneyParserBaseVisitor<Void> {
 			},
 			setTrue
 		);
-		return null;
+		return Base.BOOL;
 	}
 
 	@Override
-	public Void visitGroupedExpr(GroupedExprContext ctx) {
+	public MoneyType visitGroupedExpr(GroupedExprContext ctx) {
 		return visit(ctx.expr());
 	}
 
 	@Override
-	public Void visitLiteralExpr(LiteralExprContext ctx) {
-		if (ctx.FloatLit() != null)
+	public MoneyType visitLiteralExpr(LiteralExprContext ctx) {
+		if (ctx.FloatLit() != null) {
 			methodBuilder.ldc(Float.parseFloat(ctx.FloatLit().getText()));
+			return Base.FLOAT;
+		}
 
-		else if (ctx.IntLit() != null)
+		if (ctx.IntLit() != null) {
 			methodBuilder.ldc(Integer.parseInt(ctx.IntLit().getText()));
+			return Base.INT;
+		}
 
-		else if (ctx.StrLit() != null)
+		if (ctx.StrLit() != null) {
 			methodBuilder.ldc(ctx.StrLit().getText()
 				.substring(1, ctx.StrLit().getText().length() - 1)); // remove quotes
 
-		else if (ctx.BoolLit() != null)
+			return Base.STRING;
+		}
+
+		if (ctx.BoolLit() != null) {
 			if (ctx.BoolLit().getText().equals("true")) methodBuilder.iconst_1();
 			else methodBuilder.iconst_0();
+			return Base.BOOL;
+		}
 
-		else
-			throw new RuntimeException("Should not reach here");
-
-		return null;
+		throw new RuntimeException("Should not reach here");
 	}
 
 	@Override
-	public Void visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
+	public MoneyType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
 		// Load the value of the untyped identifier onto the stack.
 		Variable ident = variables.stream()
 			.filter(v -> v.name().equals(ctx.UntypedIdent().getText()))
 			.findFirst().orElseThrow();
 
-		methodBuilder.loadLocal(ident.type(), ident.slot());
-		return null;
+		methodBuilder.loadLocal(ident.typeKind(), ident.slot());
+		return ident.moneyType();
 	}
 }

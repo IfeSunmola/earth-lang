@@ -8,7 +8,6 @@ import sanity.MoneyType;
 import java.io.IOException;
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
-import java.lang.classfile.TypeKind;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -63,18 +62,17 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
 		String name = ctx.typedIdentExpr().name.getText();
-		TypeKind type = MoneyType
-			.fromString(ctx.typedIdentExpr().type.getText())
-			.toTypeKind();
+		var moneyType = MoneyType.fromString(ctx.typedIdentExpr().type.getText());
+		var typeKind = moneyType.toTypeKind();
 
 		// load the expression to store on the stack
 		currentMethod.exprCodegen.visit(ctx.expr());
 
 		int slot = currentMethod.slot++;
-		currentMethod.builder.storeLocal(type, slot);
+		currentMethod.builder.storeLocal(typeKind, slot);
 
 		currentMethod.exprCodegen.variables.add(
-			new Variable(name, type, slot)
+			new Variable(name, moneyType, typeKind, slot)
 		);
 		return null;
 	}
@@ -91,7 +89,7 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 			.orElseThrow();
 
 		int slot = variable.slot();
-		switch (variable.type()) {
+		switch (variable.typeKind()) {
 			case IntType -> currentMethod.builder
 				.storeLocal(IntType, slot);
 			case BooleanType -> currentMethod.builder
@@ -135,10 +133,10 @@ public class StmtCodeGen extends MoneyParserBaseVisitor<Void> {
 				for (int i = 0; i < params.size(); i++) {
 					TypedIdentExprContext param = params.get(i);
 					String name = param.name.getText();
-					TypeKind type = MoneyType.fromString(param.type.getText())
-						.toTypeKind();
+					var moneyType = MoneyType.fromString(param.type.getText());
+					var typeKind = moneyType.toTypeKind();
 					currentMethod.exprCodegen.variables.add(
-						new Variable(name, type, i)
+						new Variable(name, moneyType, typeKind, i)
 					);
 				}
 
