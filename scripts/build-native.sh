@@ -20,6 +20,7 @@ javac --enable-preview -source 23 \
 # Use .class files to create native image
 native-image --enable-preview \
   -cp $outDir \
+  -cp $lib \
   -o $bin \
   -H:Class=MoneyMain
 
