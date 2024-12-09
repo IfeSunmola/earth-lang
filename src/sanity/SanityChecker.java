@@ -2,6 +2,7 @@ package sanity;
 
 import antlr.EarthParserBaseVisitor;
 import earth.EarthException;
+import org.antlr.v4.runtime.tree.ParseTree;
 import sanity.EarthType.Func;
 
 import java.util.List;
@@ -13,6 +14,18 @@ import static sanity.EarthType.Base.VOID;
 public class SanityChecker extends EarthParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
 	private final ExprResolver exprResolver = new ExprResolver();
+
+	@Override
+	public Void visit(ParseTree tree) {
+		try {
+			return super.visit(tree);
+		}
+		catch (EarthException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			return null;
+		}
+	}
 
 	@Override
 	public Void visitStmtList(StmtListContext ctx) {
