@@ -1,4 +1,4 @@
-package codegen;
+package codegen.jvm;
 
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
@@ -13,8 +13,8 @@ import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
 import java.util.*;
 
-import static codegen.CodegenUtils.CD_PrintStream;
-import static codegen.CodegenUtils.CD_System;
+import static codegen.jvm.CodegenUtils.CD_PrintStream;
+import static codegen.jvm.CodegenUtils.CD_System;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;

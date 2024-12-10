@@ -1,4 +1,4 @@
-package codegen;
+package codegen.jvm;
 
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static codegen.CodegenUtils.CD_StringBuilder;
-import static codegen.StmtCodeGen.methodSignatures;
+import static codegen.jvm.CodegenUtils.CD_StringBuilder;
+import static codegen.jvm.StmtCodeGen.methodSignatures;
 import static java.lang.constant.ConstantDescs.*;
 
 /// The main purpose of the methods in this class is to load the

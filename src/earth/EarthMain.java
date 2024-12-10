@@ -1,7 +1,7 @@
 import antlr.EarthLexer;
 import antlr.EarthParser;
 import antlr.EarthParser.ProgramContext;
-import codegen.StmtCodeGen;
+import codegen.jvm.StmtCodeGen;
 import earth.EarthUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

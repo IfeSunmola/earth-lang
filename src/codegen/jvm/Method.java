@@ -1,4 +1,4 @@
-package codegen;
+package codegen.jvm;
 
 import sanity.EarthType;
 
