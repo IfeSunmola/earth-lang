@@ -19,11 +19,10 @@ stmt
 declStmt: letType=(Let | Var) typedIdentExpr Eq expr;
 reassignStmt: ident=UntypedIdent Eq expr;
 // the condition must evaluate to a boolean. Sanity checker will enforce this
-whenElseStmt: When expr LBrace
-        stmtList
-        RBrace
-        (Else When expr LBrace stmtList RBrace)*
-        (Else LBrace stmtList RBrace)?;
+when: When condition=expr LBrace body=stmtList RBrace;
+elseWhen: ElseWhen condition=expr LBrace body=stmtList RBrace;
+else:   (Else LBrace body=stmtList RBrace)?;
+whenElseStmt: when elseWhen* else;
 
 yeetStmt: Yeet expr;
 // function definitions, optional return type, 0 or more arguments, 0 or more

@@ -5,6 +5,7 @@ import antlr.EarthParserBaseVisitor;
 import earth.EarthUtils;
 import sanity.EarthType;
 import sanity.EarthType.Base;
+import sanity.ExprResolver;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
@@ -30,6 +31,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		CodeBuilder::iconst_1;
 	private static final Consumer<BlockCodeBuilder> setFalse =
 		CodeBuilder::iconst_0;
+	private final ExprResolver exprResolver = new ExprResolver();
 	private final ClassDesc classDesc;
 	final List<Variable> variables;
 
@@ -159,8 +161,10 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
 		// If either left or right is float, floating point comparison is done
 		// Otherwise, integer comparison is done
-		EarthType leftType = visit(ctx.left);
-		EarthType rightType = visit(ctx.right);
+		// Recall that exprResolver simply returns the type WITHOUT loading the
+		// value on the stack
+		EarthType leftType = exprResolver.visit(ctx.left);
+		EarthType rightType = exprResolver.visit(ctx.right);
 
 		if (leftType.is(Base.FLOAT) || rightType.is(Base.FLOAT)) {
 			visit(ctx.left);
@@ -317,7 +321,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 			return Base.BOOL;
 		}
 
-		throw new RuntimeException("Should not reach here");
+		throw new AssertionError("Should not reach here");
 	}
 
 	@Override

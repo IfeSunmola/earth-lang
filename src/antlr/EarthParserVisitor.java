@@ -41,6 +41,24 @@ public interface EarthParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReassignStmt(EarthParser.ReassignStmtContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link EarthParser#when}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhen(EarthParser.WhenContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link EarthParser#elseWhen}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseWhen(EarthParser.ElseWhenContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link EarthParser#else}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElse(EarthParser.ElseContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link EarthParser#whenElseStmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

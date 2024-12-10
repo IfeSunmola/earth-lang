@@ -6,6 +6,7 @@ import earth.EarthUtils;
 import sanity.EarthType;
 
 import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.Label;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -114,7 +115,50 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
-		throw new RuntimeException("visitWhenElseStmt has not been implemented");
+		Label end = currentMethod.builder.newLabel();
+		Label elseLabel = currentMethod.builder.newLabel();
+		var elseWhenLabels = new ArrayList<Label>();
+		for (int i = 0; i < ctx.elseWhen().size(); i++) {
+			elseWhenLabels.add(currentMethod.builder.newLabel());
+		}
+
+		// First, handle the when.
+		currentMethod.exprCodegen.visit(ctx.when().condition);
+		// Now, the stack contains 1 if the condition is true, 0 if false
+		// read the below as if equal to 0, jump to elseLabel
+		// Also, empty elseWhenLabels meants that there are no elseWhen blocks,
+		// so jump to the else label
+		if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
+		else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+		// condition is true
+		visitStmtList(ctx.when().body);
+		currentMethod.builder.goto_(end);
+
+		// handle the elseWhen blocks. Surely, there are better ways to do this
+		ctx.elseWhen().forEach(elseWhen -> {
+			// (for the first iteration): remember we jumped to the first label in
+			// the elseWhenLabels list? Now, we're defining what goes there
+			// (for subsequent iterations): same as what we did above, but jumping
+			// is now done in the else below
+			currentMethod.builder.labelBinding(elseWhenLabels.removeFirst());
+			currentMethod.exprCodegen.visit(elseWhen.condition);
+
+			if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
+			else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+
+			visitStmtList(elseWhen.body);
+			currentMethod.builder.goto_(end);
+		});
+
+		// Finally, handle the else block
+		currentMethod.builder.labelBinding(elseLabel);
+		ElseContext else_ = ctx.else_();
+		if (else_ != null && else_.body != null) {
+			visitStmtList(else_.body);
+		}
+
+		currentMethod.builder.labelBinding(end);
+		return null;
 	}
 
 	@Override
@@ -178,7 +222,9 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitLoopStmt(LoopStmtContext ctx) {
-		throw new RuntimeException("visitLoopStmt has not been implemented");
+		System.err.println("visitLoopStmt has not been implemented");
+		System.exit(-1);
+		return null;
 	}
 
 	private MethodTypeDesc createSignature(List<TypedIdentExprContext> params,

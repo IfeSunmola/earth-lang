@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="EarthRunner" type="Application" factoryName="Application">
+  <configuration default="false" name="Earth Run" type="Application" factoryName="Application">
     <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
     <option name="MAIN_CLASS_NAME" value="EarthMain" />
     <module name="earth-lang" />

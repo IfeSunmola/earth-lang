@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Earth Compile" type="Application" factoryName="Application">
+    <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
+    <option name="MAIN_CLASS_NAME" value="EarthMain" />
+    <module name="earth-lang" />
+    <option name="PROGRAM_PARAMETERS" value="compile samples/test.earth" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

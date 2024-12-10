@@ -8,6 +8,7 @@ MultiLineComment: '/*' .*? '*/' -> skip;
 Let: 'let';
 Var: 'var';
 When: 'when';
+ElseWhen: 'else when';
 Else: 'else';
 Fn: 'fn';
 Yeet: 'yeet';
@@ -18,7 +19,7 @@ StrLit: '"' .*? '"';
 IntLit: [0-9]+;
 FloatLit: [0-9]+'.'[0-9]+;
 BoolLit: 'true' | 'false';
-UntypedIdent: [a-zA-Z][a-zA-Z0-9]*;
+UntypedIdent: [a-zA-Z_][a-zA-Z0-9_]*;
 // Operators
 Eq: '=';
 Gt: '>';

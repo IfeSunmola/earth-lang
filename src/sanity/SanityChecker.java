@@ -70,8 +70,8 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
-		// First, check that the condition in the when stmt is a boolean expression
-		ExprContext whenCondition = ctx.expr().getFirst();
+		// First, check the when condition
+		ExprContext whenCondition = ctx.when().condition;
 		assertSameType(exprResolver.visit(whenCondition),
 			BOOL, "when condition",
 			whenCondition.getStart().getLine()
@@ -79,31 +79,27 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 
 		// Second, validate the body of the when stmt
 		table.enterScope();
-		visit(ctx.stmtList().getFirst());
+		visit(ctx.when().body);
 		table.exitScope();
 
-		// Third, handle elseWhen condition (if it exists), and the body
-		// skip 1 because the first expr is the when condition
-		ctx.expr().stream().skip(1).forEach(exprCtx -> {
-			EarthType elseWhenType = exprResolver.visit(exprCtx);
-			assertSameType(elseWhenType, BOOL, "elseWhen condition",
-				exprCtx.getStart().getLine()
+		// Third, check the else-when conditions and bodies
+		ctx.elseWhen().forEach(elseWhenCtx -> {
+			ExprContext elseWhenCondition = elseWhenCtx.condition;
+			assertSameType(exprResolver.visit(elseWhenCondition),
+				BOOL, "elseWhen condition",
+				elseWhenCondition.getStart().getLine()
 			);
 
-			// the index of the exprCtx in the expr list is the same as the index
-			// of the stmtList in the stmtList list
-			StmtListContext elseWhenBody =
-				ctx.stmtList().get(ctx.expr().indexOf(exprCtx));
-
 			table.enterScope();
-			visit(elseWhenBody);
+			visit(elseWhenCtx.body);
 			table.exitScope();
 		});
+
 		// Fourth, handle the else condition (if it exists)
-		if (ctx.Else() != null) {
-			StmtListContext elseBody = ctx.stmtList().getLast();
+		ElseContext elseCtx = ctx.else_();
+		if (elseCtx != null && elseCtx.body != null) {
 			table.enterScope();
-			visit(elseBody);
+			visit(elseCtx.body);
 			table.exitScope();
 		}
 		return null;
