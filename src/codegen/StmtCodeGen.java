@@ -222,8 +222,21 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 
 	@Override
 	public Void visitLoopStmt(LoopStmtContext ctx) {
-		System.err.println("visitLoopStmt has not been implemented");
-		System.exit(-1);
+		Label loopStart = currentMethod.builder.newLabel();
+		Label loopEnd = currentMethod.builder.newLabel();
+
+		visitDeclStmt(ctx.initializer); // create the loop variable
+		currentMethod.builder.labelBinding(loopStart);
+		currentMethod.exprCodegen.visit(ctx.condition);
+		// Here, the stack contains 1 if the loop should keep going, 0 if not.
+		// if condition is false, jump to loopEnd
+		currentMethod.builder.ifeq(loopEnd);
+
+		visitStmtList(ctx.body);
+		visitReassignStmt(ctx.update);
+		currentMethod.builder.goto_(loopStart);
+
+		currentMethod.builder.labelBinding(loopEnd);
 		return null;
 	}
 

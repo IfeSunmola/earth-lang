@@ -2,10 +2,10 @@ package codegen;
 
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
+import earth.EarthException;
 import earth.EarthUtils;
 import sanity.EarthType;
 import sanity.EarthType.Base;
-import sanity.ExprResolver;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
@@ -31,14 +31,16 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		CodeBuilder::iconst_1;
 	private static final Consumer<BlockCodeBuilder> setFalse =
 		CodeBuilder::iconst_0;
-	private final ExprResolver exprResolver = new ExprResolver();
 	private final ClassDesc classDesc;
 	final List<Variable> variables;
+	private final TypeResolver typeResolver;
 
 	public ExprCodegen(CodeBuilder builder, String fName) {
 		methodBuilder = builder;
 		variables = new ArrayList<>();
 		classDesc = ClassDesc.of(fName);
+		typeResolver = new TypeResolver(variables);
+
 	}
 
 	@Override
@@ -66,9 +68,9 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// val1 and val2 are either int or float
 		// If one of the operands is a float, the result is a float
 
-		EarthType leftType = visit(ctx.left);
+		EarthType leftType = typeResolver.visit(ctx.left);
 		String op = ctx.op.getText();
-		EarthType rightType = visit(ctx.right);
+		EarthType rightType = typeResolver.visit(ctx.right);
 
 		if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 			visit(ctx.left);
@@ -105,8 +107,8 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// int + float = float
 		// int + int = int
 
-		EarthType leftType = visit(ctx.left);
-		EarthType rightType = visit(ctx.right);
+		EarthType leftType = typeResolver.visit(ctx.left);
+		EarthType rightType = typeResolver.visit(ctx.right);
 		Function<String, EarthType> numbersOp = op -> {
 			if (leftType.is(Base.INT) && rightType.is(Base.INT)) {
 				visit(ctx.left);
@@ -163,8 +165,8 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// Otherwise, integer comparison is done
 		// Recall that exprResolver simply returns the type WITHOUT loading the
 		// value on the stack
-		EarthType leftType = exprResolver.visit(ctx.left);
-		EarthType rightType = exprResolver.visit(ctx.right);
+		EarthType leftType = typeResolver.visit(ctx.left);
+		EarthType rightType = typeResolver.visit(ctx.right);
 
 		if (leftType.is(Base.FLOAT) || rightType.is(Base.FLOAT)) {
 			visit(ctx.left);
@@ -304,7 +306,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		}
 
 		if (ctx.IntLit() != null) {
-			methodBuilder.ldc(Integer.parseInt(ctx.IntLit().getText()));
+			methodBuilder.bipush(Integer.parseInt(ctx.IntLit().getText()));
 			return Base.INT;
 		}
 
@@ -346,5 +348,127 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 
 		methodBuilder.invokestatic(classDesc, fnName, desc);
 		return EarthType.fromClassDesc(desc.returnType());
+	}
+
+	/// I felt gross making this class but here's the explanation, so I don't get
+	/// lost later.\
+	/// The `ExprCodegen` class loads the expression on the stack, AND returns
+	/// the type of the expression, but sometimes, we need to know the type of
+	/// the expression, without putting it on the stack.\
+	/// We could use `sanity.ExprResolver`, but because scope information is
+	/// lost, variables declared in a different scope would not be found. So,
+	/// here we are.\
+	/// Ideally, this class could be the same as `ExprResolver`, but since at
+	/// the time of codegen, any type errors should have been caught, we can
+	/// just return the type of the expression, without checking if it's valid.\
+	/// I also tried using switch or instanceof, but for some reason, it didn't
+	/// work. I compared the `expr.getRuleContext` with for example
+	/// NegExprContext.\
+	/// THERE HAS TO BE A BETTER SOLUTION THAT DOESN'T INVOLVE CREATING A NEW
+	/// CLASS. THIS IS A CRY FOR HELP
+	private static class TypeResolver extends EarthParserBaseVisitor<EarthType> {
+		private final List<Variable> variables;
+
+		public TypeResolver(List<Variable> v) {
+			variables = v;
+		}
+
+		@Override
+		public EarthType visitNegExpr(NegExprContext ctx) {
+			// type of negated expression is the same as the type of the expression
+			return visit(ctx.expr());
+		}
+
+		@Override
+		public EarthType visitNotExpr(NotExprContext ctx) {
+			return Base.BOOL;
+		}
+
+		@Override
+		public EarthType visitMultiplicationExpr(MultiplicationExprContext ctx) {
+			// if one of the operands is a float, then the result is a float
+			EarthType leftType = visit(ctx.left);
+			EarthType rightType = visit(ctx.right);
+
+			if (leftType == Base.FLOAT || rightType == Base.FLOAT) return Base.FLOAT;
+			if (leftType == Base.INT && rightType == Base.INT) return Base.INT;
+
+			throw new AssertionError("Should not reach here");
+		}
+
+		@Override
+		public EarthType visitAdditiveExpr(AdditiveExprContext ctx) {
+			// Any type errors would have been caught before reaching this class.
+			// So no need to be as strict as the ExprResolver
+			// float + int = float
+			// int + int = int
+			// str + str = str
+			EarthType leftType = visit(ctx.left);
+			EarthType rightType = visit(ctx.right);
+
+			if (leftType == Base.FLOAT || rightType == Base.FLOAT) return Base.FLOAT;
+			if (leftType == Base.INT && rightType == Base.INT) return Base.INT;
+			if (leftType == Base.STRING && rightType == Base.STRING)
+				return Base.STRING;
+
+			throw new AssertionError("Should not reach here");
+		}
+
+		@Override
+		public EarthType visitRelationalExpr(RelationalExprContext ctx) {
+			return Base.BOOL;
+		}
+
+		@Override
+		public EarthType visitEqualityExpr(EqualityExprContext ctx) {
+			return Base.BOOL;
+		}
+
+		@Override
+		public EarthType visitAndExpr(AndExprContext ctx) {
+			return Base.BOOL;
+		}
+
+		@Override
+		public EarthType visitOrExpr(OrExprContext ctx) {
+			return Base.BOOL;
+		}
+
+		@Override
+		public EarthType visitGroupedExpr(GroupedExprContext ctx) {
+			return visit(ctx.expr());
+		}
+
+		@Override
+		public EarthType visitLiteralExpr(LiteralExprContext ctx) {
+			if (ctx.FloatLit() != null) return Base.FLOAT;
+			if (ctx.IntLit() != null) return Base.INT;
+			if (ctx.StrLit() != null) return Base.STRING;
+			if (ctx.BoolLit() != null) return Base.BOOL;
+
+			throw new AssertionError("Should not reach here");
+		}
+
+		// THESE ARE LITERALLY THE ONLY TWO METHODS THAT ARE DIFFERENT
+		@Override
+		public EarthType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
+			String varName = ctx.UntypedIdent().getText();
+			return variables.stream()
+				.filter(v -> v.name().equals(varName))
+				.findFirst()
+				.map(Variable::earthType)
+				.orElseThrow(() -> new EarthException(
+					"Variable %s not found".formatted(varName),
+					ctx.getStart().getLine()
+				));
+		}
+
+		@Override
+		public EarthType visitFnCallExpr(FnCallExprContext ctx) {
+			String fnName = ctx.fnName.getText();
+			MethodTypeDesc desc = methodSignatures.get(fnName);
+			EarthUtils.ensure(desc != null);
+			return EarthType.fromClassDesc(desc.returnType());
+		}
 	}
 }
