@@ -52,9 +52,9 @@ Path compile(Path fPath, boolean printMsg) {
 		System.exit(1);
 	}
 	var parser = new EarthParser(new CommonTokenStream(lexer));
+	ProgramContext program = parser.program();
 
 	SanityChecker sanityChecker = new SanityChecker();
-	ProgramContext program = parser.program();
 	sanityChecker.visit(program);
 
 	byte[] classFile = new StmtCodeGen(program, removeExt(fPath))

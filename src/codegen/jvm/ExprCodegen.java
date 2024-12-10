@@ -6,18 +6,17 @@ import earth.EarthException;
 import earth.EarthUtils;
 import sanity.EarthType;
 import sanity.EarthType.Base;
+import sanity.ExprResolver;
 
 import java.lang.classfile.CodeBuilder;
-import java.lang.classfile.CodeBuilder.BlockCodeBuilder;
 import java.lang.classfile.Opcode;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static codegen.jvm.CodegenUtils.CD_StringBuilder;
+import static codegen.jvm.CodegenUtils.*;
 import static codegen.jvm.StmtCodeGen.methodSignatures;
 import static java.lang.constant.ConstantDescs.*;
 
@@ -25,22 +24,17 @@ import static java.lang.constant.ConstantDescs.*;
 /// expression onto the stack, and return the type of the expression that was
 /// loaded
 @SuppressWarnings("preview")
-public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
+class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 	private final CodeBuilder methodBuilder;
-	private static final Consumer<BlockCodeBuilder> setTrue =
-		CodeBuilder::iconst_1;
-	private static final Consumer<BlockCodeBuilder> setFalse =
-		CodeBuilder::iconst_0;
 	private final ClassDesc classDesc;
-	final List<Variable> variables;
 	private final TypeResolver typeResolver;
+	final List<Variable> variables;
 
 	public ExprCodegen(CodeBuilder builder, String fName) {
 		methodBuilder = builder;
 		variables = new ArrayList<>();
 		classDesc = ClassDesc.of(fName);
-		typeResolver = new TypeResolver(variables);
-
+		typeResolver = new TypeResolver();
 	}
 
 	@Override
@@ -163,7 +157,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// Lte | Gte | Lt | Gt. Only works for ints and floats
 		// If either left or right is float, floating point comparison is done
 		// Otherwise, integer comparison is done
-		// Recall that exprResolver simply returns the type WITHOUT loading the
+		// Recall that typeResolver simply returns the type WITHOUT loading the
 		// value on the stack
 		EarthType leftType = typeResolver.visit(ctx.left);
 		EarthType rightType = typeResolver.visit(ctx.right);
@@ -177,20 +171,20 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 
 			switch (ctx.op.getText()) {
 				case "<" -> methodBuilder.fcmpg().ifThenElse(Opcode.IFLT,
-					setTrue,
-					setFalse
+					true_,
+					false_
 				);
 				case ">" -> methodBuilder.fcmpl().ifThenElse(Opcode.IFGT,
-					setTrue,
-					setFalse
+					true_,
+					false_
 				);
 				case "<=" -> methodBuilder.fcmpg().ifThenElse(Opcode.IFLE,
-					setTrue,
-					setFalse
+					true_,
+					false_
 				);
 				case ">=" -> methodBuilder.fcmpl().ifThenElse(Opcode.IFGE,
-					setTrue,
-					setFalse
+					true_,
+					false_
 				);
 			}
 			return Base.BOOL;
@@ -208,7 +202,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 				throw new IllegalStateException("Unexpected value: " + ctx.op.getText());
 		};
 
-		methodBuilder.ifThenElse(op, setTrue, setFalse);
+		methodBuilder.ifThenElse(op, true_, false_);
 		return Base.BOOL;
 	}
 
@@ -225,11 +219,13 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		switch (leftType) {
 			case Base.INT, Base.BOOL -> {
 				Opcode opcode = isEquals ? Opcode.IF_ICMPEQ : Opcode.IF_ICMPNE;
-				methodBuilder.ifThenElse(opcode, setTrue, setFalse);
+				methodBuilder.ifThenElse(opcode, true_,
+					false_);
 			}
 			case Base.FLOAT -> {
 				Opcode opcode = isEquals ? Opcode.IFEQ : Opcode.IFNE;
-				methodBuilder.fcmpl().ifThenElse(opcode, setTrue, setFalse);
+				methodBuilder.fcmpl().ifThenElse(opcode, true_,
+					false_);
 			}
 			case Base.STRING -> {
 				// call .equals. 1st item on the stack is the left string. 2nd
@@ -257,13 +253,13 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		// recall that IFEQ compares with 0
 		methodBuilder.ifThenElse(
 			Opcode.IFEQ,
-			setFalse,
+			false_,
 			elseBlock -> {
 				visit(ctx.right);
 				elseBlock.ifThenElse(
 					Opcode.IFEQ,
-					setFalse,
-					setTrue
+					false_,
+					true_
 				);
 			});
 
@@ -284,11 +280,11 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 				visit(ctx.right);
 				ifBlock.ifThenElse(
 					Opcode.IFEQ,
-					setFalse,
-					setTrue
+					false_,
+					true_
 				);
 			},
-			setTrue
+			true_
 		);
 		return Base.BOOL;
 	}
@@ -347,32 +343,33 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		EarthUtils.ensure(desc != null);
 
 		methodBuilder.invokestatic(classDesc, fnName, desc);
-		return EarthType.fromClassDesc(desc.returnType());
+		return descToEarthType(desc.returnType());
 	}
 
+
+
 	/// I felt gross making this class but here's the explanation, so I don't get
-	/// lost later.\
-	/// The `ExprCodegen` class loads the expression on the stack, AND returns
-	/// the type of the expression, but sometimes, we need to know the type of
-	/// the expression, without putting it on the stack.\
-	/// We could use `sanity.ExprResolver`, but because scope information is
-	/// lost, variables declared in a different scope would not be found. So,
-	/// here we are.\
-	/// Ideally, this class could be the same as `ExprResolver`, but since at
-	/// the time of codegen, any type errors should have been caught, we can
-	/// just return the type of the expression, without checking if it's valid.\
+	/// lost later.
+	///
+	/// The {@link ExprCodegen} class loads the expression on the stack, AND
+	/// returns the type of the expression, but sometimes, we need to know the
+	/// type of the expression, without putting it on the stack.
+	///
+	/// We could use {@link ExprResolver}, but because scope
+	/// information is lost, variables declared in a different scope would not
+	/// be found. So, here we are.
+	///
+	/// This class could be the same as {@link ExprResolver}, but since
+	/// any type errors would have been caught before reaching this class, we can
+	/// just return the type of the expression, without checking if it's valid.
+	///
 	/// I also tried using switch or instanceof, but for some reason, it didn't
-	/// work. I compared the `expr.getRuleContext` with for example
-	/// NegExprContext.\
+	/// work. I compared the  {@link ExprContext#getRuleContext()} with for
+	/// example, {@link NegExprContext}, but it didn't work.
+	///
 	/// THERE HAS TO BE A BETTER SOLUTION THAT DOESN'T INVOLVE CREATING A NEW
 	/// CLASS. THIS IS A CRY FOR HELP
-	private static class TypeResolver extends EarthParserBaseVisitor<EarthType> {
-		private final List<Variable> variables;
-
-		public TypeResolver(List<Variable> v) {
-			variables = v;
-		}
-
+	private class TypeResolver extends EarthParserBaseVisitor<EarthType> {
 		@Override
 		public EarthType visitNegExpr(NegExprContext ctx) {
 			// type of negated expression is the same as the type of the expression
@@ -468,7 +465,7 @@ public class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 			String fnName = ctx.fnName.getText();
 			MethodTypeDesc desc = methodSignatures.get(fnName);
 			EarthUtils.ensure(desc != null);
-			return EarthType.fromClassDesc(desc.returnType());
+			return descToEarthType(desc.returnType());
 		}
 	}
 }

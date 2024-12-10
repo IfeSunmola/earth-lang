@@ -31,3 +31,11 @@
    ```
    What a generous and helpful error message. Debugger was useless too. In
    visitRelationalExpr, I was loading a value twice
+
+5. I haven't even done a lot yet and the thought of changing the way
+   something is implemented is just not appealing to me, damn. Since I
+   figured out how to use labels, I could use them to implement expressions
+   like `2 <= 5 or 9 == 20`, etc. The current implementation generates the
+   exact code that using labels would generate, but it just looks bulky
+   because of the `.ifThenElse` method. Oh well, if it isn't broken, don't fix
+   it.

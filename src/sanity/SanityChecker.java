@@ -10,6 +10,7 @@ import java.util.List;
 import static antlr.EarthParser.*;
 import static sanity.EarthType.Base.BOOL;
 import static sanity.EarthType.Base.VOID;
+import static sanity.EarthType.fromString;
 
 public class SanityChecker extends EarthParserBaseVisitor<Void> {
 	private final SymbolTable table = SymbolTable.instance;
@@ -168,7 +169,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 			if (lastStmt.yeetStmt() != null) {
 				throw new EarthException("""
 					Function `%s` does not return anything, but the last statement
-					is a return statement"""
+					is a yeet statement"""
 					.formatted(name), lastStmt.yeetStmt().getStart().getLine()
 				);
 			}
@@ -183,14 +184,14 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 				EarthType returnType = exprResolver.visit(yeetStmt.expr());
 				if (!returnType.equals(retType)) {
 					var msg = """
-						Function `%s` returns `%s` but the return statement has type `%s`"""
+						Function `%s` returns `%s` but the yeet statement has type `%s`"""
 						.formatted(name, temp, returnType);
 					throw new EarthException(msg, yeetStmt.getStart().getLine());
 				}
 			}
 			else {
 				// no return stmt
-				var msg = "Function `%s` returns `%s` but has no return statement"
+				var msg = "Function `%s` returns `%s` but has no yeet statement"
 					.formatted(name, retType);
 				throw new EarthException(msg, ctx.retType.getLine());
 			}
@@ -202,7 +203,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 		List<EarthType.Base> list = paramsCtx.typedIdentExpr()
 			.stream()
 			.map(context -> {
-				EarthType type = EarthType.fromString(context.type.getText());
+				EarthType type = fromString(context.type.getText());
 				if (type instanceof EarthType.Base) return (EarthType.Base) type;
 
 				throw new EarthException("Function parameters must be base types",
@@ -258,7 +259,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 			throw new EarthException("Unknown type `%s`".formatted(type), line);
 		}
 		// Doing double work here
-		return EarthType.fromString(type);
+		return fromString(type);
 	}
 
 	/// Asserts that the type of the expression is the same as the expected type.
@@ -299,7 +300,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 
 		if (exprCtx == null) { // most likely a var decl without an expression
 			// surely, I could do better than basically repeating the if stmt above
-			return EarthType.fromString(type);
+			return fromString(type);
 		}
 
 		// third, resolve the type of the expression

@@ -3,7 +3,6 @@ package codegen.jvm;
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
 import earth.EarthUtils;
-import sanity.EarthType;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.Label;
@@ -13,33 +12,33 @@ import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
 import java.util.*;
 
-import static codegen.jvm.CodegenUtils.CD_PrintStream;
-import static codegen.jvm.CodegenUtils.CD_System;
+import static codegen.jvm.CodegenUtils.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
+import static sanity.EarthType.fromString;
 
 
 @SuppressWarnings("preview")
 public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
-	// Stack class is synchronized!!
-	// All operations are Deque as a stack are on the last element
-	private final Deque<Method> prevMethods = new ArrayDeque<>();
+	private final Deque<Method> prevMethods; // Stack class is synchronized
 	private final Path filePath;
+	private final byte[] generated;
+
 	private Method currentMethod; // current method being built
 	private ClassBuilder classBuilder;
-	private final byte[] classBytes;
 
 	public StmtCodeGen(ProgramContext program, Path fPathNoExt) {
-		// remove any extensions
 		filePath = fPathNoExt;
+		// All operations are Deque as a stack are on the last element
+		prevMethods = new ArrayDeque<>();
 
 		var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
 		String fileName = filePath.getFileName().toString();
 
-		classBytes = of().build(ClassDesc.of(fileName),
+		generated = of().build(ClassDesc.of(fileName),
 			classBuilder -> {
 				this.classBuilder = classBuilder;
 				generateBuiltins();
@@ -66,14 +65,14 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 	}
 
 	public byte[] getClassFile() {
-		return classBytes;
+		return generated;
 	}
 
 	@Override
 	public Void visitDeclStmt(DeclStmtContext ctx) {
 		String name = ctx.typedIdentExpr().name.getText();
-		var earthType = EarthType.fromString(ctx.typedIdentExpr().type.getText());
-		var typeKind = earthType.toTypeKind();
+		var earthType = fromString(ctx.typedIdentExpr().type.getText());
+		var typeKind = earthTypeToTypeKind(earthType);
 
 		// load the expression to store on the stack
 		currentMethod.exprCodegen.visit(ctx.expr());
@@ -192,8 +191,8 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 				for (int i = 0; i < params.size(); i++) {
 					TypedIdentExprContext param = params.get(i);
 					String name = param.name.getText();
-					var earthType = EarthType.fromString(param.type.getText());
-					var typeKind = earthType.toTypeKind();
+					var earthType = fromString(param.type.getText());
+					var typeKind = earthTypeToTypeKind(earthType);
 					currentMethod.exprCodegen.variables.add(
 						new Variable(name, earthType, typeKind, i)
 					);

@@ -1,7 +1,5 @@
 package sanity;
 
-import java.lang.classfile.TypeKind;
-import java.lang.constant.ClassDesc;
 import java.util.List;
 
 @SuppressWarnings("preview")
@@ -17,31 +15,8 @@ public sealed interface EarthType {
 		};
 	}
 
-	static EarthType fromClassDesc(ClassDesc classDesc) {
-		return switch (classDesc.displayName()) {
-			case "int" -> Base.INT;
-			case "float" -> Base.FLOAT;
-			case "String" -> Base.STRING;
-			case "boolean" -> Base.BOOL;
-			case "void" -> Base.VOID;
-			default ->
-				throw new IllegalStateException("Unexpected value: " + classDesc.displayName());
-		};
-	}
-
 	default boolean stringEquals(String strType) {
 		return toString().equals(strType);
-	}
-
-	default TypeKind toTypeKind() {
-		return switch (this) {
-			case Base.INT -> TypeKind.IntType;
-			case Base.FLOAT -> TypeKind.FloatType;
-			case Base.STRING -> TypeKind.ReferenceType;
-			case Base.BOOL -> TypeKind.BooleanType;
-			case Base.VOID -> throw new RuntimeException();
-			case Func _ -> throw new RuntimeException();
-		};
 	}
 
 	default boolean isBase() {
