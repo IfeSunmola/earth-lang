@@ -3,6 +3,7 @@ package sanity;
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
 import earth.EarthException;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import static earth.EarthUtils.ordinal;
 import static sanity.EarthType.Base;
@@ -11,6 +12,18 @@ import static sanity.EarthType.Base;
 /// valid, or throwing an exception if it's not.
 public class ExprResolver extends EarthParserBaseVisitor<EarthType> {
 	private final SymbolTable table = SymbolTable.instance;
+
+	@Override
+	public EarthType visit(ParseTree tree) {
+		try {
+			return super.visit(tree);
+		}
+		catch (EarthException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			return null;
+		}
+	}
 
 	@Override
 	public EarthType visitNegExpr(NegExprContext ctx) {
