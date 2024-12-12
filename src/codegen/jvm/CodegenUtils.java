@@ -9,6 +9,8 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.util.function.Consumer;
 
+import static java.lang.constant.ConstantDescs.*;
+
 @SuppressWarnings("preview")
 class CodegenUtils {
 	static final ClassDesc CD_StringBuilder =
@@ -46,12 +48,25 @@ class CodegenUtils {
 		};
 	}
 
+	static ClassDesc earthTypeToDesc(EarthType type) {
+		return switch (type) {
+			case Base.INT -> CD_int;
+			case Base.FLOAT -> CD_float;
+			case Base.STRING -> CD_String;
+			case Base.BOOL -> CD_boolean;
+			case Base.VOID -> CD_void;
+			case EarthType.Func _ -> throw new AssertionError();
+		};
+	}
+
 	// I know it's redundant to store both types of type, but sometimes I need
 	// one value, sometimes I need the other. Converting from typekind to
 	// earth type works, but it breaks when trying to differentiate reference
 	// types. TypeKind is from the ClassFile API
-	record Variable(String name, EarthType earthType, TypeKind typeKind,
-	                int slot) {}
+	record MethodVariable(String name, EarthType earthType, TypeKind typeKind,
+	                      int slot) {}
+
+	record ClassVariable(String name, ClassDesc type) {}
 
 	// Getters and setters? What are thoseeeee
 	static final class Method {
@@ -72,7 +87,7 @@ class CodegenUtils {
 			var result = new StringBuilder();
 			result.append("Next Slot: ").append(slot);
 			result.append("\nVariables:\t");
-			for (var variable : exprCodegen.variables) {
+			for (var variable : exprCodegen.methodVariables) {
 				result.append(variable).append(", ");
 			}
 			return result.toString();

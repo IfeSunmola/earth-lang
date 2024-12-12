@@ -32,11 +32,12 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 	private final CodeBuilder methodBuilder;
 	private final ClassDesc classDesc;
 	private final TypeResolver typeResolver;
-	final List<Variable> variables;
+	final List<MethodVariable> methodVariables;
+	static final List<ClassVariable> classVariables = new ArrayList<>();
 
 	public ExprCodegen(CodeBuilder builder, String fName) {
 		methodBuilder = builder;
-		variables = new ArrayList<>();
+		methodVariables = new ArrayList<>();
 		classDesc = ClassDesc.of(fName);
 		typeResolver = new TypeResolver();
 	}
@@ -342,13 +343,21 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 
 	@Override
 	public EarthType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
-		// Load the value of the untyped identifier onto the stack.
-		Variable ident = variables.stream()
-			.filter(v -> v.name().equals(ctx.UntypedIdent().getText()))
-			.findFirst().orElseThrow();
+		// First, check local methodVariables. If not found, check class methodVariables
+		String varName = ctx.UntypedIdent().getText();
+		methodVariables.stream()
+			.filter(v -> v.name().equals(varName))
+			.findFirst()
+			.ifPresentOrElse(
+				var -> methodBuilder.loadLocal(var.typeKind(), var.slot()),
+				() -> classVariables.stream()
+					.filter(v -> v.name().equals(varName))
+					.findFirst()
+					.ifPresent(var -> methodBuilder.getstatic(classDesc, var.name(),
+						var.type()))
+			);
 
-		methodBuilder.loadLocal(ident.typeKind(), ident.slot());
-		return ident.earthType();
+		return typeResolver.visitUntypedIdentExpr(ctx);
 	}
 
 	@Override
@@ -373,7 +382,7 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 	/// type of the expression, without putting it on the stack.
 	///
 	/// We could use {@link ExprResolver}, but because scope
-	/// information is lost, variables declared in a different scope would not
+	/// information is lost, methodVariables declared in a different scope would not
 	/// be found. So, here we are.
 	///
 	/// This class could be the same as {@link ExprResolver}, but since
@@ -463,18 +472,21 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 			throw new AssertionError("Should not reach here");
 		}
 
-		// THESE ARE LITERALLY THE ONLY TWO METHODS THAT ARE DIFFERENT
+		// THESE ARE LITERALLY THE ONLY TWO METHODS THAT ARE DIFFERENT from
+		// ExprResolver
 		@Override
 		public EarthType visitUntypedIdentExpr(UntypedIdentExprContext ctx) {
 			String varName = ctx.UntypedIdent().getText();
-			return variables.stream()
+			// first, check local methodVariables. If not found, check class methodVariables
+			return methodVariables.stream()
 				.filter(v -> v.name().equals(varName))
 				.findFirst()
-				.map(Variable::earthType)
-				.orElseThrow(() -> new EarthException(
-					"`%s` is not a known identifier".formatted(varName),
-					ctx.getStart().getLine()
-				));
+				.map(MethodVariable::earthType)
+				.orElseGet(() -> classVariables.stream()
+					.filter(v -> v.name().equals(varName))
+					.findFirst()
+					.map(variable -> descToEarthType(variable.type()))
+					.orElseThrow());
 		}
 
 		@Override

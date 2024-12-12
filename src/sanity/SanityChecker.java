@@ -195,9 +195,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 			}
 			else {
 				// no return stmt
-				var msg = "Function `%s` returns `%s` but has no yeet statement"
-					.formatted(name, retType);
-				throw new EarthException(msg, ctx.retType.getLine());
+				// TODO: What to do?
 			}
 		}
 		// happy path

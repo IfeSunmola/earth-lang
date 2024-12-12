@@ -8,16 +8,18 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.Label;
+import java.lang.classfile.TypeKind;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
 
 import static codegen.jvm.CodegenUtils.*;
 import static earth.EarthUtils.DEBUG;
+import static earth.EarthUtils.LOGGER;
 import static java.lang.classfile.ClassFile.*;
-import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
 import static sanity.EarthType.fromString;
 
@@ -26,22 +28,23 @@ import static sanity.EarthType.fromString;
 public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 	static final Map<String, MethodTypeDesc> methodSignatures = new HashMap<>();
 
-	private final Deque<Method> prevMethods; // Stack class is synchronized
+	// Stack class is synchronized, all operations on last element
+	private static final Deque<Method> prevMethods = new ArrayDeque<>(); //
 	private final Path filePath;
 	private final byte[] generated;
+	private final ClassDesc thisClass;
 
 	private Method currentMethod; // current method being built
 	private ClassBuilder classBuilder;
 
 	public StmtCodeGen(ProgramContext program, Path fPathNoExt) {
 		filePath = fPathNoExt;
-		// All operations are Deque as a stack are on the last element
-		prevMethods = new ArrayDeque<>();
+		String fileName = filePath.getFileName().toString();
+		thisClass = ClassDesc.of(fileName);
 
 		var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
-		String fileName = filePath.getFileName().toString();
 
-		generated = of().build(ClassDesc.of(fileName),
+		generated = of().build(thisClass,
 			classBuilder -> {
 				this.classBuilder = classBuilder;
 				generateBuiltins();
@@ -71,13 +74,18 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 		return generated;
 	}
 
+	static boolean isMainMethod() {
+		// We're in the main method if there are no previous methods
+		return prevMethods.isEmpty();
+	}
+
 	@Override
 	public Void visit(ParseTree tree) {
 		try {
 			return super.visit(tree);
 		}
 		catch (EarthException e) {
-			if (DEBUG) e.printStackTrace();
+			if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
 			else System.err.println(e.getMessage());
 			System.exit(1);
 			return null;
@@ -91,40 +99,64 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 		var typeKind = earthTypeToTypeKind(earthType);
 
 		// load the expression to store on the stack
-		currentMethod.exprCodegen.visit(ctx.expr());
 
-		int slot = currentMethod.slot++;
-		currentMethod.builder.storeLocal(typeKind, slot);
+		if (isMainMethod()) {
+			classBuilder.withField(name, earthTypeToDesc(earthType), ACC_STATIC);
+			currentMethod.exprCodegen.visit(ctx.expr());
+			currentMethod.builder.putstatic(
+				thisClass, name, earthTypeToDesc(earthType)
+			);
 
-		currentMethod.exprCodegen.variables.add(
-			new Variable(name, earthType, typeKind, slot)
-		);
+			ExprCodegen.classVariables.add(
+				new ClassVariable(name, earthTypeToDesc(earthType))
+			);
+		}
+		else {
+			currentMethod.exprCodegen.visit(ctx.expr());
+			int slot = currentMethod.slot++;
+			currentMethod.builder.storeLocal(typeKind, slot);
+
+			currentMethod.exprCodegen.methodVariables.add(
+				new MethodVariable(name, earthType, typeKind, slot)
+			);
+		}
 		return null;
 	}
 
 	@Override
 	public Void visitReassignStmt(ReassignStmtContext ctx) {
 		String name = ctx.ident.getText();
-		currentMethod.exprCodegen.visit(ctx.expr());
 
-		Variable variable = currentMethod.exprCodegen
-			.variables.stream()
+		// First check if the variable is in the current method
+		currentMethod.exprCodegen.methodVariables.stream()
 			.filter(v -> v.name().equals(name))
 			.findFirst()
-			.orElseThrow();
+			.ifPresentOrElse(
+				methodVariable -> {
+					// methodVariable exists in the current method, so normal update
+					currentMethod.exprCodegen.visit(ctx.expr());
+					int slot = methodVariable.slot();
+					TypeKind kind = methodVariable.typeKind();
+					currentMethod.builder.storeLocal(kind, slot);
+				},
+				() -> {
+					// variable is not in the current method, so check the class
+					// methodVariables. If it's not in the class methodVariables,
+					// throw an
+					// exception because the sanity check should have caught this
 
-		int slot = variable.slot();
-		switch (variable.typeKind()) {
-			case IntType -> currentMethod.builder
-				.storeLocal(IntType, slot);
-			case BooleanType -> currentMethod.builder
-				.storeLocal(BooleanType, slot);
-			case FloatType -> currentMethod.builder
-				.storeLocal(FloatType, slot);
-			case ReferenceType -> currentMethod.builder
-				.storeLocal(ReferenceType, slot);
-			default -> throw new RuntimeException();
-		}
+					ClassVariable variable = ExprCodegen.classVariables
+						.stream()
+						.filter(v -> v.name().equals(name))
+						.findFirst().orElseThrow();
+
+					currentMethod.exprCodegen.visit(ctx.expr());
+					currentMethod.builder.putstatic(
+						thisClass, name, variable.type()
+					);
+				}
+			);
+
 		return null;
 	}
 
@@ -141,7 +173,7 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 		currentMethod.exprCodegen.visit(ctx.when().condition);
 		// Now, the stack contains 1 if the condition is true, 0 if false
 		// read the below as if equal to 0, jump to elseLabel
-		// Also, empty elseWhenLabels meants that there are no elseWhen blocks,
+		// Also, empty elseWhenLabels means that there are no elseWhen blocks,
 		// so jump to the else label
 		if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
 		else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
@@ -203,14 +235,14 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 					builder, methodDesc.parameterCount(), methodDesc,
 					filePath.getFileName().toString()
 				);
-				// add the method parameters to the local variables
+				// add the method parameters to the local methodVariables
 				for (int i = 0; i < params.size(); i++) {
 					TypedIdentExprContext param = params.get(i);
 					String name = param.name.getText();
 					var earthType = fromString(param.type.getText());
 					var typeKind = earthTypeToTypeKind(earthType);
-					currentMethod.exprCodegen.variables.add(
-						new Variable(name, earthType, typeKind, i)
+					currentMethod.exprCodegen.methodVariables.add(
+						new MethodVariable(name, earthType, typeKind, i)
 					);
 				}
 
@@ -225,6 +257,7 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 				else throw new RuntimeException("Unknown return type: " + retDesc);
 
 				currentMethod = prevMethods.removeLast();
+
 			});
 		return null;
 	}
