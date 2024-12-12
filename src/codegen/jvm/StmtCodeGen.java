@@ -2,7 +2,9 @@ package codegen.jvm;
 
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
+import earth.EarthException;
 import earth.EarthUtils;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.Label;
@@ -66,6 +68,18 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 
 	public byte[] getClassFile() {
 		return generated;
+	}
+
+	@Override
+	public Void visit(ParseTree tree) {
+		try {
+			return super.visit(tree);
+		}
+		catch (EarthException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			return null;
+		}
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
 import earth.EarthException;
 import earth.EarthUtils;
+import org.antlr.v4.runtime.tree.ParseTree;
 import sanity.EarthType;
 import sanity.EarthType.Base;
 import sanity.ExprResolver;
@@ -35,6 +36,18 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 		variables = new ArrayList<>();
 		classDesc = ClassDesc.of(fName);
 		typeResolver = new TypeResolver();
+	}
+
+	@Override
+	public EarthType visit(ParseTree tree) {
+		try {
+			return super.visit(tree);
+		}
+		catch (EarthException e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+			return null;
+		}
 	}
 
 	@Override
@@ -347,7 +360,6 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 	}
 
 
-
 	/// I felt gross making this class but here's the explanation, so I don't get
 	/// lost later.
 	///
@@ -455,7 +467,7 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 				.findFirst()
 				.map(Variable::earthType)
 				.orElseThrow(() -> new EarthException(
-					"Variable %s not found".formatted(varName),
+					"`%s` is not a known identifier".formatted(varName),
 					ctx.getStart().getLine()
 				));
 		}
