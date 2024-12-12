@@ -7,7 +7,9 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import sanity.SanityChecker;
 
-import static earth.EarthUtils.COMPILER_NAME_VERSION;
+import java.util.logging.Level;
+
+import static earth.EarthUtils.*;
 
 /*
 earth -> print usage
@@ -20,6 +22,7 @@ earth version -> print version
 
 void main(String... args) {
 	EarthUtils.validateJavaRuntime();
+	System.out.println("Running with DEBUG = " + EarthUtils.DEBUG);
 
 	if (args.length == 0) {
 		printHelp();
@@ -48,7 +51,11 @@ Path compile(Path fPath, boolean printMsg) {
 		lexer = new EarthLexer(CharStreams.fromPath(fPath));
 	}
 	catch (IOException e) {
-		System.err.println("Failed to read file: " + e.getMessage());
+		// I honestly don't care that printStackTrace is "bad" practice. I'm not
+		// pulling in a logging library for this.
+		if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
+		else System.err.println("Failed to read file: " + e.getMessage());
+
 		System.exit(1);
 	}
 	var parser = new EarthParser(new CommonTokenStream(lexer));

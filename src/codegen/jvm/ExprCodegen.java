@@ -16,9 +16,12 @@ import java.lang.constant.MethodTypeDesc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 import static codegen.jvm.CodegenUtils.*;
 import static codegen.jvm.StmtCodeGen.methodSignatures;
+import static earth.EarthUtils.DEBUG;
+import static earth.EarthUtils.LOGGER;
 import static java.lang.constant.ConstantDescs.*;
 
 /// The main purpose of the methods in this class is to load the
@@ -44,7 +47,9 @@ class ExprCodegen extends EarthParserBaseVisitor<EarthType> {
 			return super.visit(tree);
 		}
 		catch (EarthException e) {
-			System.err.println(e.getMessage());
+			if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
+			else System.err.println(e.getMessage());
+
 			System.exit(1);
 			return null;
 		}

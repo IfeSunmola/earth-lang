@@ -5,11 +5,16 @@ import java.lang.classfile.ClassFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Logger;
+
+import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("preview")
 public class EarthUtils {
 	private static final String JAVA_PATH = "java-runtime/bin/java";
 	public static final String COMPILER_NAME_VERSION = "Earth Compiler V0.0.1";
+	public static final boolean DEBUG = true;
+	public static final Logger LOGGER = Logger.getGlobal();
 
 	/// Returns the ordinal suffix for a number. E.g. 1 -> "1st", 2 -> "2nd"
 	///
@@ -73,7 +78,9 @@ public class EarthUtils {
 			return path;
 		}
 		catch (IOException e) {
-			System.err.println("Failed to write class file: " + e.getMessage());
+			if (DEBUG) LOGGER.log(SEVERE, e.getMessage(), e);
+			else System.err.println("Failed to write class file: " + e.getMessage());
+
 			System.exit(1);
 			return null;
 		}
@@ -97,7 +104,9 @@ public class EarthUtils {
 			}
 		}
 		catch (IOException e) {
-			System.err.println("Could not verify class file: " + e.getMessage());
+			if (DEBUG) LOGGER.log(SEVERE, e.getMessage(), e);
+			else System.err.println("Could not verify class file: " + e.getMessage());
+
 			System.exit(1);
 		}
 
@@ -115,7 +124,9 @@ public class EarthUtils {
 			process.waitFor();
 		}
 		catch (IOException | InterruptedException e) {
-			System.err.println("Failed to run class file: " + e.getMessage());
+			if (DEBUG) LOGGER.log(SEVERE, e.getMessage(), e);
+			else System.err.println("Failed to run class file: " + e.getMessage());
+
 			System.exit(1);
 		}
 	}
@@ -132,11 +143,14 @@ public class EarthUtils {
 			process.waitFor();
 		}
 		catch (IOException | InterruptedException e) {
-			System.err.println("""
-				Earth's Java Runtime not found.
-				Make sure it's in the same directory as the compiler.
-				""".strip()
-			);
+			if (DEBUG) LOGGER.log(SEVERE, e.getMessage(), e);
+			else {
+				System.err.println("""
+					Earth's Java Runtime not found.
+					Make sure it's in the same directory as the compiler.
+					""".strip()
+				);
+			}
 			System.exit(1);
 		}
 	}

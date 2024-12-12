@@ -6,8 +6,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import sanity.EarthType.Func;
 
 import java.util.List;
+import java.util.logging.Level;
 
 import static antlr.EarthParser.*;
+import static earth.EarthUtils.DEBUG;
+import static earth.EarthUtils.LOGGER;
 import static sanity.EarthType.Base.BOOL;
 import static sanity.EarthType.Base.VOID;
 import static sanity.EarthType.fromString;
@@ -22,7 +25,9 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 			return super.visit(tree);
 		}
 		catch (EarthException e) {
-			System.err.println(e.getMessage());
+			if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
+			else System.err.println(e.getMessage());
+
 			System.exit(1);
 			return null;
 		}

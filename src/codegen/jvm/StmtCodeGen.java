@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static codegen.jvm.CodegenUtils.*;
+import static earth.EarthUtils.DEBUG;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.classfile.TypeKind.*;
 import static java.lang.constant.ConstantDescs.*;
@@ -76,7 +77,8 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 			return super.visit(tree);
 		}
 		catch (EarthException e) {
-			System.err.println(e.getMessage());
+			if (DEBUG) e.printStackTrace();
+			else System.err.println(e.getMessage());
 			System.exit(1);
 			return null;
 		}

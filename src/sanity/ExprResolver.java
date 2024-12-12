@@ -3,8 +3,10 @@ package sanity;
 import antlr.EarthParser.*;
 import antlr.EarthParserBaseVisitor;
 import earth.EarthException;
+import earth.EarthUtils;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import static earth.EarthUtils.LOGGER;
 import static earth.EarthUtils.ordinal;
 import static sanity.EarthType.Base;
 
@@ -19,7 +21,8 @@ public class ExprResolver extends EarthParserBaseVisitor<EarthType> {
 			return super.visit(tree);
 		}
 		catch (EarthException e) {
-			System.err.println(e.getMessage());
+			if (EarthUtils.DEBUG) LOGGER.severe(e.getMessage());
+			else System.err.println(e.getMessage());
 			System.exit(1);
 			return null;
 		}
