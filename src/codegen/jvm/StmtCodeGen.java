@@ -291,12 +291,12 @@ public class StmtCodeGen extends EarthParserBaseVisitor<Void> {
 	private MethodTypeDesc createSignature(List<TypedIdentExprContext> params,
 	                                       String retType) {
 		ClassDesc retTypeDesc = switch (retType) {
-			case "" -> CD_void;
+			case "", "void" -> CD_void;
 			case "int" -> CD_int;
 			case "float" -> CD_float;
 			case "str" -> CD_String;
 			case "bool" -> CD_boolean;
-			default -> throw new RuntimeException("Unknown type: " + retType);
+			default -> throw new AssertionError("Unknown type: " + retType);
 		};
 
 		// params are in form: name1:type1,name2:type2,...name9:type9
