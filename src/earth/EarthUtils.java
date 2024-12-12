@@ -61,6 +61,10 @@ public class EarthUtils {
 			throw new AssertionError("Assertion Failed: " + msg);
 	}
 
+	public static String formatError(String type, String msg, int line) {
+		return "%s on line %d: %s".formatted(type, line, msg);
+	}
+
 	/// Writes the given bytes to a file with the same name as the given path,
 	/// but with a .class extension
 	///

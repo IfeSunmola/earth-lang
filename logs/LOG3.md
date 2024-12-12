@@ -31,4 +31,6 @@
 
 5. Mutability is coming back to bite me in the ass. I'm playing whack-a-mole
    with `where is this changing`
-   
+
+6. Antlr is making me wanna jump off someplace high. Fuck it, I'm writing my
+   lexer/parser.  

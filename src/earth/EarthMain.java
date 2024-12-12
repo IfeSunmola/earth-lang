@@ -29,6 +29,13 @@ void main(String... args) {
 		return;
 	}
 
+	////////////////////
+
+	var lexer = new lexer.Lexer(args[0]);
+	System.out.println(lexer.lex());
+	System.exit(1);
+
+	////////////////////
 	if (args.length == 1) { // earth <command|file>
 		String arg = args[0];
 
