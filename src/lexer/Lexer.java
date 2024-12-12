@@ -8,12 +8,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static lexer.TokenType.*;
 
 public class Lexer {
 	private final StringBuilder buffer;
-	private int currLine;
+	private int line;
 	private final byte[] srcCode;
 	private int currPos; // in source code
 
@@ -26,7 +27,7 @@ public class Lexer {
 		}
 		currPos = 0;
 		buffer = new StringBuilder();
-		currLine = 1;
+		line = 1;
 	}
 
 	public EarthResult<List<Token>> lex() {
@@ -40,27 +41,35 @@ public class Lexer {
 				switch (c) {
 					case ' ', '\t', '\r' -> {
 					}
-					case '\n' -> currLine++;
+					case '\n' -> line++;
 					// Delimiters
 					case ':' -> tokens.add(createToken(COLON));
 					case ',' -> tokens.add(createToken(COMMA));
-					case '(' -> tokens.add(createToken(LPAREN));
-					case ')' -> tokens.add(createToken(RPAREN));
-					case '{' -> tokens.add(createToken(LBRACE));
-					case '}' -> tokens.add(createToken(RBRACE));
+					case '(' -> tokens.add(createToken(LParen));
+					case ')' -> tokens.add(createToken(RParen));
+					case '{' -> tokens.add(createToken(LBrace));
+					case '}' -> tokens.add(createToken(RBrace));
 					// Operators
-					case '=' -> tokens.add(matchEqual(EQ_EQ, EQ));
+					case '=' -> tokens.add(matchEqual(EqEq, EQ));
 					case '>' -> tokens.add(matchEqual(GTE, GT));
 					case '<' -> tokens.add(matchEqual(LTE, LT));
-					case '!' -> tokens.add(matchEqual(BANG_EQ, BANG));
+					case '!' -> tokens.add(matchEqual(BangEq, BANG));
 					case '+' -> tokens.add(createToken(PLUS));
 					case '-' -> tokens.add(createToken(MINUS));
 					case '*' -> tokens.add(createToken(STAR));
-					case '/' -> tokens.add(createToken(SLASH));
+					case '/' -> lexSlash(tokens);
 					case '%' -> tokens.add(createToken(MOD));
 					case '&' -> tokens.add(matchPair(AND));
 					case '|' -> tokens.add(matchPair(OR));
-					default -> throw new AssertionError("lex has not been implemented");
+					// others
+					case '"' -> tokens.add(lexStringLit());
+					default -> {
+						if (Character.isDigit(c))
+							tokens.add(lexNumber(c));
+						else if (Character.isLetter(c) || c == '_')
+							tokens.add(lexKeywordOrIdent(c));
+						else throw unrecognizedToken();
+					}
 				}
 			}
 			catch (LexerException e) {
@@ -69,6 +78,90 @@ public class Lexer {
 		}
 		if (errors.isEmpty()) return EarthResult.ok(tokens);
 		return EarthResult.err(errors);
+	}
+
+	private void lexSlash(ArrayList<Token> tokens) {
+		// already consumed one slash, single line comment
+		if (peek() == '/') while (peek() != 0 && peek() != '\n') consume();
+		else if (peek() == '*') { // multi line comment
+			consume(); // consume `*`
+			while (true) {
+				if (peek() == 0)
+					throw new LexerException("Unterminated multi-line comment", line);
+				if (peek() == '\n') line++;
+				if (consume() == '*' && peek() == '/') {
+					consume(); // consume `/`
+					break;
+				}
+			}
+		}
+		else tokens.add(createToken(SLASH));
+	}
+
+	private Token lexNumber(char firstNum) {
+		Supplier<String> consumeNum = () -> {
+			StringBuilder num = getBuffer();
+
+			while (Character.isDigit(peek())) num.append(consume());
+			return num.toString();
+		};
+
+		String intPart = firstNum + consumeNum.get();
+		if (peek() == '.') { // decimal part found
+			consume(); // consume `.`
+			String floatLit = intPart + "." + consumeNum.get();
+			return new Token(FloatLit, floatLit, line);
+		}
+		return new Token(IntLit, intPart, line);
+	}
+
+	/// An identifier can start with either an underscore, or a letter,
+	/// followed by letters, numbers, or underscores
+	private Token lexKeywordOrIdent(char firstChar) {
+		StringBuilder buffer = getBuffer();
+		buffer.append(firstChar);
+
+		while (true) {
+			char peeked = peek();
+			if (Character.isLetterOrDigit(peeked) || peeked == '_')
+				buffer.append(consume());
+			else break;
+		}
+
+		String value = buffer.toString();
+
+		// First check builtins, then keywords, or default to identifier
+		TokenType type = builtInTypes.getOrDefault(value,
+			keywords.getOrDefault(value, Ident));
+		return new Token(
+			type,
+			value,
+			line
+		);
+	}
+
+	private Token lexStringLit() {
+		// opening " has been consumed
+		StringBuilder buffer = getBuffer();
+
+		while (peek() != '"') {
+			char consumed = consume();
+
+			if (consumed == 0) { // reached EOF without closing "
+				// Show maximum of 30 characters
+				var errStr = buffer.toString();
+				int length = errStr.length();
+				length = Math.min(length, 30);
+				errStr = errStr.substring(0, length).strip();
+
+				var msg = "Unterminated string literal near `%s`...".formatted(errStr);
+				throw new LexerException(msg, line);
+			}
+			if (consumed == '\n') line++;
+			buffer.append(consumed);
+		}
+		consume(); // consume closing quote
+		return new Token(StrLit, buffer.toString(), line);
 	}
 
 	/// Matches tokens such as `==`, `=` `!=`, `<`, `<=` and creates a new
@@ -106,12 +199,12 @@ public class Lexer {
 
 		return new LexerException(
 			"Unrecognized character: `" + temp + "`",
-			currLine
+			line
 		);
 	}
 
 	private Token createToken(TokenType type) {
-		return new Token(type, type.desc, currLine);
+		return new Token(type, type.desc, line);
 	}
 
 	private StringBuilder getBuffer() {
@@ -126,7 +219,7 @@ public class Lexer {
 	}
 
 	private char peek() {
-		if (isEof()) return '\0';
+		if (isEof()) return 0;
 		return (char) srcCode[currPos];
 	}
 

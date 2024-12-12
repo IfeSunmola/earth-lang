@@ -7,25 +7,31 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 
 public enum TokenType {
-	EOF("end of file"),
+	Eof("end of file"),
+	//Built-in types. I'm assuming in a serious language, these would be
+	// classes or regular reserved identifiers
+	BuiltInStart("built-in type"),
+	StrType("str"), IntType("int"), FloatType("float"),
+	BoolType("bool"), NadaType("nada"),
+	BuiltInEnd("built-in type"),
 	// Keywords
 	KeywordStart("keyword start"),
-	VAR("var"), WHEN("when"), ELSE_WHEN("else when"),
-	ELSE("else"), FN("fn"), YEET("yeet"),
-	UNNAMED("_"), LOOP("loop"),
+	Var("var"), When("when"), ElseWhen("else when"),
+	Else("else"), Fn("fn"), Yeet("yeet"),
+	Unnamed("_"), Loop("loop"),
 	KeywordEnd("keyword end"),
 	// Identifiers/Literals
-	STR_LIT("string literal"), INT_LIT("integer literal"),
-	FLOAT_LIT("float literal"), BOOL_LIT("boolean literal"),
-	UNTYPED_IDENT("identifier"),
+	StrLit("string literal"), IntLit("integer literal"),
+	FloatLit("float literal"), BoolLit("boolean literal"),
+	Ident("identifier"),
 	// Operators
 	EQ("="), GT(">"), LT("<"), GTE(">="), LTE("<="),
-	EQ_EQ("=="), BANG_EQ("!="), PLUS("+"), MINUS("-"),
+	EqEq("=="), BangEq("!="), PLUS("+"), MINUS("-"),
 	STAR("*"), SLASH("/"), MOD("%"), BANG("!"),
 	AND("&&"), OR("||"),
 	// Delimiters
-	COLON(":"), COMMA(","), LPAREN("("), RPAREN(")"),
-	LBRACE("{"), RBRACE("}");
+	COLON(":"), COMMA(","), LParen("("), RParen(")"),
+	LBrace("{"), RBrace("}");
 
 	public final String desc;
 
@@ -33,11 +39,18 @@ public enum TokenType {
 		this.desc = desc;
 	}
 
-	/// Could just list out the keywords but eh
+	/// Could just list out the keywords but eh. Looks like an expensive
+	/// operation but it's static, so it's only done once.
 	public static final Map<String, lexer.TokenType> keywords =
 		Stream.of(values())
 			.filter(token -> token.ordinal() > KeywordStart.ordinal())
 			.filter(token -> token.ordinal() < KeywordEnd.ordinal())
+			.collect(toMap(token -> token.desc, Function.identity()));
+
+	public static final Map<String, lexer.TokenType> builtInTypes =
+		Stream.of(values())
+			.filter(token -> token.ordinal() > BuiltInStart.ordinal())
+			.filter(token -> token.ordinal() < BuiltInEnd.ordinal())
 			.collect(toMap(token -> token.desc, Function.identity()));
 }
 
