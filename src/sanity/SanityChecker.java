@@ -41,8 +41,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 		int line = ctx.getStart().getLine();
 
 		EarthType exprType = checkDeclValidity(name, type, line, ctx.expr());
-		Kind kind = ctx.letType.getType() == Let ? Kind.ImmutDecl : Kind.MutDecl;
-		table.addSymbol(name, line, kind, exprType);
+		table.addSymbol(name, line, Kind.VarDecl, exprType);
 		return null;
 	}
 
@@ -126,7 +125,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 		// First, check that the name has not been declared AS A FUNCTION
 		table.findInCurrentScope(name)
 			.ifPresent(symbol -> {
-				if (symbol.kind() != Kind.Function) return;
+				if (symbol.kind() != Kind.FnDecl) return;
 
 				var msg = "";
 				if (symbol.declaredOn() == 0)
@@ -147,7 +146,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 			int line = typedIdentExprContext.getStart().getLine();
 
 			EarthType type = checkDeclValidity(paramName, paramType, line, null);
-			table.addSymbol(paramName, line, Kind.ImmutDecl, type);
+			table.addSymbol(paramName, line, Kind.VarDecl, type);
 		});
 
 		// Fourth, sanity check the function body
@@ -218,7 +217,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 
 		Func fnType = new Func(list, retTypeBase);
 
-		table.addSymbol(name, ctx.getStart().getLine(), Kind.Function, fnType);
+		table.addSymbol(name, ctx.getStart().getLine(), Kind.FnDecl, fnType);
 		return null;
 	}
 
@@ -284,7 +283,7 @@ public class SanityChecker extends EarthParserBaseVisitor<Void> {
 	/// @throws EarthException if the variable cannot be declared
 	private EarthType checkDeclValidity(String name, String type,
 	                                    int line, ExprContext exprCtx) {
-		// first, check that the letName is not already declared
+		// first, check that the var name is not already declared
 		table.findInCurrentScope(name)
 			.ifPresent(symbol -> {
 				var msg = "";

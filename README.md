@@ -8,10 +8,10 @@ something is the way it is.
 ## Valid sample code
 
 ```
-let name: str = "John" // let declaration, cannot be reassigned
-var age: int = 20 // var declaration, can be reassigned
-age = 21 // valid, reassigning a var
-let isAdult: bool = age >= 18 // valid, let declaration with expression
+var name: str = "John"
+var age: int = 20
+age = 21
+var isAdult: bool = age >= 18
 when name == "John" {
     /*
     function calls are expressions, and all expressions must be bound to a 
@@ -24,7 +24,7 @@ else when name == "Doe" {
     _ = println("Hello Doe")
 }  
 else {
-    let greeting: str = "Hello" + name
+    var greeting: str = "Hello" + name
     _ = println(greeting)  
 }
 
@@ -32,7 +32,7 @@ fn add(a: int, b: int) int {
     yeet a + b // return statement
 }
 
-let sum: int = add(1, 2)
+var sum: int = add(1, 2)
 // println can only take a string, so convert. There's floatToStr and boolToStr. 
 _ = println(intToStr(sum))
 

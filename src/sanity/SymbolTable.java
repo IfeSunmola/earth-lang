@@ -6,7 +6,7 @@ import java.util.*;
 
 import static sanity.EarthType.Base.*;
 
-enum Kind {MutDecl, ImmutDecl, Function, Builtin}
+enum Kind {VarDecl, FnDecl, Builtin}
 
 record Symbol(String name, int declaredOn, Kind kind, EarthType type) {
 }
@@ -26,12 +26,12 @@ public enum SymbolTable {
 		addSymbol(BOOL.toString(), 0, Kind.Builtin, BOOL);
 		addSymbol(VOID.toString(), 0, Kind.Builtin, VOID);
 
-		addSymbol("intToStr", 0, Kind.Function, new Func(List.of(INT), STRING));
-		addSymbol("floatToStr", 0, Kind.Function, new Func(List.of(FLOAT),
+		addSymbol("intToStr", 0, Kind.FnDecl, new Func(List.of(INT), STRING));
+		addSymbol("floatToStr", 0, Kind.FnDecl, new Func(List.of(FLOAT),
 			STRING));
-		addSymbol("boolToStr", 0, Kind.Function, new Func(List.of(BOOL), STRING));
-		addSymbol("print", 0, Kind.Function, new Func(List.of(STRING), VOID));
-		addSymbol("println", 0, Kind.Function, new Func(List.of(STRING), VOID));
+		addSymbol("boolToStr", 0, Kind.FnDecl, new Func(List.of(BOOL), STRING));
+		addSymbol("print", 0, Kind.FnDecl, new Func(List.of(STRING), VOID));
+		addSymbol("println", 0, Kind.FnDecl, new Func(List.of(STRING), VOID));
 	}
 
 	void enterScope() {

@@ -8,9 +8,11 @@
    statement as a terminator.
    E.g:
    ```
-   // the var statement will be treated as the end of the let statement
-   let name: str = "ife" 
-   var age: int = 23
+   // the when statement will be treated as the end of the var statement
+   var name: str = "ife" 
+   when name == "ife" {
+       _ = println("Hello, Ife")
+   }
    ```
    Will this be problematic? Definitely but I like to fuck around and find out.
 
@@ -30,7 +32,7 @@
    // and all expressions have to be linked to a statement
    println("Hello") 
    // So, if we're calling a function, we HAVE to attach it to a statement like:
-   let name: str = nameMaker("Ife", "Sunmola")
+   var name: str = nameMaker("Ife", "Sunmola")
    // Since println returns nothing, we can't assign it to an assignment 
    // statement. So we do this:
    _ = println("Hello") 

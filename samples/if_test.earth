@@ -9,7 +9,7 @@ sunny and calm
 C
 */
 // Basic conditionals, expected: equal to 10
-let x: int = 10
+var x: int = 10
 when x > 10{
     _ = println("greater than 10")
 }
@@ -46,7 +46,7 @@ else{
 
 // expected: x < 10 and y > 10
 x = 8
-let y: int = 12
+var y: int = 12
 when x > 10{
     when y > 10{
         _ = println("x > 10 and y > 10")
@@ -68,8 +68,8 @@ else{
 }
 
 // expected: both match
-let word: str = "hello"
-let number: int = 3
+var word: str = "hello"
+var number: int = 3
 when word == "hello" && number == 3{
     _ = println("both match")
 }
@@ -94,8 +94,8 @@ else{
 
 // Boolean Conditions, expected: sunny and calm
 
-let is_sunny: bool = true
-let is_windy: bool = false
+var is_sunny: bool = true
+var is_windy: bool = false
 when is_sunny && !is_windy{
     _ = println("sunny and calm")
 }

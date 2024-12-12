@@ -16,7 +16,7 @@ stmt
     ;
 
 // statements
-declStmt: letType=(Let | Var) typedIdentExpr Eq expr;
+declStmt: Var typedIdentExpr Eq expr;
 reassignStmt: ident=UntypedIdent Eq expr;
 // the condition must evaluate to a boolean. Sanity checker will enforce this
 when: When condition=expr LBrace body=stmtList RBrace;

@@ -213,7 +213,7 @@ public class ExprResolver extends EarthParserBaseVisitor<EarthType> {
 			));
 
 		// Second, It's an identifier, check if it's a function
-		if (symbol.kind() != Kind.Function ||
+		if (symbol.kind() != Kind.FnDecl ||
 		    !(symbol.type() instanceof EarthType.Func fnType)) {
 			throw new EarthException(
 				"`%s` is not a function".formatted(fnName),

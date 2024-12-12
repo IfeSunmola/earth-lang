@@ -5,7 +5,6 @@ SingleLineComment: '//' ~[\r\n]* -> skip;
 MultiLineComment: '/*' .*? '*/' -> skip;
 
 // Keywords
-Let: 'let';
 Var: 'var';
 When: 'when';
 ElseWhen: 'else when';
