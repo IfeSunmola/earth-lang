@@ -5,9 +5,7 @@ import lexer.Token;
 import lexer.TokenType;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdentExpr;
-import parser.exprs.Expr;
-import parser.exprs.IdentExpr;
-import parser.exprs.LitExpr;
+import parser.exprs.*;
 import parser.stmts.DeclStmt;
 import parser.stmts.Stmt;
 
@@ -53,6 +51,17 @@ public class Parser {
 		TokenType.Star, Precedence.PRODUCT
 	);
 
+	/*
+	* p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfix(token.PLUS, p.parseInfixExpression)
+	p.registerInfix(token.MINUS, p.parseInfixExpression)
+	p.registerInfix(token.SLASH, p.parseInfixExpression)
+	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
+	p.registerInfix(token.EQ, p.parseInfixExpression)
+	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
+	p.registerInfix(token.LT, p.parseInfixExpression)
+	p.registerInfix(token.GT, p.parseInfixExpression)
+	* */
 	public Parser(List<Token> tokens) {
 		this.tokens = tokens;
 		currPos = 0;
@@ -62,7 +71,10 @@ public class Parser {
 			IntLit, this::parseLiteralExpr,
 			FloatLit, this::parseLiteralExpr,
 			BoolLit, this::parseLiteralExpr,
-			NadaLit, this::parseLiteralExpr
+			NadaLit, this::parseLiteralExpr,
+			Minus, this::parseUnaryExpr,
+			Bang, this::parseUnaryExpr,
+			LParen, this::parseGroupedExpr
 		);
 		infixParseFns = Map.of();
 	}
@@ -170,6 +182,20 @@ public class Parser {
 			case NadaLit -> new LitExpr.Nada(line);
 			default -> throw new AssertionError("Should not happen");
 		};
+	}
+
+	private UnaryExpr parseUnaryExpr() {
+		Token expected = expect(List.of(Minus, Bang), "");
+		int line = expected.line();
+
+		return new UnaryExpr(expected.type(), parseExpr(Precedence.UNARY), line);
+	}
+
+	private GroupedExpr parseGroupedExpr() {
+		int line = expect(LParen).line();
+		Expr expr = parseExpr(Precedence.LOWEST);
+		expect(RParen);
+		return new GroupedExpr(expr, line);
 	}
 
 	private IdentExpr parseIdentExpr() {
