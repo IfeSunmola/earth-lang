@@ -43,24 +43,24 @@ public class Lexer {
 					}
 					case '\n' -> line++;
 					// Delimiters
-					case ':' -> tokens.add(createToken(COLON));
+					case ':' -> tokens.add(createToken(Colon));
 					case ',' -> tokens.add(createToken(COMMA));
 					case '(' -> tokens.add(createToken(LParen));
 					case ')' -> tokens.add(createToken(RParen));
 					case '{' -> tokens.add(createToken(LBrace));
 					case '}' -> tokens.add(createToken(RBrace));
 					// Operators
-					case '=' -> tokens.add(matchEqual(EqEq, EQ));
-					case '>' -> tokens.add(matchEqual(GTE, GT));
-					case '<' -> tokens.add(matchEqual(LTE, LT));
-					case '!' -> tokens.add(matchEqual(BangEq, BANG));
-					case '+' -> tokens.add(createToken(PLUS));
-					case '-' -> tokens.add(createToken(MINUS));
-					case '*' -> tokens.add(createToken(STAR));
+					case '=' -> tokens.add(matchEqual(EqEq, Eq));
+					case '>' -> tokens.add(matchEqual(Gte, Gt));
+					case '<' -> tokens.add(matchEqual(Lte, Lt));
+					case '!' -> tokens.add(matchEqual(BangEq, Bang));
+					case '+' -> tokens.add(createToken(PLus));
+					case '-' -> tokens.add(createToken(Minus));
+					case '*' -> tokens.add(createToken(Star));
 					case '/' -> lexSlash(tokens);
-					case '%' -> tokens.add(createToken(MOD));
-					case '&' -> tokens.add(matchPair(AND));
-					case '|' -> tokens.add(matchPair(OR));
+					case '%' -> tokens.add(createToken(Mod));
+					case '&' -> tokens.add(matchPair(And));
+					case '|' -> tokens.add(matchPair(Or));
 					// others
 					case '"' -> tokens.add(lexStringLit());
 					default -> {
@@ -95,7 +95,7 @@ public class Lexer {
 				}
 			}
 		}
-		else tokens.add(createToken(SLASH));
+		else tokens.add(createToken(Slash));
 	}
 
 	private Token lexNumber(char firstNum) {
@@ -131,10 +131,8 @@ public class Lexer {
 		String value = buffer.toString();
 
 		// First check builtins, then keywords, or default to identifier
-		TokenType type = builtInTypes.getOrDefault(value,
-			keywords.getOrDefault(value, Ident));
 		return new Token(
-			type,
+			keywords.getOrDefault(value, Ident),
 			value,
 			line
 		);

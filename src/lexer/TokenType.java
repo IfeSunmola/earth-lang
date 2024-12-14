@@ -1,5 +1,6 @@
 package lexer;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -8,29 +9,26 @@ import static java.util.stream.Collectors.toMap;
 
 public enum TokenType {
 	Eof("end of file"),
-	//Built-in types. I'm assuming in a serious language, these would be
-	// classes or regular reserved identifiers
-	BuiltInStart("built-in type"),
-	StrType("str"), IntType("int"), FloatType("float"),
-	BoolType("bool"), NadaType("nada"),
-	BuiltInEnd("built-in type"),
 	// Keywords
-	KeywordStart("keyword start"),
+	KeywordStart("keyword"),
 	Var("var"), When("when"), ElseWhen("else when"),
 	Else("else"), Fn("fn"), Yeet("yeet"),
 	Unnamed("_"), Loop("loop"),
-	KeywordEnd("keyword end"),
+	KeywordEnd("keyword"),
 	// Identifiers/Literals
+	LitStart("literal"),
 	StrLit("string literal"), IntLit("integer literal"),
 	FloatLit("float literal"), BoolLit("boolean literal"),
-	Ident("identifier"),
+	NadaLit("nada literal"),
+	LitEnd("literal"),
+	Ident("an identifier"),
 	// Operators
-	EQ("="), GT(">"), LT("<"), GTE(">="), LTE("<="),
-	EqEq("=="), BangEq("!="), PLUS("+"), MINUS("-"),
-	STAR("*"), SLASH("/"), MOD("%"), BANG("!"),
-	AND("&&"), OR("||"),
+	Eq("="), Gt(">"), Lt("<"), Gte(">="), Lte("<="),
+	EqEq("=="), BangEq("!="), PLus("+"), Minus("-"),
+	Star("*"), Slash("/"), Mod("%"), Bang("!"),
+	And("&&"), Or("||"),
 	// Delimiters
-	COLON(":"), COMMA(","), LParen("("), RParen(")"),
+	Colon(":"), COMMA(","), LParen("("), RParen(")"),
 	LBrace("{"), RBrace("}");
 
 	public final String desc;
@@ -40,17 +38,16 @@ public enum TokenType {
 	}
 
 	/// Could just list out the keywords but eh. Looks like an expensive
-	/// operation but it's static, so it's only done once.
+	/// operation, but it's static, so it's only done once.
 	public static final Map<String, lexer.TokenType> keywords =
 		Stream.of(values())
 			.filter(token -> token.ordinal() > KeywordStart.ordinal())
 			.filter(token -> token.ordinal() < KeywordEnd.ordinal())
 			.collect(toMap(token -> token.desc, Function.identity()));
 
-	public static final Map<String, lexer.TokenType> builtInTypes =
-		Stream.of(values())
-			.filter(token -> token.ordinal() > BuiltInStart.ordinal())
-			.filter(token -> token.ordinal() < BuiltInEnd.ordinal())
-			.collect(toMap(token -> token.desc, Function.identity()));
+	public static final List<TokenType> literals = Stream.of(values())
+		.filter(token -> token.ordinal() > LitStart.ordinal())
+		.filter(token -> token.ordinal() < LitEnd.ordinal())
+		.toList();
 }
 
