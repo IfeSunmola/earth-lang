@@ -1,4 +1,4 @@
-package parser.sanity2;
+package sanity2;
 
 public class BuiltInTypes {
 	public static final String INT = "int";

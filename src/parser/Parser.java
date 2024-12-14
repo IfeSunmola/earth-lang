@@ -113,9 +113,39 @@ public class Parser {
 			case Ident -> parseReassignStmt();
 			case Loop -> parseLoopStmt();
 			case Fn -> parseFnDefStmt();
+			case When -> parseWhenStmt();
 			default ->
 				throw new ParserException("Unknown statement type: `%s`".formatted(peekType().desc), peekLine());
 		};
+	}
+
+	private WhenStmt parseWhenStmt() {
+		int line = peekLine();
+
+		expect(When);
+		Expr condition = parseExpr(Precedence.LOWEST);
+		StmtList body = parseStmtList(LBrace, RBrace);
+		WhenStmt.When when = new WhenStmt.When(condition, body);
+
+		List<WhenStmt.When> elseWhens = new ArrayList<>();
+		StmtList elseBlock = new StmtList(new ArrayList<>());
+		while (peekType() == Else) {
+			consume();
+			if (peekType() == When) { // else when
+				consume();
+				elseWhens.add(
+					new WhenStmt.When(
+						parseExpr(Precedence.LOWEST),
+						parseStmtList(LBrace, RBrace))
+				);
+			}
+			else {
+				// else block
+				elseBlock.addAll(parseStmtList(LBrace, RBrace));
+			}
+		}
+
+		return new WhenStmt(when, elseWhens, elseBlock, line);
 	}
 
 	private FnDefStmt parseFnDefStmt() {

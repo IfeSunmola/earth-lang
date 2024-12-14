@@ -1,6 +1,6 @@
 package parser.exprs;
 
-import parser.sanity2.BuiltInTypes;
+import sanity2.BuiltInTypes;
 
 public sealed interface LitExpr extends Expr {
 	default String value() {

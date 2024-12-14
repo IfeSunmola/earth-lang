@@ -1,6 +1,6 @@
 package parser.exprs;
 
-import parser.sanity2.BuiltInTypes;
+import sanity2.BuiltInTypes;
 
 public record IdentExpr(String name, int line) implements Expr {
 	public static IdentExpr nada(int line) {

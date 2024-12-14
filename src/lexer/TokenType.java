@@ -11,9 +11,8 @@ public enum TokenType {
 	Eof("end of file"),
 	// Keywords
 	KeywordStart("keyword"),
-	Var("var"), When("when"), ElseWhen("else when"),
-	Else("else"), Fn("fn"), Yeet("yeet"),
-	Unnamed("_"), Loop("loop"),
+	Var("var"), When("when"), Else("else"),
+	Fn("fn"), Yeet("yeet"), Unnamed("_"), Loop("loop"),
 	KeywordEnd("keyword"),
 	// Identifiers/Literals
 	LitStart("literal"),

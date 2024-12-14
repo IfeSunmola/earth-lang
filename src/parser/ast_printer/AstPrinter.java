@@ -7,6 +7,8 @@ import parser.ast_helpers.TypedIdentList;
 import parser.exprs.*;
 import parser.stmts.*;
 
+import java.util.function.Function;
+
 // The program should still work as expected if the ast_printer package is
 // not compiled
 public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
@@ -23,13 +25,33 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 	private static AstPrinter stmtStr(Stmt stmt) {
 		return switch (stmt) {
 			case DeclStmt s -> declStmtStr(s);
-			case ElseWhenStmt s -> throw new RuntimeException();
+			case WhenStmt s -> whenStmtStr(s);
 			case FnDefStmt s -> fnDefStmtStr(s);
 			case LoopStmt s -> loopStmtStr(s);
 			case ReassignStmt s -> reassignStmtStr(s);
 			case UnnamedStmt s -> unnamedStmtStr(s);
 			case YeetStmt s -> yeetStmtStr(s);
 		};
+	}
+
+	private static AstPrinter whenStmtStr(WhenStmt s) {
+		Function<WhenStmt.When, AstPrinter> whenStr =
+			when -> new ListPrinter(
+				"when",
+				new SinglePrinter("Condition", exprStr(when.condition())),
+				new SinglePrinter("Body", stmtsStr(when.body()))
+			);
+
+		AstPrinter[] array = s.elseWhen().stream()
+			.map(whenStr)
+			.toArray(AstPrinter[]::new);
+
+		return new ListPrinter("When Stmt",
+			createLine(s.line()),
+			new SinglePrinter("--", whenStr.apply(s.when())),
+			new ListPrinter("Else", array),
+			new SinglePrinter("Else Body", stmtsStr(s.elseBody()))
+		);
 	}
 
 	private static AstPrinter fnDefStmtStr(FnDefStmt s) {
