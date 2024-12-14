@@ -4,7 +4,7 @@ import earth.EarthResult;
 import lexer.Token;
 import lexer.TokenType;
 import parser.ast_helpers.StmtList;
-import parser.ast_helpers.TypedIdentExpr;
+import parser.ast_helpers.TypedIdent;
 import parser.exprs.*;
 import parser.stmts.DeclStmt;
 import parser.stmts.Stmt;
@@ -121,7 +121,7 @@ public class Parser {
 
 	private DeclStmt parseDeclStmt() {
 		int line = expect(Var).line();
-		TypedIdentExpr identAndType = parseTypedIdentExpr();
+		TypedIdent identAndType = parseTypedIdent();
 		expect(Eq);
 		Expr value = parseExpr(Precedence.LOWEST);
 		return new DeclStmt(identAndType, value, line);
@@ -204,11 +204,11 @@ public class Parser {
 	}
 
 	// AST Helpers parse methods
-	private TypedIdentExpr parseTypedIdentExpr() {
+	private TypedIdent parseTypedIdent() {
 		IdentExpr name = parseIdentExpr();
 		expect(Colon);
 		IdentExpr type = parseIdentExpr();
-		return new TypedIdentExpr(name, type);
+		return new TypedIdent(name, type);
 	}
 
 	private Token expect(TokenType expected) {

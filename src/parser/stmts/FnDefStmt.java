@@ -1,11 +1,11 @@
 package parser.stmts;
 
 import parser.ast_helpers.StmtList;
-import parser.ast_helpers.TypedIdentExprList;
+import parser.ast_helpers.TypedIdentList;
 import parser.exprs.IdentExpr;
 
 public record FnDefStmt(IdentExpr name,
-                        TypedIdentExprList params,
+                        TypedIdentList params,
                         IdentExpr returnType,
                         StmtList body,
                         int line

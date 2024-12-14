@@ -13,6 +13,16 @@ public sealed interface LitExpr extends Expr {
 		};
 	}
 
+	default String type() {
+		return switch (this) {
+			case Int _ -> BuiltInTypes.INT;
+			case Str _ -> BuiltInTypes.STRING;
+			case Bool _ -> BuiltInTypes.BOOL;
+			case Float _ -> BuiltInTypes.FLOAT;
+			case Nada _ -> BuiltInTypes.NADA;
+		};
+	}
+
 	record Int(int num, int line) implements LitExpr {}
 
 	record Str(String str, int line) implements LitExpr {}

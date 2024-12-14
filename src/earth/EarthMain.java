@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.Parser;
 import parser.ast_helpers.StmtList;
+import parser.ast_printer.AstPrinter;
 import sanity.SanityChecker;
 
 import java.util.logging.Level;
@@ -40,7 +41,7 @@ void handwrittenMain(String filepath) {
 	}
 
 	StmtList stmts = parse.value();
-	System.out.println(stmts);
+	AstPrinter.print(stmts);
 
 
 	System.exit(1);
