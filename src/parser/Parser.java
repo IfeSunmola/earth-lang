@@ -26,53 +26,22 @@ public class Parser {
 	// interpreter in go page 55
 	private enum Precedence {
 		LOWEST,
+		LOGICAL, // && or ||
 		EQUALS, // ==
 		LESS_GREATER, // >= OR <= OR < OR >
 		SUM, // + or -
 		PRODUCT, // *
 		UNARY, // -number or !false
-		CALL // function call
+		CALL, // function call
 	}
 
-	private static final Map<TokenType, Precedence> precedences = Map.of(
-		TokenType.Eq, Precedence.EQUALS,
-		TokenType.BangEq, Precedence.EQUALS,
-		TokenType.Lt, Precedence.LESS_GREATER,
-		TokenType.Gt, Precedence.LESS_GREATER,
-		TokenType.Lte, Precedence.LESS_GREATER,
-		TokenType.Gte, Precedence.LESS_GREATER,
-		TokenType.PLus, Precedence.SUM,
-		TokenType.Minus, Precedence.SUM,
-		TokenType.Slash, Precedence.PRODUCT,
-		TokenType.Star, Precedence.PRODUCT
-	);
-
-	/*
-	* p.infixParseFns = make(map[token.TokenType]infixParseFn)
-	p.registerInfix(token.PLUS, p.parseInfixExpression)
-	p.registerInfix(token.MINUS, p.parseInfixExpression)
-	p.registerInfix(token.SLASH, p.parseInfixExpression)
-	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
-	p.registerInfix(token.EQ, p.parseInfixExpression)
-	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
-	p.registerInfix(token.LT, p.parseInfixExpression)
-	p.registerInfix(token.GT, p.parseInfixExpression)
-	* */
 	public Parser(List<Token> tokens) {
 		this.tokens = tokens;
 		currPos = 0;
-		prefixParseFns = Map.of(
-			Ident, this::parseIdentExpr,
-			StrLit, this::parseLiteralExpr,
-			IntLit, this::parseLiteralExpr,
-			FloatLit, this::parseLiteralExpr,
-			BoolLit, this::parseLiteralExpr,
-			NadaLit, this::parseLiteralExpr,
-			Minus, this::parseUnaryExpr,
-			Bang, this::parseUnaryExpr,
-			LParen, this::parseGroupedExpr
-		);
-		infixParseFns = Map.of();
+		prefixParseFns = new HashMap<>();
+		infixParseFns = new HashMap<>();
+		registerPrefixFns();
+		registerInfixFns();
 	}
 
 	public EarthResult<StmtList> parse() {
@@ -86,6 +55,33 @@ public class Parser {
 			errors.add(e.msg);
 		}
 		return EarthResult.err(errors);
+	}
+
+	private void registerInfixFns() {
+		infixParseFns.put(PLus, this::parseBinaryExpr);
+		infixParseFns.put(Minus, this::parseBinaryExpr);
+		infixParseFns.put(Star, this::parseBinaryExpr);
+		infixParseFns.put(Slash, this::parseBinaryExpr);
+		infixParseFns.put(EqEq, this::parseBinaryExpr);
+		infixParseFns.put(BangEq, this::parseBinaryExpr);
+		infixParseFns.put(Lt, this::parseBinaryExpr);
+		infixParseFns.put(Gt, this::parseBinaryExpr);
+		infixParseFns.put(Lte, this::parseBinaryExpr);
+		infixParseFns.put(Gte, this::parseBinaryExpr);
+		infixParseFns.put(And, this::parseBinaryExpr);
+		infixParseFns.put(Or, this::parseBinaryExpr);
+	}
+
+	private void registerPrefixFns() {
+		prefixParseFns.put(Ident, this::parseIdentExpr);
+		prefixParseFns.put(StrLit, this::parseLiteralExpr);
+		prefixParseFns.put(IntLit, this::parseLiteralExpr);
+		prefixParseFns.put(FloatLit, this::parseLiteralExpr);
+		prefixParseFns.put(BoolLit, this::parseLiteralExpr);
+		prefixParseFns.put(NadaLit, this::parseLiteralExpr);
+		prefixParseFns.put(Minus, this::parseUnaryExpr);
+		prefixParseFns.put(Bang, this::parseUnaryExpr);
+		prefixParseFns.put(LParen, this::parseGroupedExpr);
 	}
 
 	// Statements
@@ -110,9 +106,10 @@ public class Parser {
 		return switch (peekType()) {
 			case Var -> parseDeclStmt();
 			case Yeet -> parseYeetStmt();
-			// case Unnamed -> parseUnnamedStmt();
+			case Unnamed -> parseUnnamedStmt();
 			case Ident -> parseReassignStmt();
-			default -> parseUnnamedStmt();
+			default ->
+				throw new ParserException("Unknown statement type: `%s`".formatted(peekType().desc), peekLine());
 		};
 	}
 
@@ -154,7 +151,7 @@ public class Parser {
 		if (prefixFn == null) {
 			Token peeked = peek();
 			throw new ParserException(
-				// change to unexpected token
+				// change to not an expression
 				"Prefix function not found: %s".formatted(peeked)
 				, peeked.line()
 			);
@@ -163,9 +160,8 @@ public class Parser {
 		// Are you wondering how this works? Me too!
 		// Writing an interpreter in Go, page 67
 		// while not a keyword i.e. end of statement, and some shit
-		while (!keywords.containsValue(peekType()) &&
-		       prec.ordinal() < precedences.getOrDefault(peekType(),
-			       Precedence.LOWEST).ordinal()) {
+		while (peekType() != Eof && !keywords.containsValue(peekType())
+		       && prec.ordinal() < getPrecedence(peekType()).ordinal()) {
 			var infixFn = infixParseFns.get(peekType());
 			if (infixFn == null) return left;
 			left = infixFn.apply(left);
@@ -180,6 +176,15 @@ public class Parser {
 		catch (ParserException e) {
 			return Optional.empty();
 		}
+	}
+
+	private BinaryExpr parseBinaryExpr(Expr left) {
+		Token expected = expect(binaryOperators, "");
+		int line = expected.line();
+		TokenType op = expected.type();
+
+		Expr right = parseExpr(getPrecedence(op));
+		return new BinaryExpr(left, op, right, line);
 	}
 
 	private LitExpr parseLiteralExpr() {
@@ -264,7 +269,8 @@ public class Parser {
 				.map(type -> type.desc)
 				.reduce((a, b) -> a + ", " + b)
 				.orElseThrow();
-			msg = "Expected one of %s, got %s".formatted(msg, next.type().desc);
+			msg = "Expected one of %s, got %s `%s`".formatted(msg,
+				next.type().desc, next.literal());
 		}
 		throw new ParserException(msg, next.line()
 		);
@@ -288,5 +294,16 @@ public class Parser {
 		Token peeked = peek();
 		currPos++;
 		return peeked;
+	}
+
+	private static Precedence getPrecedence(TokenType type) {
+		return (switch (type) {
+			case EqEq, BangEq -> Precedence.EQUALS;
+			case And, Or -> Precedence.LOGICAL;
+			case Lt, Gt, Lte, Gte -> Precedence.LESS_GREATER;
+			case PLus, Minus -> Precedence.SUM;
+			case Star, Slash -> Precedence.PRODUCT;
+			default -> Precedence.LOWEST;
+		});
 	}
 }

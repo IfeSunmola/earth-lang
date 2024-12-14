@@ -97,12 +97,21 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 	private static AstPrinter exprStr(Expr expr) {
 		return switch (expr) {
 			case IdentExpr e -> identExprStr(e);
-			case BinaryExpr binaryExpr -> throw new RuntimeException();
-			case FnCallExpr callExpr -> throw new RuntimeException();
+			case BinaryExpr e -> binaryExprStr(e);
+			case FnCallExpr e -> throw new RuntimeException();
 			case GroupedExpr e -> groupedExprStr(e);
 			case LitExpr e -> litExprStr(e);
 			case UnaryExpr e -> unaryExprStr(e);
 		};
+	}
+
+	private static AstPrinter binaryExprStr(BinaryExpr e) {
+		return new ListPrinter("Binary Expr",
+			createLine(e.line()),
+			new KeyValuePrinter("Op", e.op().desc),
+			new SinglePrinter("Left", exprStr(e.left())),
+			new SinglePrinter("Right", exprStr(e.right()))
+		);
 	}
 
 	private static AstPrinter litExprStr(LitExpr e) {

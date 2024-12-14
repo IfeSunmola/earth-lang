@@ -22,14 +22,18 @@ public enum TokenType {
 	NadaLit("nada literal"),
 	LitEnd("literal"),
 	Ident("an identifier"),
-	// Operators
-	Eq("="), Gt(">"), Lt("<"), Gte(">="), Lte("<="),
+	// Binary Operators
+	BinaryStart("binary operator"),
+	Gt(">"), Lt("<"), Gte(">="), Lte("<="),
 	EqEq("=="), BangEq("!="), PLus("+"), Minus("-"),
-	Star("*"), Slash("/"), Mod("%"), Bang("!"),
+	Star("*"), Slash("/"), Mod("%"),
 	And("&&"), Or("||"),
+	BinaryEnd("binary operator"),
+	// Unary Operators, - should be here too but hoe well
+	Bang("!"),
 	// Delimiters
-	Colon(":"), COMMA(","), LParen("("), RParen(")"),
-	LBrace("{"), RBrace("}");
+	Eq("="), Colon(":"), COMMA(","), LParen("("),
+	RParen(")"), LBrace("{"), RBrace("}");
 
 	public final String desc;
 
@@ -48,6 +52,11 @@ public enum TokenType {
 	public static final List<TokenType> literals = Stream.of(values())
 		.filter(token -> token.ordinal() > LitStart.ordinal())
 		.filter(token -> token.ordinal() < LitEnd.ordinal())
+		.toList();
+
+	public static final List<TokenType> binaryOperators = Stream.of(values())
+		.filter(token -> token.ordinal() > BinaryStart.ordinal())
+		.filter(token -> token.ordinal() < BinaryEnd.ordinal())
 		.toList();
 }
 
