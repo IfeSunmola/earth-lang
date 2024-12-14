@@ -68,7 +68,7 @@ public class Lexer {
 							tokens.add(lexNumber(c));
 						else if (Character.isLetter(c) || c == '_')
 							tokens.add(lexKeywordOrIdent(c));
-						else throw unrecognizedToken();
+						else throw unrecognizedToken(c);
 					}
 				}
 			}
@@ -177,17 +177,13 @@ public class Lexer {
 	/// Matches a pair of characters e.g. '&&', '||' or throws a
 	/// `LexerException` if the next character does not match the expected
 	private Token matchPair(TokenType expected) {
-		if (peek() == expected.desc.charAt(0)) {
-			consume();
-			return createToken(expected);
-		}
-		throw unrecognizedToken();
+		char consumed = consume();
+		if (consumed == expected.desc.charAt(0)) return createToken(expected);
+		throw unrecognizedToken(consumed);
 	}
 
 	/// Helper method to keep `unrecognized token` handling consistent
-	private LexerException unrecognizedToken() {
-		char c = consume();
-
+	private LexerException unrecognizedToken(char c) {
 		String temp;
 		if (c == '\0') temp = "EOF";
 		else if (c == '\n') temp = "\\n";
