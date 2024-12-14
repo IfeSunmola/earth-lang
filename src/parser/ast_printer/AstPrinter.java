@@ -25,10 +25,32 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 			case ElseWhenStmt s -> throw new RuntimeException();
 			case FnDefStmt s -> throw new RuntimeException();
 			case LoopStmt s -> throw new RuntimeException();
-			case ReassignStmt s -> throw new RuntimeException();
-			case UnnamedStmt s -> throw new RuntimeException();
-			case YeetStmt s -> throw new RuntimeException();
+			case ReassignStmt s -> reassignStmtStr(s);
+			case UnnamedStmt s -> unnamedStmtStr(s);
+			case YeetStmt s -> yeetStmtStr(s);
 		};
+	}
+
+	private static AstPrinter reassignStmtStr(ReassignStmt s) {
+		return new ListPrinter("Reassign Stmt",
+			createLine(s.line()),
+			new SinglePrinter("Name", identExprStr(s.name())),
+			new SinglePrinter("Expr", exprStr(s.newValue()))
+		);
+	}
+
+	private static AstPrinter unnamedStmtStr(UnnamedStmt s) {
+		return new ListPrinter("Unnamed Stmt",
+			createLine(s.line()),
+			new SinglePrinter("Expr", exprStr(s.expr()))
+		);
+	}
+
+	private static AstPrinter yeetStmtStr(YeetStmt s) {
+		return new ListPrinter("Yeet Stmt",
+			createLine(s.line()),
+			new SinglePrinter("Expr", exprStr(s.yeetValue()))
+		);
 	}
 
 	private static AstPrinter stmtsStr(StmtList s) {

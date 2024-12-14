@@ -6,13 +6,9 @@ import lexer.TokenType;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdent;
 import parser.exprs.*;
-import parser.stmts.DeclStmt;
-import parser.stmts.Stmt;
+import parser.stmts.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -113,10 +109,36 @@ public class Parser {
 	private Stmt parseStmt() {
 		return switch (peekType()) {
 			case Var -> parseDeclStmt();
-			default ->
-				// change to unnamed stmt
-				throw new ParserException("Expected a statement but got %s".formatted(peekType()), peekLine());
+			case Yeet -> parseYeetStmt();
+			// case Unnamed -> parseUnnamedStmt();
+			case Ident -> parseReassignStmt();
+			default -> parseUnnamedStmt();
 		};
+	}
+
+	private ReassignStmt parseReassignStmt() {
+		IdentExpr ident = parseIdentExpr();
+		expect(Eq);
+		Expr value = parseExpr(Precedence.LOWEST);
+		return new ReassignStmt(ident, value, ident.line());
+	}
+
+	private UnnamedStmt parseUnnamedStmt() {
+		int line = expect(Unnamed).line();
+		expect(Eq);
+		Expr value = parseExpr(Precedence.LOWEST);
+
+		return new UnnamedStmt(value, line);
+	}
+
+	private YeetStmt parseYeetStmt() {
+		int line = expect(Yeet).line();
+		// not sure if there's any difference between defaulting to literal nada,
+		// or identifier nada
+		Expr value = tryParseExpr(Precedence.LOWEST)
+			.orElse(new LitExpr.Nada(line));
+
+		return new YeetStmt(value, line);
 	}
 
 	private DeclStmt parseDeclStmt() {
@@ -132,8 +154,9 @@ public class Parser {
 		if (prefixFn == null) {
 			Token peeked = peek();
 			throw new ParserException(
-				"(Prefix not found) Expected an expression but got " + peeked,
-				peeked.line()
+				// change to unexpected token
+				"Prefix function not found: %s".formatted(peeked)
+				, peeked.line()
 			);
 		}
 		Expr left = prefixFn.get();
@@ -148,6 +171,15 @@ public class Parser {
 			left = infixFn.apply(left);
 		}
 		return left;
+	}
+
+	private Optional<Expr> tryParseExpr(Precedence prec) {
+		try {
+			return Optional.of(parseExpr(prec));
+		}
+		catch (ParserException e) {
+			return Optional.empty();
+		}
 	}
 
 	private LitExpr parseLiteralExpr() {
