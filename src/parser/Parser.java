@@ -6,6 +6,7 @@ import lexer.TokenType;
 import parser.ast_helpers.ExprList;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdent;
+import parser.ast_helpers.TypedIdentList;
 import parser.exprs.*;
 import parser.stmts.*;
 
@@ -110,9 +111,54 @@ public class Parser {
 			case Yeet -> parseYeetStmt();
 			case Unnamed -> parseUnnamedStmt();
 			case Ident -> parseReassignStmt();
+			case Loop -> parseLoopStmt();
+			case Fn -> parseFnDefStmt();
 			default ->
 				throw new ParserException("Unknown statement type: `%s`".formatted(peekType().desc), peekLine());
 		};
+	}
+
+	private FnDefStmt parseFnDefStmt() {
+		int line = expect(Fn).line();
+		IdentExpr name = parseIdentExpr();
+
+		expect(LParen);
+		TypedIdentList params = parseTypedIdentList();
+		expect(RParen);
+
+		Expr expr = tryParseExpr()
+			.orElse(IdentExpr.nada(line));
+
+		if (!(expr instanceof IdentExpr returnType)) {
+			throw new ParserException(
+				"Expected a return type after the function parameters",
+				expr.line());
+		}
+
+		StmtList body = parseStmtList(LBrace, RBrace);
+		if (body.isEmpty()) {
+			var newYeet = new YeetStmt(IdentExpr.nada(line), line);
+			body.add(newYeet);
+		}
+		else if (!(body.getLast() instanceof YeetStmt)) {
+			int yeetLine = body.getLast().line();
+			var newYeet = new YeetStmt(IdentExpr.nada(yeetLine), yeetLine);
+			body.add(newYeet);
+		}
+
+		return new FnDefStmt(name, params, returnType, body, line);
+	}
+
+	private LoopStmt parseLoopStmt() {
+		int line = expect(Loop).line();
+		DeclStmt init = parseDeclStmt();
+		expect(COMMA);
+		Expr condition = parseExpr(Precedence.LOWEST);
+		expect(COMMA);
+		ReassignStmt update = parseReassignStmt();
+		StmtList body = parseStmtList(LBrace, RBrace);
+
+		return new LoopStmt(init, condition, update, body, line);
 	}
 
 	private ReassignStmt parseReassignStmt() {
@@ -135,7 +181,7 @@ public class Parser {
 		// not sure if there's any difference between defaulting to literal nada,
 		// or identifier nada
 		Expr value = tryParseExpr()
-			.orElse(new LitExpr.Nada(line));
+			.orElse(IdentExpr.nada(line));
 
 		return new YeetStmt(value, line);
 	}
@@ -169,15 +215,6 @@ public class Parser {
 			left = infixFn.apply(left);
 		}
 		return left;
-	}
-
-	private Optional<Expr> tryParseExpr() {
-		try {
-			return Optional.of(parseExpr(Precedence.LOWEST));
-		}
-		catch (ParserException e) {
-			return Optional.empty();
-		}
 	}
 
 	private FnCallExpr parseFnCallExpr(Expr expr) {
@@ -255,11 +292,48 @@ public class Parser {
 		return new IdentExpr(ident.literal(), ident.line());
 	}
 
+	private Optional<Expr> tryParseExpr() {
+		int temp = currPos;
+		try {
+			return Optional.of(parseExpr(Precedence.LOWEST));
+		}
+		catch (ParserException e) {
+			currPos = temp;
+			return Optional.empty();
+		}
+	}
+
+	private Optional<IdentExpr> tryParseIdentExpr() {
+		int temp = currPos;
+		try {
+			return Optional.of(parseIdentExpr());
+		}
+		catch (ParserException e) {
+			currPos = temp;
+			return Optional.empty();
+		}
+	}
+
+	private Optional<TypedIdent> tryParseTypedIdent() {
+		int temp = currPos;
+		try {
+			return Optional.of(parseTypedIdent());
+		}
+		catch (ParserException e) {
+			currPos = temp;
+			return Optional.empty();
+		}
+	}
+
 	// AST Helpers parse methods
 	private TypedIdent parseTypedIdent() {
 		IdentExpr name = parseIdentExpr();
 		expect(Colon);
-		IdentExpr type = parseIdentExpr();
+		IdentExpr type = tryParseIdentExpr()
+			.orElseThrow(() -> new ParserException(
+				"Expected a type after the colon",
+				peekLine()
+			));
 		return new TypedIdent(name, type);
 	}
 
@@ -272,10 +346,23 @@ public class Parser {
 		while (peekType() == COMMA) {
 			consume();
 			// Optional trailing comma
-			tryParseExpr()
-				.ifPresent(exprs::add);
+			tryParseExpr().ifPresent(exprs::add);
 		}
 		return new ExprList(exprs);
+	}
+
+	private TypedIdentList parseTypedIdentList() {
+		Optional<TypedIdent> expr = tryParseTypedIdent();
+		if (expr.isEmpty()) return new TypedIdentList(List.of());
+
+		List<TypedIdent> exprs = new ArrayList<>();
+		exprs.add(expr.get());
+		while (peekType() == COMMA) {
+			consume();
+			// Optional trailing comma
+			if (peekType() == Ident) exprs.add(parseTypedIdent());
+		}
+		return new TypedIdentList(exprs);
 	}
 
 	private Token expect(TokenType expected) {
