@@ -8,9 +8,9 @@ import static lexer.TokenType.*;
 public record BinaryExpr(Expr left, TokenType op, Expr right, int line) implements Expr  {
 	public BinaryExpr {
 		EarthUtils.ensure(
-			op == MINUS || op == PLUS || op == TokenType.SLASH ||
-			op == STAR || op == GT || op == GTE || op == LT || op == LTE ||
-			op == BangEq || op == EqEq || op == AND || op == OR,
+			op == Minus || op == PLus || op == TokenType.Slash ||
+			op == Star || op == Gt || op == Gte || op == Lt || op == Lte ||
+			op == BangEq || op == EqEq || op == And || op == Or,
 			"Invalid binary operator"
 		);
 	}

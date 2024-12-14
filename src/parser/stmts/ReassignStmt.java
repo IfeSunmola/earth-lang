@@ -1,8 +1,8 @@
 package parser.stmts;
 
 import parser.exprs.Expr;
-import parser.exprs.UntypedIdentExpr;
+import parser.exprs.IdentExpr;
 
-public record ReassignStmt(UntypedIdentExpr name, Expr newValue,
+public record ReassignStmt(IdentExpr name, Expr newValue,
                            int line) implements Stmt {
 }

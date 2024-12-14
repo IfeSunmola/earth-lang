@@ -2,6 +2,6 @@ package parser.exprs;
 
 public sealed interface Expr permits BinaryExpr, FnCallExpr,
 	GroupedExpr,
-	LitExpr, UnaryExpr, UntypedIdentExpr {
+	LitExpr, UnaryExpr, IdentExpr {
 	int line();
 }

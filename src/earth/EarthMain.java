@@ -2,9 +2,12 @@ import antlr.EarthLexer;
 import antlr.EarthParser;
 import antlr.EarthParser.ProgramContext;
 import codegen.jvm.StmtCodeGen;
+import earth.EarthResult;
 import earth.EarthUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import parser.Parser;
+import parser.ast_helpers.StmtList;
 import sanity.SanityChecker;
 
 import java.util.logging.Level;
@@ -20,6 +23,29 @@ earth help -> print usage
 earth version -> print version
 * */
 
+void handwrittenMain(String filepath) {
+	var result = new lexer.Lexer(filepath).lex();
+	if (result.isErr()) {
+		result.errors().forEach(System.err::println);
+		System.exit(1);
+	}
+	List<lexer.Token> tokens = result.value();
+
+	var parser = new Parser(tokens);
+	EarthResult<StmtList> parse = parser.parse();
+
+	if (parse.isErr()) {
+		parse.errors().forEach(System.err::println);
+		System.exit(1);
+	}
+
+	StmtList stmts = parse.value();
+	System.out.println(stmts);
+
+
+	System.exit(1);
+}
+
 void main(String... args) {
 	EarthUtils.validateJavaRuntime();
 	System.out.println("Running with DEBUG = " + EarthUtils.DEBUG);
@@ -28,14 +54,8 @@ void main(String... args) {
 		printHelp();
 		return;
 	}
+	handwrittenMain(args[0]);
 
-	////////////////////
-
-	var lexer = new lexer.Lexer(args[0]);
-	System.out.println(lexer.lex());
-	System.exit(1);
-
-	////////////////////
 	if (args.length == 1) { // earth <command|file>
 		String arg = args[0];
 

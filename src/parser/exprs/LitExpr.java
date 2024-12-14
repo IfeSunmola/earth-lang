@@ -1,6 +1,6 @@
 package parser.exprs;
 
-import lexer.TokenType;
+import parser.sanity2.BuiltInTypes;
 
 public sealed interface LitExpr extends Expr {
 	default String value() {
@@ -9,7 +9,7 @@ public sealed interface LitExpr extends Expr {
 			case Str s -> s.str();
 			case Bool b -> String.valueOf(b.bool());
 			case Float f -> String.valueOf(f.num());
-			case Nada _ -> TokenType.NadaType.desc;
+			case Nada _ -> BuiltInTypes.NADA;
 		};
 	}
 

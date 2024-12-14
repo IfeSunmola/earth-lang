@@ -1,5 +1,5 @@
 package parser.ast_helpers;
 
-import parser.exprs.UntypedIdentExpr;
+import parser.exprs.IdentExpr;
 
-public record TypedIdentExpr(UntypedIdentExpr name, UntypedIdentExpr type) {}
+public record TypedIdentExpr(IdentExpr name, IdentExpr type) {}
