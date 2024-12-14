@@ -3,6 +3,7 @@ package parser;
 import earth.EarthResult;
 import lexer.Token;
 import lexer.TokenType;
+import parser.ast_helpers.ExprList;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdent;
 import parser.exprs.*;
@@ -70,6 +71,7 @@ public class Parser {
 		infixParseFns.put(Gte, this::parseBinaryExpr);
 		infixParseFns.put(And, this::parseBinaryExpr);
 		infixParseFns.put(Or, this::parseBinaryExpr);
+		infixParseFns.put(LParen, this::parseFnCallExpr);
 	}
 
 	private void registerPrefixFns() {
@@ -132,7 +134,7 @@ public class Parser {
 		int line = expect(Yeet).line();
 		// not sure if there's any difference between defaulting to literal nada,
 		// or identifier nada
-		Expr value = tryParseExpr(Precedence.LOWEST)
+		Expr value = tryParseExpr()
 			.orElse(new LitExpr.Nada(line));
 
 		return new YeetStmt(value, line);
@@ -169,17 +171,30 @@ public class Parser {
 		return left;
 	}
 
-	private Optional<Expr> tryParseExpr(Precedence prec) {
+	private Optional<Expr> tryParseExpr() {
 		try {
-			return Optional.of(parseExpr(prec));
+			return Optional.of(parseExpr(Precedence.LOWEST));
 		}
 		catch (ParserException e) {
 			return Optional.empty();
 		}
 	}
 
+	private FnCallExpr parseFnCallExpr(Expr expr) {
+		if (!(expr instanceof IdentExpr fnName)) {
+			throw new ParserException(
+				"Expected an identifier as the name of a function",
+				expr.line());
+		}
+		int line = expect(LParen).line();
+		ExprList params = parseExprList();
+		expect(RParen);
+
+		return new FnCallExpr(fnName, params, line);
+	}
+
 	private BinaryExpr parseBinaryExpr(Expr left) {
-		Token expected = expect(binaryOperators, "");
+		Token expected = expect(binaryOperators);
 		int line = expected.line();
 		TokenType op = expected.type();
 
@@ -188,7 +203,7 @@ public class Parser {
 	}
 
 	private LitExpr parseLiteralExpr() {
-		Token expected = expect(TokenType.literals, "");
+		Token expected = expect(TokenType.literals);
 		int line = expected.line();
 		String literal = expected.literal();
 
@@ -222,7 +237,7 @@ public class Parser {
 	}
 
 	private UnaryExpr parseUnaryExpr() {
-		Token expected = expect(List.of(Minus, Bang), "");
+		Token expected = expect(List.of(Minus, Bang));
 		int line = expected.line();
 
 		return new UnaryExpr(expected.type(), parseExpr(Precedence.UNARY), line);
@@ -248,6 +263,21 @@ public class Parser {
 		return new TypedIdent(name, type);
 	}
 
+	private ExprList parseExprList() {
+		Optional<Expr> expr = tryParseExpr();
+		if (expr.isEmpty()) return new ExprList(List.of());
+
+		List<Expr> exprs = new ArrayList<>();
+		exprs.add(expr.get());
+		while (peekType() == COMMA) {
+			consume();
+			// Optional trailing comma
+			tryParseExpr()
+				.ifPresent(exprs::add);
+		}
+		return new ExprList(exprs);
+	}
+
 	private Token expect(TokenType expected) {
 		Token next = consume();
 		if (next.type() != expected)
@@ -258,20 +288,20 @@ public class Parser {
 		return next;
 	}
 
-	private Token expect(Collection<TokenType> expected, String msg) {
+	private Token expect(Collection<TokenType> expected) {
 		Token next = consume();
 		for (TokenType type : expected) {
 			if (next.type() == type) return next;
 		}
-		if (msg.isEmpty()) {
-			msg = expected
-				.stream()
-				.map(type -> type.desc)
-				.reduce((a, b) -> a + ", " + b)
-				.orElseThrow();
-			msg = "Expected one of %s, got %s `%s`".formatted(msg,
-				next.type().desc, next.literal());
-		}
+
+		String msg = expected
+			.stream()
+			.map(type -> type.desc)
+			.reduce((a, b) -> a + ", " + b)
+			.orElseThrow();
+
+		msg = "Expected one of %s, got %s `%s`".formatted(msg,
+			next.type().desc, next.literal());
 		throw new ParserException(msg, next.line()
 		);
 	}
@@ -303,6 +333,7 @@ public class Parser {
 			case Lt, Gt, Lte, Gte -> Precedence.LESS_GREATER;
 			case PLus, Minus -> Precedence.SUM;
 			case Star, Slash -> Precedence.PRODUCT;
+			case LParen -> Precedence.CALL;
 			default -> Precedence.LOWEST;
 		});
 	}
