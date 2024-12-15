@@ -9,6 +9,7 @@ import java.util.Stack;
 import java.util.stream.Stream;
 
 import static sanity2.Kind.Builtin;
+import static sanity2.NEarthType.Base.BoolType;
 
 enum Kind {VarDecl, FnDecl, Builtin}
 
@@ -25,6 +26,9 @@ enum SymbolTable {
 		enterScope();
 		Stream.of(NEarthType.Base.values())
 			.forEach(t -> addSymbol(t.type, 0, Builtin, t));
+
+		addSymbol("true", 0, Builtin, BoolType);
+		addSymbol("false", 0, Builtin, BoolType);
 		System.out.println(this);
 	}
 

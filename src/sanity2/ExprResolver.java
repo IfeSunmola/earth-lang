@@ -175,7 +175,9 @@ interface ExprResolver {
 					"""
 						Expected %s argument to be of type `%s` but got `%s`. \
 						Required signature is %s
-						""".formatted(ordinal(i + 1), paramType, argType, fnType),
+						"""
+						.formatted(ordinal(i + 1), paramType.string(), argType.string(),
+							fnType.string()),
 					line
 				);
 			}

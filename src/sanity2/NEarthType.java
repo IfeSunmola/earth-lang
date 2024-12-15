@@ -1,16 +1,21 @@
 package sanity2;
 
 import java.util.List;
-import java.util.Map;
 
 public sealed interface NEarthType {
-	Map<String, NEarthType> strToType = Map.of(
-		"int", Base.IntType,
-		"float", Base.FloatType,
-		"str", Base.StrType,
-		"bool", Base.BoolType,
-		"nada", Base.NadaType
-	);
+	static NEarthType fromString(String s, int line) {
+		return switch (s) {
+			case "int" -> Base.IntType;
+			case "float" -> Base.FloatType;
+			case "str" -> Base.StrType;
+			case "bool" -> Base.BoolType;
+			case "nada" -> Base.NadaType;
+			// TODO: Implement function type
+			default -> throw new SanityException(
+				"Invalid type: `%s`".formatted(s),
+				line);
+		};
+	}
 
 	default boolean isOneOf(NEarthType... types) {
 		for (NEarthType t : types) {
@@ -47,10 +52,10 @@ public sealed interface NEarthType {
 		public String toString() {
 			return "fn(%s)%s".formatted(
 				params.stream()
-					.map(NEarthType::toString)
+					.map(base -> base.type)
 					.reduce((a, b) -> a + ", " + b)
 					.orElse(""),
-				returnType
+				returnType.type
 			);
 		}
 	}
