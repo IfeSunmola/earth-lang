@@ -1,7 +1,7 @@
 package parser.exprs;
 
-public sealed interface Expr permits BinaryExpr, FnCallExpr,
-	GroupedExpr,
-	LitExpr, UnaryExpr, IdentExpr {
+public sealed interface Expr permits AdditiveExpr, EqualityExpr, FnCallExpr,
+	GroupedExpr, IdentExpr, LitExpr, LogicalExpr, NegExpr, NotExpr, ProductExpr,
+	RelationalExpr {
 	int line();
 }

@@ -60,18 +60,24 @@ public class Parser {
 	}
 
 	private void registerInfixFns() {
-		infixParseFns.put(PLus, this::parseBinaryExpr);
-		infixParseFns.put(Minus, this::parseBinaryExpr);
-		infixParseFns.put(Star, this::parseBinaryExpr);
-		infixParseFns.put(Slash, this::parseBinaryExpr);
-		infixParseFns.put(EqEq, this::parseBinaryExpr);
-		infixParseFns.put(BangEq, this::parseBinaryExpr);
-		infixParseFns.put(Lt, this::parseBinaryExpr);
-		infixParseFns.put(Gt, this::parseBinaryExpr);
-		infixParseFns.put(Lte, this::parseBinaryExpr);
-		infixParseFns.put(Gte, this::parseBinaryExpr);
-		infixParseFns.put(And, this::parseBinaryExpr);
-		infixParseFns.put(Or, this::parseBinaryExpr);
+		infixParseFns.put(Star, this::parseProductExpr);
+		infixParseFns.put(Slash, this::parseProductExpr);
+		infixParseFns.put(Mod, this::parseProductExpr);
+
+		infixParseFns.put(PLus, this::parseAdditiveExpr);
+		infixParseFns.put(Minus, this::parseAdditiveExpr);
+
+		infixParseFns.put(Lt, this::parseRelationalExpr);
+		infixParseFns.put(Gt, this::parseRelationalExpr);
+		infixParseFns.put(Lte, this::parseRelationalExpr);
+		infixParseFns.put(Gte, this::parseRelationalExpr);
+
+		infixParseFns.put(EqEq, this::parseEqualityExpr);
+		infixParseFns.put(BangEq, this::parseEqualityExpr);
+
+		infixParseFns.put(And, this::parseLogicalExpr);
+		infixParseFns.put(Or, this::parseLogicalExpr);
+
 		infixParseFns.put(LParen, this::parseFnCallExpr);
 	}
 
@@ -82,8 +88,8 @@ public class Parser {
 		prefixParseFns.put(FloatLit, this::parseLiteralExpr);
 		prefixParseFns.put(BoolLit, this::parseLiteralExpr);
 		prefixParseFns.put(NadaLit, this::parseLiteralExpr);
-		prefixParseFns.put(Minus, this::parseUnaryExpr);
-		prefixParseFns.put(Bang, this::parseUnaryExpr);
+		prefixParseFns.put(Minus, this::parseNegExpr);
+		prefixParseFns.put(Bang, this::parseNotExpr);
 		prefixParseFns.put(LParen, this::parseGroupedExpr);
 	}
 
@@ -260,13 +266,49 @@ public class Parser {
 		return new FnCallExpr(fnName, params, line);
 	}
 
-	private BinaryExpr parseBinaryExpr(Expr left) {
-		Token expected = expect(binaryOperators);
+	private ProductExpr parseProductExpr(Expr left) {
+		Token expected = expect(List.of(Star, Slash, Mod));
 		int line = expected.line();
 		TokenType op = expected.type();
 
 		Expr right = parseExpr(getPrecedence(op));
-		return new BinaryExpr(left, op, right, line);
+		return new ProductExpr(left, op, right, line);
+	}
+
+	private AdditiveExpr parseAdditiveExpr(Expr left) {
+		Token expected = expect(List.of(PLus, Minus));
+		int line = expected.line();
+		TokenType op = expected.type();
+
+		Expr right = parseExpr(getPrecedence(op));
+		return new AdditiveExpr(left, op, right, line);
+	}
+
+	private RelationalExpr parseRelationalExpr(Expr left) {
+		Token expected = expect(List.of(Lte, Gte, Lt, Gt));
+		int line = expected.line();
+		TokenType op = expected.type();
+
+		Expr right = parseExpr(getPrecedence(op));
+		return new RelationalExpr(left, op, right, line);
+	}
+
+	private EqualityExpr parseEqualityExpr(Expr left) {
+		Token expected = expect(List.of(EqEq, BangEq));
+		int line = expected.line();
+		TokenType op = expected.type();
+
+		Expr right = parseExpr(getPrecedence(op));
+		return new EqualityExpr(left, op, right, line);
+	}
+
+	private LogicalExpr parseLogicalExpr(Expr left) {
+		Token expected = expect(List.of(And, Or));
+		int line = expected.line();
+		TokenType op = expected.type();
+
+		Expr right = parseExpr(getPrecedence(op));
+		return new LogicalExpr(left, op, right, line);
 	}
 
 	private LitExpr parseLiteralExpr() {
@@ -303,11 +345,18 @@ public class Parser {
 		};
 	}
 
-	private UnaryExpr parseUnaryExpr() {
-		Token expected = expect(List.of(Minus, Bang));
+	private NegExpr parseNegExpr() {
+		Token expected = expect(Minus);
 		int line = expected.line();
 
-		return new UnaryExpr(expected.type(), parseExpr(Precedence.UNARY), line);
+		return new NegExpr(parseExpr(Precedence.UNARY), line);
+	}
+
+	private NotExpr parseNotExpr() {
+		Token expected = expect(Bang);
+		int line = expected.line();
+
+		return new NotExpr(parseExpr(Precedence.UNARY), line);
 	}
 
 	private GroupedExpr parseGroupedExpr() {

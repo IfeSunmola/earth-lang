@@ -1,9 +1,9 @@
 package parser.exprs;
 
-import sanity2.BuiltInTypes;
+import static sanity2.NEarthType.Base.NadaType;
 
 public record IdentExpr(String name, int line) implements Expr {
 	public static IdentExpr nada(int line) {
-		return new IdentExpr(BuiltInTypes.NADA, line);
+		return new IdentExpr(NadaType.type, line);
 	}
 }

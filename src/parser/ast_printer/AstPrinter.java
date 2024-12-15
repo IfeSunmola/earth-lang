@@ -1,5 +1,6 @@
 package parser.ast_printer;
 
+import lexer.TokenType;
 import parser.ast_helpers.ExprList;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdent;
@@ -134,12 +135,47 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 	private static AstPrinter exprStr(Expr expr) {
 		return switch (expr) {
 			case IdentExpr e -> identExprStr(e);
-			case BinaryExpr e -> binaryExprStr(e);
 			case FnCallExpr e -> fnCallExprStr(e);
 			case GroupedExpr e -> groupedExprStr(e);
 			case LitExpr e -> litExprStr(e);
-			case UnaryExpr e -> unaryExprStr(e);
+			case AdditiveExpr e -> binaryExprHelper(
+				"Additive Expr", e.line(), e.left(), e.right(),
+				e.op()
+			);
+			case EqualityExpr equalityExpr -> binaryExprHelper(
+				"Equality Expr", equalityExpr.line(), equalityExpr.left(),
+				equalityExpr.right(), equalityExpr.op()
+			);
+			case LogicalExpr logicalExpr -> binaryExprHelper(
+				"Logical Expr", logicalExpr.line(), logicalExpr.left(),
+				logicalExpr.right(), logicalExpr.op()
+			);
+			case ProductExpr productExpr -> binaryExprHelper(
+				"Product Expr", productExpr.line(), productExpr.left(),
+				productExpr.right(), productExpr.op()
+			);
+			case RelationalExpr relationalExpr -> binaryExprHelper(
+				"Relational Expr", relationalExpr.line(),
+				relationalExpr.left(), relationalExpr.right(),
+				relationalExpr.op()
+			);
+			case NegExpr e -> negExprStr(e);
+			case NotExpr e -> notExprStr(e);
 		};
+	}
+
+	private static AstPrinter notExprStr(NotExpr e) {
+		return new ListPrinter("Not Expr",
+			createLine(e.line()),
+			new SinglePrinter("Expr", exprStr(e.expr()))
+		);
+	}
+
+	private static AstPrinter negExprStr(NegExpr e) {
+		return new ListPrinter("Neg Expr",
+			createLine(e.line()),
+			new SinglePrinter("Expr", exprStr(e.expr()))
+		);
 	}
 
 	private static AstPrinter fnCallExprStr(FnCallExpr e) {
@@ -150,12 +186,15 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 		);
 	}
 
-	private static AstPrinter binaryExprStr(BinaryExpr e) {
-		return new ListPrinter("Binary Expr",
-			createLine(e.line()),
-			new KeyValuePrinter("Op", e.op().desc),
-			new SinglePrinter("Left", exprStr(e.left())),
-			new SinglePrinter("Right", exprStr(e.right()))
+	// Should have made a BinaryExpr interface but aside printing, I can't see
+	// anywhere else I'll want to use it
+	private static AstPrinter binaryExprHelper(String name, int line, Expr left,
+	                                           Expr right, TokenType op) {
+		return new ListPrinter(name,
+			createLine(line),
+			new KeyValuePrinter("Op", op.desc),
+			new SinglePrinter("Left", exprStr(left)),
+			new SinglePrinter("Right", exprStr(right))
 		);
 	}
 
@@ -163,14 +202,6 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 		return new ListPrinter("Literal Expr",
 			createLine(e.line()),
 			new KeyValuePrinter(e.type(), e.value())
-		);
-	}
-
-	private static AstPrinter unaryExprStr(UnaryExpr e) {
-		return new ListPrinter("Unary Expr",
-			createLine(e.line()),
-			new KeyValuePrinter("Op", e.op().toString()),
-			new SinglePrinter("Expr", exprStr(e.expr()))
 		);
 	}
 

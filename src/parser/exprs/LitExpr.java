@@ -1,6 +1,6 @@
 package parser.exprs;
 
-import sanity2.BuiltInTypes;
+import static sanity2.NEarthType.Base.*;
 
 public sealed interface LitExpr extends Expr {
 	default String value() {
@@ -9,17 +9,17 @@ public sealed interface LitExpr extends Expr {
 			case Str s -> s.str();
 			case Bool b -> String.valueOf(b.bool());
 			case Float f -> String.valueOf(f.num());
-			case Nada _ -> BuiltInTypes.NADA;
+			case Nada _ -> NadaType.type;
 		};
 	}
 
 	default String type() {
 		return switch (this) {
-			case Int _ -> BuiltInTypes.INT;
-			case Str _ -> BuiltInTypes.STRING;
-			case Bool _ -> BuiltInTypes.BOOL;
-			case Float _ -> BuiltInTypes.FLOAT;
-			case Nada _ -> BuiltInTypes.NADA;
+			case Int _ -> IntType.type;
+			case Str _ -> StrType.type;
+			case Bool _ -> BoolType.type;
+			case Float _ -> FloatType.type;
+			case Nada _ -> NadaType.type;
 		};
 	}
 
