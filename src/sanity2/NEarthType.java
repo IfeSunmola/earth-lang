@@ -1,5 +1,6 @@
 package sanity2;
 
+import java.util.List;
 import java.util.Map;
 
 public sealed interface NEarthType {
@@ -11,9 +12,19 @@ public sealed interface NEarthType {
 		"nada", Base.NadaType
 	);
 
+	default boolean isOneOf(NEarthType... types) {
+		for (NEarthType t : types) {
+			if (this == t) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	default String string() {
 		return switch (this) {
 			case Base b -> b.type;
+			case FuncType funcType -> funcType.toString();
 		};
 	}
 
@@ -28,6 +39,19 @@ public sealed interface NEarthType {
 
 		Base(String s) {
 			this.type = s;
+		}
+	}
+
+	record FuncType(List<Base> params, Base returnType) implements NEarthType {
+		@Override
+		public String toString() {
+			return "fn(%s)%s".formatted(
+				params.stream()
+					.map(NEarthType::toString)
+					.reduce((a, b) -> a + ", " + b)
+					.orElse(""),
+				returnType
+			);
 		}
 	}
 }
