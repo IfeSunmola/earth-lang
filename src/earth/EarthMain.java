@@ -8,7 +8,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.Parser;
 import parser.ast_helpers.StmtList;
-import parser.ast_printer.AstPrinter;
 import sanity.SanityChecker;
 
 import java.util.logging.Level;
@@ -25,6 +24,7 @@ earth version -> print version
 * */
 
 void handwrittenMain(String filepath) {
+	// lexer
 	var result = new lexer.Lexer(filepath).lex();
 	if (result.isErr()) {
 		result.errors().forEach(System.err::println);
@@ -32,6 +32,7 @@ void handwrittenMain(String filepath) {
 	}
 	List<lexer.Token> tokens = result.value();
 
+	// parser
 	var parser = new Parser(tokens);
 	EarthResult<StmtList> parse = parser.parse();
 
@@ -41,7 +42,14 @@ void handwrittenMain(String filepath) {
 	}
 
 	StmtList stmts = parse.value();
-	AstPrinter.print(stmts);
+	//	AstPrinter.print(stmts);
+
+	// sanity checker
+	EarthResult<?> result1 = sanity2.SanityChecker.run(stmts);
+	if (result1.isErr()) {
+		result1.errors().forEach(System.err::println);
+		System.exit(1);
+	}
 
 
 	System.exit(1);
