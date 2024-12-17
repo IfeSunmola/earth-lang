@@ -45,6 +45,12 @@ class ExprTyper {
 	/// The type a of function call is the return type of the function
 	static FnCallExpr typeFnCallExpr(FnCallExpr e) {
 		String fnName = e.name().name();
+		if (fnName.equals("main")) {
+			throw new SanityException(
+				"Cannot call main function", e.line()
+			);
+		}
+
 		int line = e.line();
 		ExprList params = e.params();
 

@@ -158,4 +158,10 @@ public class EarthUtils {
 			System.exit(1);
 		}
 	}
+
+	public static Path removeExt(Path path) {
+		String temp = path.getFileName().toString();
+		temp = temp.substring(0, temp.lastIndexOf('.'));
+		return path.resolveSibling(temp);
+	}
 }

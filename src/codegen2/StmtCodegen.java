@@ -4,6 +4,7 @@ import codegen2.CodegenUtils.ClassVariable;
 import codegen2.CodegenUtils.Method;
 import codegen2.CodegenUtils.MethodVariable;
 import earth.EarthResult;
+import earth.EarthUtils;
 import parser.ast_helpers.StmtList;
 import parser.ast_helpers.TypedIdentList;
 import parser.exprs.Expr;
@@ -35,15 +36,16 @@ public class StmtCodegen {
 	private boolean inMethod = false;
 	private ClassBuilder classBuilder;
 	private Method currentMethod;
-	private static final Map<String, Method> methods = new HashMap<>();
+	static final Map<String, Method> methods = new HashMap<>();
 
 	public StmtCodegen(Path path) {
-		srcPath = path;
+		srcPath = EarthUtils.removeExt(path);
 		thisClass = ClassDesc.of(srcPath.getFileName().toString());
 	}
 
 	public EarthResult<byte[]> generate(StmtList stmts) {
 		var errors = new ArrayList<String>();
+		System.out.println(srcPath);
 		byte[] result = ClassFile.of().build(thisClass, classBuilder -> {
 			this.classBuilder = classBuilder;
 			var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
@@ -58,7 +60,7 @@ public class StmtCodegen {
 				)
 				.withMethodBody("main", mainDesc,
 					ACC_PUBLIC | ACC_STATIC, builder -> {
-						this.currentMethod = new Method(builder, mainDesc);
+						this.currentMethod = new Method(builder, mainDesc, thisClass);
 						methods.put("main", currentMethod);
 						try {
 							generateStmts(stmts);
@@ -135,7 +137,7 @@ public class StmtCodegen {
 			ACC_STATIC | ACC_PRIVATE, builder -> {
 				Method prevMethod = currentMethod;
 
-				currentMethod = new Method(builder, methodDesc);
+				currentMethod = new Method(builder, methodDesc, thisClass);
 				methods.put(fnName, currentMethod);
 
 				// add the method parameters to the local methodVariables
@@ -181,7 +183,8 @@ public class StmtCodegen {
 	}
 
 	private void generateUnnamedStmt(UnnamedStmt s) {
-		throw new AssertionError("generateUnnamedStmt has not been implemented");
+		currentMethod.exprCodegen.loadExpr(s.expr());
+
 	}
 
 	private void generateWhenStmt(WhenStmt s) {

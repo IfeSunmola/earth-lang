@@ -36,12 +36,14 @@ public class CodegenUtils {
 		int slot; // this is literally the only reason I didn't use a record
 		final ExprCodegen exprCodegen;
 		final MethodTypeDesc signature;
+		final ClassDesc owner;
 
-		Method(CodeBuilder builder, MethodTypeDesc sig) {
+		Method(CodeBuilder builder, MethodTypeDesc sig, ClassDesc owner) {
 			this.builder = builder;
 			this.slot = sig.parameterCount();
 			this.exprCodegen = new ExprCodegen(builder);
 			this.signature = sig;
+			this.owner = owner;
 		}
 	}
 
