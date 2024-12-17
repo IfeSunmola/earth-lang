@@ -44,9 +44,8 @@ void handwrittenMain(String filepath) {
 	}
 
 	StmtList program = parse.value();
-	//	AstPrinter.print(stmts);
 
-
+	// sanity check
 	EarthResult<StmtList> run = SanityChecker.run(program);
 	if (run.isErr()) {
 		run.errors().forEach(System.err::println);
@@ -55,8 +54,21 @@ void handwrittenMain(String filepath) {
 
 	program = run.value();
 	TypeValidator.validateStmts(program);
-	AstPrinter.print(program);
+//	AstPrinter.print(program);
 
+	// codegen
+	var codegen = new codegen2.StmtCodegen(Path.of(filepath));
+	EarthResult<byte[]> classFile = codegen.generate(program);
+
+	if (classFile.isErr()) {
+		classFile.errors().forEach(System.err::println);
+		System.exit(1);
+	}
+
+	// write to file
+	EarthUtils.writeToFile(
+		classFile.value(), removeExt(Path.of(filepath)), true
+	);
 
 	System.exit(1);
 }

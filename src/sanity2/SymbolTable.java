@@ -29,7 +29,6 @@ enum SymbolTable {
 
 		addSymbol("true", 0, Builtin, BoolType);
 		addSymbol("false", 0, Builtin, BoolType);
-		System.out.println(this);
 	}
 
 
