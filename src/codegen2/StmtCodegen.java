@@ -1,12 +1,14 @@
 package codegen2;
 
 import codegen2.CodegenUtils.ClassVariable;
-import codegen2.CodegenUtils.CurrentBuilder;
+import codegen2.CodegenUtils.Method;
 import codegen2.CodegenUtils.MethodVariable;
 import earth.EarthResult;
 import parser.ast_helpers.StmtList;
+import parser.ast_helpers.TypedIdentList;
 import parser.exprs.Expr;
 import parser.stmts.*;
+import sanity2.NEarthType;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
@@ -16,11 +18,15 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import static codegen2.CodegenUtils.earthTypeToDesc;
 import static codegen2.CodegenUtils.earthTypeToTypeKind;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
+import static sanity2.NEarthType.Base;
+import static sanity2.NEarthType.FuncType;
 
 @SuppressWarnings("preview")
 public class StmtCodegen {
@@ -28,9 +34,9 @@ public class StmtCodegen {
 	private final ClassDesc thisClass;
 	private boolean inMethod = false;
 	private ClassBuilder classBuilder;
-	private CurrentBuilder currentBuilder;
+	private Method currentMethod;
+	private static final Map<String, Method> methods = new HashMap<>();
 
-	// TODO: Assert that any method named main must have no parameters
 	public StmtCodegen(Path path) {
 		srcPath = path;
 		thisClass = ClassDesc.of(srcPath.getFileName().toString());
@@ -52,7 +58,8 @@ public class StmtCodegen {
 				)
 				.withMethodBody("main", mainDesc,
 					ACC_PUBLIC | ACC_STATIC, builder -> {
-						this.currentBuilder = new CurrentBuilder(builder, mainDesc);
+						this.currentMethod = new Method(builder, mainDesc);
+						methods.put("main", currentMethod);
 						try {
 							generateStmts(stmts);
 						}
@@ -91,26 +98,77 @@ public class StmtCodegen {
 
 		if (!inMethod) {
 			classBuilder.withField(name, desc, ACC_STATIC);
-			currentBuilder.exprCodegen.loadExpr(toDeclare);
-			currentBuilder.builder.putstatic(thisClass, name, desc);
+			currentMethod.exprCodegen.loadExpr(toDeclare);
+			currentMethod.builder.putstatic(thisClass, name, desc);
 
-			currentBuilder.exprCodegen.classVariables
+			currentMethod.exprCodegen.classVariables
 				.put(name, new ClassVariable(name, desc));
 			return;
 		}
 
-		currentBuilder.exprCodegen.loadExpr(toDeclare);
-		int slot = currentBuilder.slot++;
+		currentMethod.exprCodegen.loadExpr(toDeclare);
+		int slot = currentMethod.slot++;
 		TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
-		currentBuilder.builder.storeLocal(typeKind, slot);
+		currentMethod.builder.storeLocal(typeKind, slot);
 
-		currentBuilder.exprCodegen.methodVariables
+		currentMethod.exprCodegen.methodVariables
 			.put(name,
 				new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
 	}
 
 	private void generateFnDefStmt(FnDefStmt s) {
-		throw new AssertionError("generateFnDefStmt has not been implemented");
+		inMethod = true;
+		String fnName = s.name().name();
+		if (fnName.equals("main")) { // main already defined so no need to redefine
+			currentMethod = methods.get("main");
+			generateStmts(s.body());
+			inMethod = false;
+			return;
+		}
+
+		MethodTypeDesc methodDesc = createSignature(
+			s.params(), s.returnType().dataType()
+		);
+
+		classBuilder.withMethodBody(fnName, methodDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> {
+				Method prevMethod = currentMethod;
+
+				currentMethod = new Method(builder, methodDesc);
+				methods.put(fnName, currentMethod);
+
+				// add the method parameters to the local methodVariables
+				s.params().forEach(param -> {
+					String name = param.name().name();
+					NEarthType paramType = param.type().dataType();
+					int slot = currentMethod.slot++;
+
+					TypeKind typeKind = earthTypeToTypeKind(paramType);
+					currentMethod.builder.storeLocal(typeKind, slot);
+
+					currentMethod.exprCodegen.methodVariables
+						.put(name, new MethodVariable(name, paramType, typeKind, slot));
+				});
+
+				generateStmts(s.body());
+
+				currentMethod = prevMethod;
+			});
+
+		inMethod = false;
+	}
+
+	private MethodTypeDesc createSignature(TypedIdentList params,
+	                                       NEarthType retType) {
+		ClassDesc retTypeDesc = earthTypeToDesc(retType);
+
+		// params are in form: name1:type1,name2:type2,...name9:type9
+		// extract the types
+		var paramTypes = new ClassDesc[params.size()];
+		for (int i = 0; i < params.size(); i++) {
+			paramTypes[i] = earthTypeToDesc(params.get(i).type().dataType());
+		}
+		return MethodTypeDesc.of(retTypeDesc, paramTypes);
 	}
 
 	private void generateLoopStmt(LoopStmt s) {
@@ -130,6 +188,22 @@ public class StmtCodegen {
 	}
 
 	private void generateYeetStmt(YeetStmt s) {
-		throw new AssertionError("generateYeetStmt has not been implemented");
+		Expr expr = s.yeetValue();
+		switch (expr.dataType()) {
+			case Base.IntType, Base.BoolType -> {
+				currentMethod.exprCodegen.loadExpr(expr);
+				currentMethod.builder.ireturn();
+			}
+			case Base.FloatType -> {
+				currentMethod.exprCodegen.loadExpr(expr);
+				currentMethod.builder.freturn();
+			}
+			case Base.StrType -> {
+				currentMethod.exprCodegen.loadExpr(expr);
+				currentMethod.builder.areturn();
+			}
+			case Base.NadaType -> currentMethod.builder.return_();
+			case FuncType _ -> throw new AssertionError();
+		}
 	}
 }

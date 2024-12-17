@@ -74,6 +74,22 @@ public class SanityChecker {
 				}
 			});
 
+		// If the name of the function is main, the function must take no
+		// parameters and return nada
+		if (name.equals("main")) {
+			if (!params.isEmpty())
+				throw new SanityException(
+					"Function `main` must take no parameters", line
+				);
+
+			if (returnType != NEarthType.Base.NadaType)
+				throw new SanityException(
+					"Function `main` must return `nada`, but returns `%s`"
+						.formatted(returnType.string()),
+					line
+				);
+		}
+
 		SymbolTable.instance.enterScope();
 
 		// Second, add the parameters to the symbol table.

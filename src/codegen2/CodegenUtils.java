@@ -6,8 +6,6 @@ import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.TypeKind;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static java.lang.constant.ConstantDescs.*;
@@ -33,22 +31,13 @@ public class CodegenUtils {
 	record MethodVariable(String name, NEarthType earthType, TypeKind typeKind,
 	                      int slot) {}
 
-	record CurrentBuilder2(CodeBuilder builder, int slot,
-	                       Map<String, MethodVariable> variables,
-	                       ExprCodegen exprCodegen) {
-
-		public CurrentBuilder2(CodeBuilder builder) {
-			this(builder, 0, new HashMap<>(), new ExprCodegen(builder));
-		}
-	}
-
-	static final class CurrentBuilder {
+	static final class Method {
 		final CodeBuilder builder;
 		int slot; // this is literally the only reason I didn't use a record
 		final ExprCodegen exprCodegen;
 		final MethodTypeDesc signature;
 
-		CurrentBuilder(CodeBuilder builder, MethodTypeDesc sig) {
+		Method(CodeBuilder builder, MethodTypeDesc sig) {
 			this.builder = builder;
 			this.slot = sig.parameterCount();
 			this.exprCodegen = new ExprCodegen(builder);
