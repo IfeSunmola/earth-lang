@@ -101,8 +101,9 @@ public class StmtCodegen {
 			currentMethod.exprCodegen.loadExpr(toDeclare);
 			currentMethod.builder.putstatic(thisClass, name, desc);
 
-			currentMethod.exprCodegen.classVariables
-				.put(name, new ClassVariable(name, desc));
+			ExprCodegen.classVariables
+				.put(name, new ClassVariable(name, desc, thisClass));
+
 			return;
 		}
 

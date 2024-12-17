@@ -26,7 +26,7 @@ public class CodegenUtils {
 	static final Consumer<CodeBuilder.BlockCodeBuilder>
 		true_ = CodeBuilder::iconst_1, false_ = CodeBuilder::iconst_0;
 
-	record ClassVariable(String name, ClassDesc type) {}
+	record ClassVariable(String name, ClassDesc type, ClassDesc owner) {}
 
 	record MethodVariable(String name, NEarthType earthType, TypeKind typeKind,
 	                      int slot) {}

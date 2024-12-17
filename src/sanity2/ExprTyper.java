@@ -264,7 +264,7 @@ class ExprTyper {
 		}
 
 		throw new SanityException(
-			"`-` is not a valid operator on %s".formatted(exprType),
+			"`-` is not a valid operator on %s".formatted(exprType.string()),
 			e.line()
 		);
 	}
