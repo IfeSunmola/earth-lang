@@ -8,7 +8,9 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.Parser;
 import parser.ast_helpers.StmtList;
-import sanity.SanityChecker;
+import parser.ast_printer.AstPrinter;
+import sanity2.SanityChecker;
+import sanity2.TypeValidator;
 
 import java.util.logging.Level;
 
@@ -41,15 +43,19 @@ void handwrittenMain(String filepath) {
 		System.exit(1);
 	}
 
-	StmtList stmts = parse.value();
+	StmtList program = parse.value();
 	//	AstPrinter.print(stmts);
 
-	// sanity checker
-	EarthResult<?> result1 = sanity2.SanityChecker.run(stmts);
-	if (result1.isErr()) {
-		result1.errors().forEach(System.err::println);
+
+	EarthResult<StmtList> run = SanityChecker.run(program);
+	if (run.isErr()) {
+		run.errors().forEach(System.err::println);
 		System.exit(1);
 	}
+
+	program = run.value();
+	TypeValidator.validateStmts(program);
+	AstPrinter.print(program);
 
 
 	System.exit(1);
@@ -97,7 +103,7 @@ Path compile(Path fPath, boolean printMsg) {
 	var parser = new EarthParser(new CommonTokenStream(lexer));
 	ProgramContext program = parser.program();
 
-	SanityChecker sanityChecker = new SanityChecker();
+	sanity.SanityChecker sanityChecker = new sanity.SanityChecker();
 	sanityChecker.visit(program);
 
 	byte[] classFile = new StmtCodeGen(program, removeExt(fPath))

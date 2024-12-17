@@ -9,4 +9,8 @@ public final class ExprList extends ArrayList<Expr> {
 	public ExprList(List<Expr> exprs) {
 		super(exprs);
 	}
+
+	public ExprList() {
+		super();
+	}
 }

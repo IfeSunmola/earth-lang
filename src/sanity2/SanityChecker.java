@@ -2,54 +2,59 @@ package sanity2;
 
 import earth.EarthResult;
 import parser.ast_helpers.StmtList;
+import parser.ast_helpers.TypedIdent;
 import parser.ast_helpers.TypedIdentList;
 import parser.exprs.Expr;
+import parser.exprs.IdentExpr;
 import parser.stmts.*;
-import sanity2.NEarthType.Base;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
+import static sanity2.Kind.VarDecl;
 import static sanity2.NEarthType.Base.BoolType;
 
-public interface SanityChecker {
-	static EarthResult<?> run(StmtList stmts) {
+public class SanityChecker {
+	public static EarthResult<StmtList> run(StmtList stmts) {
 		var errors = new ArrayList<String>();
+
 		try {
-			checkStmts(stmts);
+			StmtList result = typeStmts(stmts);
+			return EarthResult.ok(result);
 		}
 		catch (SanityException e) {
 			errors.add(e.getMessage());
 		}
-
-		if (errors.isEmpty()) return EarthResult.ok(null);
-		else return EarthResult.err(errors);
+		return EarthResult.err(errors);
 	}
 
-	private static void checkStmts(StmtList stmts) {
-		stmts.forEach(SanityChecker::checkStmt);
+	private static StmtList typeStmts(StmtList stmts) {
+		return new StmtList(stmts.stream()
+			.map(SanityChecker::typeStmt)
+			.toList());
 	}
 
-	private static void checkStmt(Stmt stmt) {
-		switch (stmt) {
-			case DeclStmt s -> checkDeclStmt(s);
-			case FnDefStmt s -> checkFnDefStmt(s);
-			case LoopStmt s -> checkLoopStmt(s);
-			case ReassignStmt s -> checkReassignStmt(s);
-			case UnnamedStmt s -> checkUnnamedStmt(s);
-			case WhenStmt s -> checkWhenStmt(s);
-			case YeetStmt s -> checkYeetStmt(s);
-		}
+	private static Stmt typeStmt(Stmt stmt) {
+		return switch (stmt) {
+			case DeclStmt s -> typeDeclStmt(s);
+			case FnDefStmt s -> fnDefStmt(s);
+			case LoopStmt s -> typedLoopStmt(s);
+			case ReassignStmt s -> typeReassignStmt(s);
+			case UnnamedStmt s -> typeUnnamedStmt(s);
+			case WhenStmt s -> typedWhenStmt(s);
+			case YeetStmt s -> typedYeetStmt(s);
+		};
 	}
 
-	static void checkFnDefStmt(FnDefStmt s) {
+	private static FnDefStmt fnDefStmt(FnDefStmt s) {
 		String name = s.name().name();
 		int line = s.line();
 		TypedIdentList params = s.params();
 		StmtList fnBody = s.body();
 		NEarthType temp = NEarthType.fromString(s.returnType().name(), line);
-		if (!(temp instanceof Base returnType))
+
+		if (!(temp instanceof NEarthType.Base returnType))
 			throw new SanityException(
 				"Uhh, I don't wanna implement functions returning functions" + s.returnType().name(),
 				line
@@ -72,12 +77,18 @@ public interface SanityChecker {
 		SymbolTable.instance.enterScope();
 
 		// Second, add the parameters to the symbol table.
+		var typedParams = new TypedIdentList();
 		params.forEach(param -> {
 			String paramName = param.name().name();
 			String paramType = param.type().name();
 
-			NEarthType type = validateDecl(paramName, paramType, line, null);
-			SymbolTable.instance.addSymbol(paramName, line, Kind.VarDecl, type);
+			NEarthType type = getDeclTypeOrThrow(paramName, paramType, line);
+
+			SymbolTable.instance.addSymbol(paramName, line, VarDecl, type);
+
+			// Get the expression but with type information attached to it
+			TypedIdent typedParam = ExprTyper.typedIdentExpr(param);
+			typedParams.add(typedParam);
 		});
 
 		// Third, throw an exception if the statement body contains a `yeet`
@@ -94,14 +105,14 @@ public interface SanityChecker {
 			});
 
 		// Fourth, check the body
-		checkStmts(fnBody);
+		var typedBody = typeStmts(fnBody);
 
 
 		// Because a yeet statement is automatically added in the parser when
 		// there's none, the last statement is ALWAYS a yeet statement.
 		// Fifth, get the type of the expression in the yeet statement
-		YeetStmt last = (YeetStmt) fnBody.getLast();
-		NEarthType lastType = ExprResolver.exprType(last.yeetValue());
+		YeetStmt last = (YeetStmt) typedBody.getLast();
+		NEarthType lastType = last.yeetValue().dataType();
 
 		// Fifth, check that the type of the expression in the yeet statement
 		// matches the return type of the function
@@ -116,79 +127,94 @@ public interface SanityChecker {
 
 		// Sixth, add the function to the symbol table
 
-		List<Base> symbolParams = params.stream()
+		List<NEarthType.Base> symbolParams = params.stream()
 			.map(param -> NEarthType.fromString(param.type().name(), line))
-			.map(type -> (Base) type)
+			.map(type -> (NEarthType.Base) type)
 			.toList();
 
 		SymbolTable.instance.addSymbol(name, line, Kind.FnDecl,
 			new NEarthType.FuncType(symbolParams, returnType));
+
+
+		return new FnDefStmt(
+			ExprTyper.typeIdentExpr(s.name()),
+			typedParams,
+			ExprTyper.typeIdentExpr(s.returnType()),
+			typedBody,
+			line
+		);
 	}
 
-	static void checkWhenStmt(WhenStmt s) {
-		Consumer<WhenStmt.When> whenChecker = when -> {
-			// The condition must be a boolean expression
-			NEarthType condType = ExprResolver.exprType(when.condition());
-			if (condType != BoolType)
+	private static WhenStmt typedWhenStmt(WhenStmt s) {
+		Function<WhenStmt.When, WhenStmt.When> whenMapper = when -> {
+			Expr typedCond = ExprTyper.typeExpr(when.condition());
+			if (typedCond.dataType() != BoolType)
 				throw new SanityException(
 					"Expected a boolean expression in when condition, but got `%s`"
-						.formatted(condType.string()),
+						.formatted(typedCond.dataType().string()),
 					s.line()
 				);
 
 			SymbolTable.instance.enterScope();
-			checkStmts(when.body());
+			StmtList typedBody = typeStmts(when.body());
 			SymbolTable.instance.exitScope();
+
+			return new WhenStmt.When(typedCond, typedBody);
 		};
 
 		// First check the condition and the body of the when block.
-		whenChecker.accept(s.when());
+		WhenStmt.When newWhen = whenMapper.apply(s.when());
 
 		// Second check the else-when blocks. Repeat the same checks as above
-		s.elseWhen().forEach(whenChecker);
+		List<WhenStmt.When> typedElseWhen = s.elseWhen().stream()
+			.map(whenMapper).toList();
 
 		// Finally, check the else block
 		SymbolTable.instance.enterScope();
-		checkStmts(s.elseBody());
+		StmtList typedElseBlock = typeStmts(s.elseBody());
 		SymbolTable.instance.exitScope();
+
+		return new WhenStmt(newWhen, typedElseWhen, typedElseBlock, s.line());
 	}
 
-	static void checkLoopStmt(LoopStmt s) {
+	private static LoopStmt typedLoopStmt(LoopStmt s) {
 		SymbolTable.instance.enterScope();
 		// Check the initializer
-		checkDeclStmt(s.initializer());
+		DeclStmt typedDeclStmt = typeDeclStmt(s.initializer());
 
 		// Check that the condition has BoolType
-		NEarthType condType = ExprResolver.exprType(s.condition());
-		if (condType != BoolType)
+		Expr typedCond = ExprTyper.typeExpr(s.condition());
+		if (typedCond.dataType() != BoolType)
 			throw new SanityException(
 				"Expected a boolean expression in loop condition, but got `%s`"
-					.formatted(condType.string()),
+					.formatted(typedCond.dataType().string()),
 				s.line()
 			);
 
 		// Check the update statement
-		checkReassignStmt(s.update());
+		ReassignStmt typedReassignStmt = typeReassignStmt(s.update());
 
 		// Check the body
-		checkStmts(s.body());
+		StmtList typedBody = typeStmts(s.body());
 
 		SymbolTable.instance.exitScope();
+
+		return new LoopStmt(
+			typedDeclStmt, typedCond, typedReassignStmt, typedBody, s.line()
+		);
 	}
 
-	static void checkUnnamedStmt(UnnamedStmt s) {
-		// Just check that the expression is valid. An exception will be thrown
-		// if not
-		ExprResolver.exprType(s.expr());
+	private static YeetStmt typedYeetStmt(YeetStmt s) {
+		Expr typedExpr = ExprTyper.typeExpr(s.yeetValue());
+		return new YeetStmt(typedExpr, s.line());
 	}
 
-	static void checkYeetStmt(YeetStmt s) {
-		// Just check that the expression is valid. An exception will be thrown
-		// if not
-		ExprResolver.exprType(s.yeetValue());
+	private static UnnamedStmt typeUnnamedStmt(UnnamedStmt s) {
+		Expr typedExpr = ExprTyper.typeExpr(s.expr());
+		return new UnnamedStmt(typedExpr, s.line());
 	}
 
-	static void checkReassignStmt(ReassignStmt s) {
+	private static ReassignStmt typeReassignStmt(ReassignStmt s) {
 		String name = s.name().name();
 		int line = s.line();
 
@@ -199,39 +225,70 @@ public interface SanityChecker {
 				"`%s` is not a known identifier".formatted(name), line
 			));
 
-		if (variable.kind() != Kind.VarDecl)
+		if (variable.kind() != VarDecl)
 			throw new SanityException(
 				"`%s` is not a variable".formatted(name), line
 			);
 
 		// Find the type of the new expression
-		NEarthType exprType = ExprResolver.exprType(s.newValue());
+		Expr typedExpr = ExprTyper.typeExpr(s.newValue());
 
 		// Check that the type of the new expression matches the type of the
 		// variable being assigned
-		if (variable.type() != exprType)
+		if (variable.type() != typedExpr.dataType())
 			throw new SanityException(
 				"`%s` has type `%s` but the expression has type `%s`"
-					.formatted(name, variable.type().string(), exprType.string()),
+					.formatted(name, variable.type().string(),
+						typedExpr.dataType().string()),
 				line
 			);
+
+		IdentExpr typedName = ExprTyper.typeIdentExpr(s.name());
+		return new ReassignStmt(typedName, typedExpr, line);
 	}
 
-	static void checkDeclStmt(DeclStmt s) {
-		// What the flip is this lmao
+	private static DeclStmt typeDeclStmt(DeclStmt s) {
 		String name = s.nameAndType().name().name();
-		String type = s.nameAndType().type().name();
+		String strType = s.nameAndType().type().name();
 		int line = s.line();
 
-		NEarthType exprType = validateDecl(name, type, line, s.value());
-		SymbolTable.instance.addSymbol(name, line, Kind.VarDecl, exprType);
+		NEarthType type = getDeclTypeOrThrow(name, strType, line);
+
+		Expr toDeclare = validateDecl(name, type, line, s.value());
+
+		SymbolTable.instance.addSymbol(
+			name, line, VarDecl, toDeclare.dataType()
+		);
+
+		return new DeclStmt(
+			ExprTyper.typedIdentExpr(s.nameAndType()),
+			toDeclare,
+			line
+		);
 	}
 
-	/// Returns the type of the expression if a declaration is possible, or
-	/// throws a `SanityException` if the declaration is invalid
-	private static NEarthType validateDecl(String name, String strType,
-	                                       int line,
-	                                       Expr toDeclare) {
+	private static Expr validateDecl(String name, NEarthType expectedType,
+	                                 int line, Expr toDeclare) {
+		//  find the type of the expression
+		Expr typedExpr = ExprTyper.typeExpr(toDeclare);
+
+		// Fourth, check that the type of the expression matches the type of the
+		// declaration
+		if (typedExpr.dataType() != expectedType)
+			throw new SanityException(
+				"`%s` has type `%s`, but the expression has type `%s`"
+					.formatted(name, expectedType.string(),
+						typedExpr.dataType().string()),
+				line
+			);
+
+		return typedExpr; // happy path
+	}
+
+	/// Returns the type of the expression if a declaration with the name is
+	/// possible, or throws a `SanityException` if not
+	private static NEarthType getDeclTypeOrThrow(String name, String strType,
+	                                             int line) {
 		// First, check that the type is known
 		NEarthType declType = NEarthType.fromString(strType, line);
 		if (declType == null)
@@ -250,23 +307,6 @@ public interface SanityChecker {
 				throw new SanityException(msg, line);
 			});
 
-		// If to declare is null, then the type is just the decl type. This will
-		// be the case when this function is called when handling function
-		// parameters
-		if (toDeclare == null) return declType;
-
-		// Third, find the type of the expression
-		NEarthType exprType = ExprResolver.exprType(toDeclare);
-
-		// Fourth, check that the type of the expression matches the type of the
-		// declaration
-		if (exprType != declType)
-			throw new SanityException(
-				"`%s` has type `%s`, but the expression has type `%s`"
-					.formatted(name, declType.string(), exprType.string()),
-				line
-			);
-
-		return declType; // happy path
+		return declType;
 	}
 }

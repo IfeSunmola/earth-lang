@@ -1,5 +1,7 @@
 package parser.exprs;
 
+import sanity2.NEarthType;
+
 import static sanity2.NEarthType.Base.*;
 
 public sealed interface LitExpr extends Expr {
@@ -20,6 +22,16 @@ public sealed interface LitExpr extends Expr {
 			case Bool _ -> BoolType.type;
 			case Float _ -> FloatType.type;
 			case Nada _ -> NadaType.type;
+		};
+	}
+
+	default NEarthType dataType() {
+		return switch (this) {
+			case Int _ -> IntType;
+			case Str _ -> StrType;
+			case Bool _ -> BoolType;
+			case Float _ -> FloatType;
+			case Nada _ -> NadaType;
 		};
 	}
 
