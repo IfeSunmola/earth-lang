@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import static earth.EarthUtils.DEBUG;
 import static earth.EarthUtils.LOGGER;
 import static lexer.TokenType.*;
+import static parser.exprs.BinaryExpr.*;
 
 public class Parser {
 	private final List<Token> tokens;
@@ -498,7 +499,7 @@ public class Parser {
 			case And, Or -> Precedence.LOGICAL;
 			case Lt, Gt, Lte, Gte -> Precedence.LESS_GREATER;
 			case PLus, Minus -> Precedence.SUM;
-			case Star, Slash -> Precedence.PRODUCT;
+			case Star, Slash, Mod -> Precedence.PRODUCT;
 			case LParen -> Precedence.CALL;
 			default -> Precedence.LOWEST;
 		});
