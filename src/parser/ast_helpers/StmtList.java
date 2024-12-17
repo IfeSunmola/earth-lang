@@ -9,4 +9,8 @@ public final class StmtList extends ArrayList<Stmt> {
 	public StmtList(List<Stmt> stmts) {
 		super(stmts);
 	}
+
+	public StmtList() {
+		super();
+	}
 }

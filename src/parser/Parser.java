@@ -104,12 +104,12 @@ public class Parser {
 			return new StmtList(List.of());
 		}
 
-		List<Stmt> stmts = new ArrayList<>();
+		var stmts = new StmtList();
 		while (peekType() != Eof && peekType() != end) {
 			stmts.add(parseStmt());
 		}
 		expect(end); // consume the end token
-		return new StmtList(stmts);
+		return stmts;
 	}
 
 	private Stmt parseStmt() {
@@ -135,7 +135,7 @@ public class Parser {
 		WhenStmt.When when = new WhenStmt.When(condition, body);
 
 		List<WhenStmt.When> elseWhens = new ArrayList<>();
-		StmtList elseBlock = new StmtList(new ArrayList<>());
+		StmtList elseBlock = new StmtList();
 		while (peekType() == Else) {
 			consume();
 			if (peekType() == When) { // else when
@@ -421,14 +421,14 @@ public class Parser {
 		Optional<Expr> expr = tryParseExpr();
 		if (expr.isEmpty()) return new ExprList(List.of());
 
-		List<Expr> exprs = new ArrayList<>();
+		var exprs = new ExprList();
 		exprs.add(expr.get());
 		while (peekType() == COMMA) {
 			consume();
 			// Optional trailing comma
 			tryParseExpr().ifPresent(exprs::add);
 		}
-		return new ExprList(exprs);
+		return exprs;
 	}
 
 	private TypedIdentList parseTypedIdentList() {
