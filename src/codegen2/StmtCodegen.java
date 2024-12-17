@@ -1,8 +1,5 @@
 package codegen2;
 
-import codegen2.CodegenUtils.ClassVariable;
-import codegen2.CodegenUtils.Method;
-import codegen2.CodegenUtils.MethodVariable;
 import earth.EarthResult;
 import earth.EarthUtils;
 import parser.ast_helpers.StmtList;
@@ -13,6 +10,7 @@ import sanity2.NEarthType;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
+import java.lang.classfile.Label;
 import java.lang.classfile.TypeKind;
 import java.lang.classfile.attribute.SourceFileAttribute;
 import java.lang.constant.ClassDesc;
@@ -22,8 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static codegen2.CodegenUtils.earthTypeToDesc;
-import static codegen2.CodegenUtils.earthTypeToTypeKind;
+import static codegen2.CodegenUtils.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
 import static sanity2.NEarthType.Base;
@@ -48,6 +45,7 @@ public class StmtCodegen {
 		System.out.println(srcPath);
 		byte[] result = ClassFile.of().build(thisClass, classBuilder -> {
 			this.classBuilder = classBuilder;
+			generateBuiltins();
 			var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
 
 			classBuilder
@@ -98,25 +96,25 @@ public class StmtCodegen {
 		Expr toDeclare = s.value();
 		ClassDesc desc = earthTypeToDesc(toDeclare.dataType());
 
-		if (!inMethod) {
-			classBuilder.withField(name, desc, ACC_STATIC);
+		if (inMethod) {
 			currentMethod.exprCodegen.loadExpr(toDeclare);
-			currentMethod.builder.putstatic(thisClass, name, desc);
+			int slot = currentMethod.slot++;
+			TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
+			currentMethod.builder.storeLocal(typeKind, slot);
 
-			ExprCodegen.classVariables
-				.put(name, new ClassVariable(name, desc, thisClass));
+			currentMethod.exprCodegen.methodVariables
+				.put(name,
+					new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
 
 			return;
 		}
 
+		classBuilder.withField(name, desc, ACC_STATIC);
 		currentMethod.exprCodegen.loadExpr(toDeclare);
-		int slot = currentMethod.slot++;
-		TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
-		currentMethod.builder.storeLocal(typeKind, slot);
+		currentMethod.builder.putstatic(thisClass, name, desc);
 
-		currentMethod.exprCodegen.methodVariables
-			.put(name,
-				new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
+		ExprCodegen.classVariables
+			.put(name, new ClassVariable(name, desc, thisClass));
 	}
 
 	private void generateFnDefStmt(FnDefStmt s) {
@@ -161,34 +159,92 @@ public class StmtCodegen {
 		inMethod = false;
 	}
 
-	private MethodTypeDesc createSignature(TypedIdentList params,
-	                                       NEarthType retType) {
-		ClassDesc retTypeDesc = earthTypeToDesc(retType);
-
-		// params are in form: name1:type1,name2:type2,...name9:type9
-		// extract the types
-		var paramTypes = new ClassDesc[params.size()];
-		for (int i = 0; i < params.size(); i++) {
-			paramTypes[i] = earthTypeToDesc(params.get(i).type().dataType());
-		}
-		return MethodTypeDesc.of(retTypeDesc, paramTypes);
-	}
-
 	private void generateLoopStmt(LoopStmt s) {
-		throw new AssertionError("generateLoopStmt has not been implemented");
+		Label loopStart = currentMethod.builder.newLabel();
+		Label loopEnd = currentMethod.builder.newLabel();
+
+		generateDeclStmt(s.initializer()); // create the loop variable
+		currentMethod.builder.labelBinding(loopStart);
+		currentMethod.exprCodegen.loadExpr(s.condition());
+		// Here, the stack contains 1 if the loop should keep going, 0 if not.
+		// if condition is false, jump to loopEnd
+		currentMethod.builder.ifeq(loopEnd);
+
+		generateStmts(s.body());
+		generateReassignStmt(s.update());
+		currentMethod.builder.goto_(loopStart);
+
+		currentMethod.builder.labelBinding(loopEnd);
 	}
 
 	private void generateReassignStmt(ReassignStmt s) {
-		throw new AssertionError("generateReassignStmt has not been implemented");
+		String name = s.name().name();
+
+		// First check if the variable is in the current method
+		MethodVariable methodVar =
+			currentMethod.exprCodegen.methodVariables.get(name);
+		if (methodVar != null) {
+			currentMethod.exprCodegen.loadExpr(s.newValue());
+			currentMethod.builder.storeLocal(methodVar.typeKind(), methodVar.slot());
+		}
+		else {
+			// not in method, check if it's a class variable
+			ClassVariable classVar = ExprCodegen.classVariables.get(name);
+			if (classVar != null) {
+				currentMethod.exprCodegen.loadExpr(s.newValue());
+				currentMethod.builder.putstatic(classVar.owner(), classVar.name(),
+					classVar.type());
+				return;
+			}
+			throw new AssertionError("Malformed ReassignStmt: " + s);
+		}
 	}
 
 	private void generateUnnamedStmt(UnnamedStmt s) {
 		currentMethod.exprCodegen.loadExpr(s.expr());
-
 	}
 
 	private void generateWhenStmt(WhenStmt s) {
-		throw new AssertionError("generateWhenStmt has not been implemented");
+		Label end = currentMethod.builder.newLabel();
+		Label elseLabel = currentMethod.builder.newLabel();
+		var elseWhenLabels = new ArrayList<Label>();
+		for (int i = 0; i < s.elseWhen().size(); i++) {
+			elseWhenLabels.add(currentMethod.builder.newLabel());
+		}
+
+		// First, handle the when.
+		currentMethod.exprCodegen.loadExpr(s.when().condition());
+		// Now, the stack contains 1 if the condition is true, 0 if false
+		// read the below as if equal to 0, jump to elseLabel
+		// Also, empty elseWhenLabels means that there are no elseWhen blocks,
+		// so jump to the else label
+		if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
+		else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+		// condition is true
+		generateStmts(s.when().body());
+		currentMethod.builder.goto_(end);
+
+		// handle the elseWhen blocks. Surely, there are better ways to do this
+		s.elseWhen().forEach(elseWhen -> {
+			// (for the first iteration): remember we jumped to the first label in
+			// the elseWhenLabels list? Now, we're defining what goes there
+			// (for subsequent iterations): same as what we did above, but jumping
+			// is now done in the else below
+			currentMethod.builder.labelBinding(elseWhenLabels.removeFirst());
+			currentMethod.exprCodegen.loadExpr(elseWhen.condition());
+
+			if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
+			else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+
+			generateStmts(elseWhen.body());
+			currentMethod.builder.goto_(end);
+		});
+
+		// Finally, handle the else block
+		currentMethod.builder.labelBinding(elseLabel);
+		generateStmts(s.elseBody());
+
+		currentMethod.builder.labelBinding(end);
 	}
 
 	private void generateYeetStmt(YeetStmt s) {
@@ -209,5 +265,66 @@ public class StmtCodegen {
 			case Base.NadaType -> currentMethod.builder.return_();
 			case FuncType _ -> throw new AssertionError();
 		}
+	}
+
+	private MethodTypeDesc createSignature(TypedIdentList params,
+	                                       NEarthType retType) {
+		ClassDesc retTypeDesc = earthTypeToDesc(retType);
+
+		// params are in form: name1:type1,name2:type2,...name9:type9
+		// extract the types
+		var paramTypes = new ClassDesc[params.size()];
+		for (int i = 0; i < params.size(); i++) {
+			paramTypes[i] = earthTypeToDesc(params.get(i).type().dataType());
+		}
+		return MethodTypeDesc.of(retTypeDesc, paramTypes);
+	}
+
+	private void generateBuiltins() {
+		var intToStringDesc = MethodTypeDesc.of(CD_String, CD_int);
+		var floatToStringDesc = MethodTypeDesc.of(CD_String, CD_float);
+		var boolToStringDesc = MethodTypeDesc.of(CD_String, CD_boolean);
+		var printDesc = MethodTypeDesc.of(CD_void, CD_String);
+		var printlnDesc = MethodTypeDesc.of(CD_void, CD_String);
+
+		// Hmm, what could go wrong with using nulls like this? I might find
+		// out soon. Builder is null because it will be built immediately after
+		methods.put("intToStr", new Method(null, intToStringDesc, thisClass));
+		methods.put("floatToStr", new Method(null, floatToStringDesc, thisClass));
+		methods.put("boolToStr", new Method(null, boolToStringDesc, thisClass));
+		methods.put("print", new Method(null, printDesc, thisClass));
+		methods.put("println", new Method(null, printlnDesc, thisClass));
+
+		classBuilder.withMethodBody("intToStr", intToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.iload(0)
+				.invokestatic(CD_Integer, "toString", intToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("floatToStr", floatToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.fload(0)
+				.invokestatic(CD_Float, "toString", floatToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("boolToStr", boolToStringDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.iload(0)
+				.invokestatic(CD_Boolean, "toString", boolToStringDesc)
+				.areturn());
+
+		classBuilder.withMethodBody("print", printDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.getstatic(CD_System, "out", CD_PrintStream)
+				.aload(0)
+				.invokevirtual(CD_PrintStream, "print", printDesc)
+				.return_());
+
+		classBuilder.withMethodBody("println", printlnDesc,
+			ACC_STATIC | ACC_PRIVATE, builder -> builder
+				.getstatic(CD_System, "out", CD_PrintStream)
+				.aload(0)
+				.invokevirtual(CD_PrintStream, "println", printlnDesc)
+				.return_());
 	}
 }

@@ -2,14 +2,12 @@ package sanity2;
 
 import earth.EarthUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static sanity2.Kind.Builtin;
-import static sanity2.NEarthType.Base.BoolType;
+import static sanity2.Kind.FnDecl;
+import static sanity2.NEarthType.Base.*;
 
 enum Kind {VarDecl, FnDecl, Builtin}
 
@@ -29,6 +27,15 @@ enum SymbolTable {
 
 		addSymbol("true", 0, Builtin, BoolType);
 		addSymbol("false", 0, Builtin, BoolType);
+
+		addSymbol("print", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
+		addSymbol("println", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
+
+		addSymbol("intToStr", 0, FnDecl, new FuncType(List.of(IntType), StrType));
+		addSymbol("floatToStr", 0, FnDecl, new FuncType(List.of(FloatType),
+			StrType));
+		addSymbol("boolToStr", 0, FnDecl, new FuncType(List.of(BoolType),
+			StrType));
 	}
 
 
