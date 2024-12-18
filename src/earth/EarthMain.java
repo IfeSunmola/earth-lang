@@ -1,96 +1,134 @@
+package earth;
+
 import codegen.StmtCodegen;
-import earth.EarthResult;
-import earth.EarthUtils;
 import lexer.Lexer;
 import lexer.Token;
+import org.apache.commons.cli.*;
 import parser.Parser;
 import parser.ast_helpers.StmtList;
 import sanity.SanityChecker;
 import sanity.TypeValidator;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+
+import static earth.EarthUtils.COMPILER_NAME;
 import static earth.EarthUtils.COMPILER_NAME_VERSION;
 
-/*
-earth -> print usage
-earth <file> -> compile and run the program
-earth compile <file> -> compile the program to .class file
-earth run <.class> -> run the .class file
-earth help -> print usage
-earth version -> print version
-* */
+public class EarthMain {
+	public static boolean DEBUG = false; // Can't make this final :(
 
-void main(String... args) {
-	EarthUtils.validateJavaRuntime();
-	System.out.println("Running with DEBUG = " + EarthUtils.DEBUG);
+	void main(String... args) {
+		EarthUtils.validateJavaRuntime();
 
-	if (args.length == 0) {
-		printHelp();
-		return;
+		CommandLine parsed;
+		Options options = createOptions();
+		var helpPrinter = new HelpFormatter();
+
+		try {
+			parsed = new DefaultParser().parse(options, args);
+		}
+		catch (ParseException e) {
+			System.err.println("Error parsing command line arguments: " + e.getMessage());
+			helpPrinter.printHelp(COMPILER_NAME, options);
+			return;
+		}
+
+		if (parsed.hasOption("h") || args.length == 0) {
+			helpPrinter.printHelp(COMPILER_NAME, options);
+			return;
+		}
+		if (parsed.hasOption("v")) {
+			System.out.println(COMPILER_NAME_VERSION);
+			return;
+		}
+
+		if (parsed.hasOption("d")) DEBUG = true;
+
+		if (args.length == 1) { // one file passed.
+			Path compiledPath = compile(args[0], false);
+			EarthUtils.runClassFile(compiledPath);
+			try {
+				Files.delete(compiledPath);
+			}
+			catch (IOException e) {
+				System.err.println("Failed to delete class file: " + e.getMessage());
+			}
+		}
+
+		else if (parsed.hasOption("compile"))
+			compile(parsed.getOptionValue("compile"), true);
+
+		else if (parsed.hasOption("run")) {
+			String classFile = parsed.getOptionValue("run");
+			EarthUtils.runClassFile(Path.of(classFile));
+		}
+		else {
+			System.err.println("Invalid command: " + Arrays.toString(args));
+			System.exit(1);
+		}
 	}
 
-	if (args.length == 1) { // earth <command|file>
-		String arg = args[0];
+	private Options createOptions() {
+		var options = new Options();
+		options.addOption("d", "debug", false,
+			"Print stack trace of any error that happened during compilation");
 
-		if (arg.equals("help")) printHelp();
-		else if (arg.equals("version")) System.out.println(COMPILER_NAME_VERSION);
-		else compileAndRun(arg);
-		return;
+		options.addOption("h", "help", false, "Print this help message");
+
+		options.addOption("v", "version", false,
+			"Print the version of the Earth compiler");
+
+		options.addOption(Option.builder()
+			.longOpt("compile")
+			.option("c")
+			.type(String.class)
+			.argName(".earth file")
+			.hasArg()
+			.desc("Compile the given .earth file to .class file")
+			.build()
+		);
+		options.addOption(Option.builder()
+			.longOpt("run")
+			.option("r")
+			.type(String.class)
+			.argName(".class file")
+			.hasArg()
+			.desc("Run the given .class file")
+			.build()
+		);
+		return options;
 	}
 
-	// now the args are in form earth <something> <other things...>
-	if (args[0].equals("compile")) compile(args[1], true);
-	else if (args[0].equals("run")) EarthUtils.runClassFile(Path.of(args[1]));
+	/// Compiles the code at the given file path, and returns the path to the
+	/// class file
+	private Path compile(String fPath, boolean printMsg) {
+		// Lex
+		EarthResult<List<Token>> lexResult = new Lexer(fPath).lex();
+		lexResult.quitOnError();
+		List<Token> tokens = lexResult.value();
 
-	else System.err.println("Invalid command: " + Arrays.toString(args));
-}
+		// Parser
+		EarthResult<StmtList> result = new Parser(tokens).parse();
+		result.quitOnError();
+		StmtList program = result.value();
 
-Path compile(String fPath, boolean printMsg) {
-	// Lex
-	EarthResult<List<Token>> lexResult = new Lexer(fPath).lex();
-	lexResult.quitOnError();
-	List<Token> tokens = lexResult.value();
+		// SanityChecker
+		result = SanityChecker.run(program);
+		result.quitOnError();
+		program = result.value();
+		TypeValidator.validateStmts(program);
 
-	// Parser
-	EarthResult<StmtList> result = new Parser(tokens).parse();
-	result.quitOnError();
-	StmtList program = result.value();
+		// Codegen
+		EarthResult<byte[]> codegen = new StmtCodegen(fPath).generate(program);
+		result.quitOnError(); // Shouldn't happen but eh
+		byte[] classFile = codegen.value();
 
-	// SanityChecker
-	result = SanityChecker.run(program);
-	result.quitOnError();
-	program = result.value();
-	TypeValidator.validateStmts(program);
-
-	// Codegen
-	EarthResult<byte[]> codegen = new StmtCodegen(fPath).generate(program);
-	result.quitOnError(); // Shouldn't happen but eh
-	byte[] classFile = codegen.value();
-
-	return EarthUtils.writeToFile(
-		classFile, fPath, printMsg
-	);
-}
-
-void compileAndRun(String fPath) {
-	Path compiledPath = compile(fPath, false);
-	EarthUtils.runClassFile(compiledPath);
-	try {
-		Files.delete(compiledPath);
+		return EarthUtils.writeToFile(
+			classFile, fPath, printMsg
+		);
 	}
-	catch (IOException e) {
-		System.err.println("Failed to delete compiled file: " + e.getMessage());
-	}
-}
-
-void printHelp() {
-	System.out.printf("""
-		Help Menu for %s:
-		earth                     - print this help message
-		earth         <file>      - compile and run the .earth file
-		earth compile <file>      - compile the .earth file to a .class file
-		earth run     <.class>    - run the .class file using the custom Java runtime
-		earth help                - print this help message
-		earth version             - print the version of the Earth compiler
-		""", COMPILER_NAME_VERSION
-	);
 }

@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Earth Run" type="Application" factoryName="Application">
     <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
-    <option name="MAIN_CLASS_NAME" value="EarthMain" />
+    <option name="MAIN_CLASS_NAME" value="earth.EarthMain" />
     <module name="earth-lang" />
     <option name="PROGRAM_PARAMETERS" value="samples/test.earth" />
     <method v="2">

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.logging.Level;
 
-import static earth.EarthUtils.DEBUG;
+import static earth.EarthMain.DEBUG;
 import static earth.EarthUtils.LOGGER;
 import static sanity.EarthType.Base.BoolType;
 import static sanity.Kind.VarDecl;

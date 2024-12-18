@@ -7,13 +7,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static earth.EarthMain.DEBUG;
 import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("preview")
 public class EarthUtils {
 	private static final String JAVA_PATH = "java-runtime/bin/java";
 	public static final String COMPILER_NAME_VERSION = "Earth Compiler V0.0.1";
-	public static final boolean DEBUG = true;
+	public static final String COMPILER_NAME = "earth";
 	public static final Logger LOGGER = Logger.getGlobal();
 
 	/// Returns the ordinal suffix for a number. E.g. 1 -> "1st", 2 -> "2nd"
@@ -142,8 +143,9 @@ public class EarthUtils {
 			if (DEBUG) LOGGER.log(SEVERE, e.getMessage(), e);
 			else {
 				System.err.println("""
-					Earth's Java Runtime not found.
-					Make sure it's in the same directory as the compiler.
+					Earth's Java Runtime Environment not found.
+					Make sure it's in the same directory as the compiler binary, and is
+					named 'earth-jre'
 					""".strip()
 				);
 			}

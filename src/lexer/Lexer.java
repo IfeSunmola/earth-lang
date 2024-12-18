@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
-import static earth.EarthUtils.DEBUG;
+import static earth.EarthMain.DEBUG;
 import static earth.EarthUtils.LOGGER;
 import static lexer.TokenType.*;
 

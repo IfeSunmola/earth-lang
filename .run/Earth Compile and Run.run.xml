@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Earth Compile and Run" type="Application" factoryName="Application">
     <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
-    <option name="MAIN_CLASS_NAME" value="EarthMain" />
+    <option name="MAIN_CLASS_NAME" value="earth.EarthMain" />
     <module name="earth-lang" />
-    <option name="PROGRAM_PARAMETERS" value="run samples/test.class" />
+    <option name="PROGRAM_PARAMETERS" value="--run samples/test.class" />
     <method v="2">
       <option name="Make" enabled="true" />
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="Earth Compile" run_configuration_type="Application" />
