@@ -51,6 +51,8 @@ public class Parser {
 		var errors = new ArrayList<String>();
 		try {
 			StmtList stmts = parseStmtList(null, Eof);
+			if (stmts.isEmpty())
+				return EarthResult.err(List.of("Nothing to compile"));
 			return EarthResult.ok(stmts);
 		}
 		catch (ParserException e) {
@@ -475,7 +477,7 @@ public class Parser {
 
 	private Token peek() {
 		if (currPos >= tokens.size())
-			return new Token(Eof, Eof.desc, tokens.getLast().line());
+			return new Token(Eof, Eof.desc, -1);
 		return tokens.get(currPos);
 	}
 
