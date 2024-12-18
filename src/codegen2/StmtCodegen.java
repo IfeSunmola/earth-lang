@@ -24,7 +24,6 @@ import java.util.Map;
 import static codegen2.CodegenUtils.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
-import static sanity2.NEarthType.Base;
 import static sanity2.NEarthType.Base.*;
 import static sanity2.NEarthType.FuncType;
 
@@ -32,7 +31,6 @@ import static sanity2.NEarthType.FuncType;
 public class StmtCodegen {
 	private final Path srcPath;
 	private final ClassDesc thisClass;
-	private boolean inMethod = false;
 	private ClassBuilder classBuilder;
 	private Method currentMethod;
 	static final Map<String, Method> methods = new HashMap<>();
@@ -43,12 +41,9 @@ public class StmtCodegen {
 	}
 
 	public EarthResult<byte[]> generate(StmtList stmts) {
-		var errors = new ArrayList<String>();
-		System.out.println(srcPath);
 		byte[] result = ClassFile.of().build(thisClass, classBuilder -> {
 			this.classBuilder = classBuilder;
 			generateBuiltins();
-			var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
 
 			classBuilder
 				.with(SourceFileAttribute.of(srcPath + ".earth"))
@@ -58,16 +53,16 @@ public class StmtCodegen {
 					.invokespecial(CD_Object, INIT_NAME, MTD_void)
 					.return_()
 				)
-				.withMethodBody("main", mainDesc,
-					ACC_PUBLIC | ACC_STATIC, builder -> {
-						this.currentMethod = new Method(builder, mainDesc, thisClass);
-						methods.put("main", currentMethod);
-
+				// static constructor
+				.withMethodBody(CLASS_INIT_NAME, MTD_void, ACC_STATIC,
+					builder -> {
+						this.currentMethod = new Method(builder, MTD_void, thisClass);
+						methods.put(CLASS_INIT_NAME, currentMethod);
 						generateStmts(stmts);
-
 						builder.return_();
 					}
 				);
+
 		});
 		return EarthResult.ok(result);
 	}
@@ -93,33 +88,43 @@ public class StmtCodegen {
 		Expr toDeclare = s.value();
 		ClassDesc desc = earthTypeToDesc(toDeclare.dataType());
 
-		if (inMethod) {
+		if (isStaticContext()) {
+			classBuilder.withField(name, desc, ACC_STATIC | ACC_PRIVATE);
 			currentMethod.exprCodegen.loadExpr(toDeclare);
-			int slot = currentMethod.slot++;
-			TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
-			currentMethod.builder.storeLocal(typeKind, slot);
+			currentMethod.builder.putstatic(thisClass, name, desc);
 
-			currentMethod.exprCodegen.methodVariables
-				.put(name,
-					new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
-
+			ExprCodegen.classVariables
+				.put(name, new ClassVariable(name, desc, thisClass));
 			return;
 		}
 
-		classBuilder.withField(name, desc, ACC_STATIC);
 		currentMethod.exprCodegen.loadExpr(toDeclare);
-		currentMethod.builder.putstatic(thisClass, name, desc);
+		int slot = currentMethod.slot++;
+		TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
+		currentMethod.builder.storeLocal(typeKind, slot);
 
-		ExprCodegen.classVariables
-			.put(name, new ClassVariable(name, desc, thisClass));
+		currentMethod.exprCodegen.methodVariables
+			.put(name,
+				new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
+
+
 	}
 
 	private void generateFnDefStmt(FnDefStmt s) {
-		inMethod = true;
 		String fnName = s.name().name();
-		if (fnName.equals("main")) { // main already defined so no need to redefine
-			currentMethod = methods.get("main");
-			generateStmts(s.body());
+		if (fnName.equals("main")) { // special boy
+			var mainDesc = MethodTypeDesc.of(CD_void, CD_String.arrayType());
+			classBuilder.withMethodBody("main", mainDesc, ACC_STATIC | ACC_PUBLIC,
+				builder -> {
+					Method prevMethod = currentMethod;
+					currentMethod = new Method(builder, mainDesc, thisClass);
+					methods.put("main", currentMethod);
+
+					// main has no parameters, so skip
+					generateStmts(s.body());
+
+					currentMethod = prevMethod;
+				});
 		}
 		else {
 			MethodTypeDesc methodDesc = createSignature(
@@ -153,7 +158,6 @@ public class StmtCodegen {
 					currentMethod = prevMethod;
 				});
 		}
-		inMethod = false;
 	}
 
 	private void generateLoopStmt(LoopStmt s) {
@@ -323,5 +327,9 @@ public class StmtCodegen {
 				.aload(0)
 				.invokevirtual(CD_PrintStream, "println", printlnDesc)
 				.return_());
+	}
+
+	private boolean isStaticContext() {
+		return (methods.get(CLASS_INIT_NAME) == currentMethod);
 	}
 }
