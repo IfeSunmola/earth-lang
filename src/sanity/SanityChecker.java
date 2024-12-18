@@ -11,7 +11,10 @@ import parser.stmts.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Level;
 
+import static earth.EarthUtils.DEBUG;
+import static earth.EarthUtils.LOGGER;
 import static sanity.EarthType.Base.BoolType;
 import static sanity.Kind.VarDecl;
 
@@ -33,6 +36,7 @@ public class SanityChecker {
 			return EarthResult.ok(result);
 		}
 		catch (SanityException e) {
+			if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
 			errors.add(e.getMessage());
 		}
 		return EarthResult.err(errors);

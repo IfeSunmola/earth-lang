@@ -9,7 +9,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
+import static earth.EarthUtils.DEBUG;
+import static earth.EarthUtils.LOGGER;
 import static lexer.TokenType.*;
 
 public class Lexer {
@@ -33,7 +36,6 @@ public class Lexer {
 	public EarthResult<List<Token>> lex() {
 		var tokens = new ArrayList<Token>();
 		var errors = new ArrayList<String>();
-
 
 		while (!isEof()) {
 			char c = consume();
@@ -73,6 +75,7 @@ public class Lexer {
 				}
 			}
 			catch (LexerException e) {
+				if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
 				errors.add(e.msg);
 			}
 		}
