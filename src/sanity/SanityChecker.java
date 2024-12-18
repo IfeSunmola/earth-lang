@@ -12,14 +12,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static sanity.Kind.VarDecl;
 import static sanity.EarthType.Base.BoolType;
+import static sanity.Kind.VarDecl;
 
 public class SanityChecker {
 	public static EarthResult<StmtList> run(StmtList stmts) {
 		var errors = new ArrayList<String>();
 
 		try {
+			// Stop if there's no main method
+			stmts.stream()
+				.filter(stmt -> stmt instanceof FnDefStmt)
+				.map(stmt -> (FnDefStmt) stmt)
+				.filter(stmt -> stmt.name().name().equals("main"))
+				.findFirst()
+				.orElseThrow(() -> new SanityException(
+					"Main function not found", 0
+				));
 			StmtList result = typeStmts(stmts);
 			return EarthResult.ok(result);
 		}
@@ -171,7 +180,18 @@ public class SanityChecker {
 					s.line()
 				);
 
+			// Check if the body contains any yeet stmt. Can't handle that shit
+			when.body().stream()
+				.filter(stmt -> stmt instanceof YeetStmt)
+				.findFirst()
+				.ifPresent(stmt -> {
+					throw new SanityException(
+						"When statements cannot contain yeet statements",
+						stmt.line()
+					);
+				});
 			SymbolTable.instance.enterScope();
+
 			StmtList typedBody = typeStmts(when.body());
 			SymbolTable.instance.exitScope();
 
@@ -211,6 +231,15 @@ public class SanityChecker {
 		ReassignStmt typedReassignStmt = typeReassignStmt(s.update());
 
 		// Check the body
+		s.body().stream()
+			.filter(stmt -> stmt instanceof YeetStmt)
+			.findFirst()
+			.ifPresent(stmt -> {
+				throw new SanityException(
+					"Loop statements cannot contain yeet statements",
+					stmt.line()
+				);
+			});
 		StmtList typedBody = typeStmts(s.body());
 
 		SymbolTable.instance.exitScope();

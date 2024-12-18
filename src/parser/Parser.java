@@ -450,8 +450,8 @@ public class Parser {
 	private Token expect(TokenType expected) {
 		Token next = consume();
 		if (next.type() != expected)
-			throw new ParserException("Expected %s, got %s"
-				.formatted(expected.desc, next.type().desc),
+			throw new ParserException("Expected %s, got %s: %s"
+				.formatted(expected.desc, next.type().desc, next.literal()),
 				next.line()
 			);
 		return next;

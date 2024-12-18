@@ -108,18 +108,18 @@ class ExprCodegen {
 		TokenType op = e.op();
 		EarthType rightType = e.right().dataType();
 
-		if (leftType == IntType && rightType == IntType) {
-			loadExpr(e.left());
-			loadExpr(e.right());
-			switch (op) {
-				case Star -> builder.imul();
-				case Slash -> builder.idiv();
-				case Mod -> builder.irem();
-			}
+		if (leftType == IntType && rightType == IntType && op != Slash) {
+				loadExpr(e.left());
+				loadExpr(e.right());
+				switch (op) {
+					case Star -> builder.imul();
+					case Mod -> builder.irem();
+				}
+
 			return;
 		}
 
-		// one or both of the operands are floats
+		// one or both of the operands are floats, or the op is /
 		loadExpr(e.left());
 		if (leftType == IntType) builder.i2f();
 
