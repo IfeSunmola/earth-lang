@@ -3,6 +3,7 @@ package codegen2;
 import earth.EarthResult;
 import earth.EarthUtils;
 import parser.ast_helpers.StmtList;
+import parser.ast_helpers.TypedIdent;
 import parser.ast_helpers.TypedIdentList;
 import parser.exprs.Expr;
 import parser.stmts.*;
@@ -24,6 +25,7 @@ import static codegen2.CodegenUtils.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
 import static sanity2.NEarthType.Base;
+import static sanity2.NEarthType.Base.*;
 import static sanity2.NEarthType.FuncType;
 
 @SuppressWarnings("preview")
@@ -60,18 +62,13 @@ public class StmtCodegen {
 					ACC_PUBLIC | ACC_STATIC, builder -> {
 						this.currentMethod = new Method(builder, mainDesc, thisClass);
 						methods.put("main", currentMethod);
-						try {
-							generateStmts(stmts);
-						}
-						catch (CodegenException e) {
-							errors.add(e.getMessage());
-						}
+
+						generateStmts(stmts);
+
 						builder.return_();
 					}
 				);
 		});
-
-		if (!errors.isEmpty()) return EarthResult.err(errors);
 		return EarthResult.ok(result);
 	}
 
@@ -123,39 +120,39 @@ public class StmtCodegen {
 		if (fnName.equals("main")) { // main already defined so no need to redefine
 			currentMethod = methods.get("main");
 			generateStmts(s.body());
-			inMethod = false;
-			return;
 		}
+		else {
+			MethodTypeDesc methodDesc = createSignature(
+				s.params(), s.returnType().dataType()
+			);
 
-		MethodTypeDesc methodDesc = createSignature(
-			s.params(), s.returnType().dataType()
-		);
+			classBuilder.withMethodBody(fnName, methodDesc,
+				ACC_STATIC | ACC_PRIVATE, builder -> {
+					Method prevMethod = currentMethod;
 
-		classBuilder.withMethodBody(fnName, methodDesc,
-			ACC_STATIC | ACC_PRIVATE, builder -> {
-				Method prevMethod = currentMethod;
+					currentMethod = new Method(builder, methodDesc, thisClass);
+					methods.put(fnName, currentMethod);
 
-				currentMethod = new Method(builder, methodDesc, thisClass);
-				methods.put(fnName, currentMethod);
+					// add the method parameters to the local methodVariables.
+					// No need to add it on the jvm level because function parameters are
+					// there by default.
+					TypedIdentList params = s.params();
+					for (int i = 0; i < params.size(); i++) {
+						TypedIdent param = params.get(i);
+						String name = param.name().name();
+						NEarthType paramType = param.type().dataType();
 
-				// add the method parameters to the local methodVariables
-				s.params().forEach(param -> {
-					String name = param.name().name();
-					NEarthType paramType = param.type().dataType();
-					int slot = currentMethod.slot++;
+						TypeKind typeKind = earthTypeToTypeKind(paramType);
 
-					TypeKind typeKind = earthTypeToTypeKind(paramType);
-					currentMethod.builder.storeLocal(typeKind, slot);
+						currentMethod.exprCodegen.methodVariables
+							.put(name, new MethodVariable(name, paramType, typeKind, i));
+					}
 
-					currentMethod.exprCodegen.methodVariables
-						.put(name, new MethodVariable(name, paramType, typeKind, slot));
+					generateStmts(s.body());
+
+					currentMethod = prevMethod;
 				});
-
-				generateStmts(s.body());
-
-				currentMethod = prevMethod;
-			});
-
+		}
 		inMethod = false;
 	}
 
@@ -250,19 +247,19 @@ public class StmtCodegen {
 	private void generateYeetStmt(YeetStmt s) {
 		Expr expr = s.yeetValue();
 		switch (expr.dataType()) {
-			case Base.IntType, Base.BoolType -> {
+			case IntType, BoolType -> {
 				currentMethod.exprCodegen.loadExpr(expr);
 				currentMethod.builder.ireturn();
 			}
-			case Base.FloatType -> {
+			case FloatType -> {
 				currentMethod.exprCodegen.loadExpr(expr);
 				currentMethod.builder.freturn();
 			}
-			case Base.StrType -> {
+			case StrType -> {
 				currentMethod.exprCodegen.loadExpr(expr);
 				currentMethod.builder.areturn();
 			}
-			case Base.NadaType -> currentMethod.builder.return_();
+			case NadaType -> currentMethod.builder.return_();
 			case FuncType _ -> throw new AssertionError();
 		}
 	}
