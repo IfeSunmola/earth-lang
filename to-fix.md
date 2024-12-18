@@ -16,5 +16,13 @@ fn main() {
     }
 }
 ```
-It's correct, but the yeet statement is added by the compiler, so it just 
-makes it seem ... of. 
+
+It's correct, but the yeet statement is added by the compiler, so it just
+makes it seem ... of.
+
+---
+
+Not sure if this will be problematic later on but if there's no main
+function, everything will be done inside the static block
+
+---

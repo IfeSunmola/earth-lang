@@ -293,8 +293,8 @@ public class StmtCodegen {
 		methods.put("intToStr", new Method(null, intToStringDesc, thisClass));
 		methods.put("floatToStr", new Method(null, floatToStringDesc, thisClass));
 		methods.put("boolToStr", new Method(null, boolToStringDesc, thisClass));
-		methods.put("print", new Method(null, printDesc, thisClass));
-		methods.put("println", new Method(null, printlnDesc, thisClass));
+		methods.put("yap", new Method(null, printDesc, thisClass));
+		methods.put("yapln", new Method(null, printlnDesc, thisClass));
 
 		classBuilder.withMethodBody("intToStr", intToStringDesc,
 			ACC_STATIC | ACC_PRIVATE, builder -> builder
@@ -314,14 +314,14 @@ public class StmtCodegen {
 				.invokestatic(CD_Boolean, "toString", boolToStringDesc)
 				.areturn());
 
-		classBuilder.withMethodBody("print", printDesc,
+		classBuilder.withMethodBody("yap", printDesc,
 			ACC_STATIC | ACC_PRIVATE, builder -> builder
 				.getstatic(CD_System, "out", CD_PrintStream)
 				.aload(0)
 				.invokevirtual(CD_PrintStream, "print", printDesc)
 				.return_());
 
-		classBuilder.withMethodBody("println", printlnDesc,
+		classBuilder.withMethodBody("yapln", printlnDesc,
 			ACC_STATIC | ACC_PRIVATE, builder -> builder
 				.getstatic(CD_System, "out", CD_PrintStream)
 				.aload(0)

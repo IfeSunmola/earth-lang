@@ -28,8 +28,8 @@ enum SymbolTable {
 		addSymbol("true", 0, Builtin, BoolType);
 		addSymbol("false", 0, Builtin, BoolType);
 
-		addSymbol("print", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
-		addSymbol("println", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
+		addSymbol("yap", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
+		addSymbol("yapln", 0, FnDecl, new FuncType(List.of(StrType), NadaType));
 
 		addSymbol("intToStr", 0, FnDecl, new FuncType(List.of(IntType), StrType));
 		addSymbol("floatToStr", 0, FnDecl, new FuncType(List.of(FloatType),
