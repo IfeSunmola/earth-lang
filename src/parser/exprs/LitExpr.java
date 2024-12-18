@@ -1,8 +1,8 @@
 package parser.exprs;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
-import static sanity2.NEarthType.Base.*;
+import static sanity.EarthType.Base.*;
 
 public sealed interface LitExpr extends Expr {
 	default String value() {
@@ -25,7 +25,7 @@ public sealed interface LitExpr extends Expr {
 		};
 	}
 
-	default NEarthType dataType() {
+	default EarthType dataType() {
 		return switch (this) {
 			case Int _ -> IntType;
 			case Str _ -> StrType;

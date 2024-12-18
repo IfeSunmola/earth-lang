@@ -1,7 +1,7 @@
 package parser.exprs;
 
 import lexer.TokenType;
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 public sealed interface BinaryExpr extends Expr {
 	Expr left();
@@ -12,7 +12,7 @@ public sealed interface BinaryExpr extends Expr {
 
 	/// expr (`+` OR `-`) expr
 	record AdditiveExpr(Expr left, TokenType op, Expr right,
-	                    int line, NEarthType dataType) implements BinaryExpr {
+	                    int line, EarthType dataType) implements BinaryExpr {
 
 		public AdditiveExpr(Expr left, TokenType op, Expr right, int line) {
 			this(left, op, right, line, null);
@@ -23,8 +23,8 @@ public sealed interface BinaryExpr extends Expr {
 	record EqualityExpr(Expr left, TokenType op, Expr right,
 	                    int line) implements BinaryExpr {
 		@Override
-		public NEarthType dataType() {
-			return NEarthType.Base.BoolType;
+		public EarthType dataType() {
+			return EarthType.Base.BoolType;
 		}
 	}
 
@@ -32,14 +32,14 @@ public sealed interface BinaryExpr extends Expr {
 	record LogicalExpr(Expr left, TokenType op, Expr right,
 	                   int line) implements BinaryExpr {
 		@Override
-		public NEarthType dataType() {
-			return NEarthType.Base.BoolType;
+		public EarthType dataType() {
+			return EarthType.Base.BoolType;
 		}
 	}
 
 	/// expr (`*` OR `/` OR `%`) expr
 	record ProductExpr(Expr left, TokenType op, Expr right,
-	                   int line, NEarthType dataType) implements BinaryExpr {
+	                   int line, EarthType dataType) implements BinaryExpr {
 
 		public ProductExpr(Expr left, TokenType op, Expr right, int line) {
 			this(left, op, right, line, null);
@@ -50,8 +50,8 @@ public sealed interface BinaryExpr extends Expr {
 	record RelationalExpr(Expr left, TokenType op, Expr right,
 	                      int line) implements BinaryExpr {
 		@Override
-		public NEarthType dataType() {
-			return NEarthType.Base.BoolType;
+		public EarthType dataType() {
+			return EarthType.Base.BoolType;
 		}
 	}
 }

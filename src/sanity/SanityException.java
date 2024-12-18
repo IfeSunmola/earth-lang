@@ -1,4 +1,4 @@
-package sanity2;
+package sanity;
 
 import static earth.EarthUtils.formatError;
 

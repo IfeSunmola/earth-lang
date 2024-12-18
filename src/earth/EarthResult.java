@@ -4,7 +4,6 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public sealed interface EarthResult <V> {
-
 	record Ok <T>(T value) implements EarthResult<T> {}
 
 	record Err <T>(List<String> errors) implements EarthResult<T> {}
@@ -30,5 +29,12 @@ public sealed interface EarthResult <V> {
 	default List<String> errors() {
 		if (this instanceof Err<?> err) return err.errors;
 		throw new AssertionError("Nope, not allowed.");
+	}
+
+	default void quitOnError() {
+		if (isErr()) {
+			errors().forEach(System.err::println);
+			System.exit(1);
+		}
 	}
 }

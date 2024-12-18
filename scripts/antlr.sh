@@ -1,5 +1,9 @@
 # Script to generate antlr code from the grammar file
 # Run from root like: ./scripts/antlr.sh
+# No longer needed since antlr is not being used but just leaving it here for
+# future reference.
+
+# Must have antlr4 in your path/aliased
 
 antlr_dir="./src/antlr"
 lexer="${antlr_dir}/EarthLexer.g4"

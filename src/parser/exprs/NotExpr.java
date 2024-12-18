@@ -1,11 +1,11 @@
 package parser.exprs;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 /// !expr
 public record NotExpr(Expr expr, int line) implements Expr {
 	@Override
-	public NEarthType dataType() {
-		return NEarthType.Base.BoolType;
+	public EarthType dataType() {
+		return EarthType.Base.BoolType;
 	}
 }

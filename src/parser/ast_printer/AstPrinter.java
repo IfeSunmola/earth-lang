@@ -6,7 +6,7 @@ import parser.ast_helpers.TypedIdent;
 import parser.ast_helpers.TypedIdentList;
 import parser.exprs.*;
 import parser.stmts.*;
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 import java.util.function.Function;
 
@@ -226,7 +226,7 @@ public sealed interface AstPrinter permits KeyValuePrinter, ListPrinter,
 		return new KeyValuePrinter("line", line + "");
 	}
 
-	private static AstPrinter createType(NEarthType type) {
+	private static AstPrinter createType(EarthType type) {
 		if (type == null) {
 			return new KeyValuePrinter("EarthType", "UnknownType");
 		}

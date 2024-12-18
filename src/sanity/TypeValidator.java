@@ -1,4 +1,4 @@
-package sanity2;
+package sanity;
 
 import parser.ast_helpers.StmtList;
 import parser.exprs.*;

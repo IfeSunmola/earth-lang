@@ -1,10 +1,10 @@
 package parser.exprs;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 /// -expr
 public record NegExpr(Expr expr, int line,
-                      NEarthType dataType) implements Expr {
+                      EarthType dataType) implements Expr {
 	public NegExpr(Expr expr, int line) {
 		this(expr, line, null);
 	}

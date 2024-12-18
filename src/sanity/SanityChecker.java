@@ -1,320 +1,328 @@
 package sanity;
 
-import antlr.EarthParserBaseVisitor;
-import earth.EarthException;
-import org.antlr.v4.runtime.tree.ParseTree;
-import sanity.EarthType.Func;
+import earth.EarthResult;
+import parser.ast_helpers.StmtList;
+import parser.ast_helpers.TypedIdent;
+import parser.ast_helpers.TypedIdentList;
+import parser.exprs.Expr;
+import parser.exprs.IdentExpr;
+import parser.stmts.*;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.function.Function;
 
-import static antlr.EarthParser.*;
-import static earth.EarthUtils.DEBUG;
-import static earth.EarthUtils.LOGGER;
-import static sanity.EarthType.Base.BOOL;
-import static sanity.EarthType.Base.VOID;
-import static sanity.EarthType.fromString;
+import static sanity.Kind.VarDecl;
+import static sanity.EarthType.Base.BoolType;
 
-public class SanityChecker extends EarthParserBaseVisitor<Void> {
-	private final SymbolTable table = SymbolTable.instance;
-	private final ExprResolver exprResolver = new ExprResolver();
+public class SanityChecker {
+	public static EarthResult<StmtList> run(StmtList stmts) {
+		var errors = new ArrayList<String>();
 
-	@Override
-	public Void visit(ParseTree tree) {
 		try {
-			return super.visit(tree);
+			StmtList result = typeStmts(stmts);
+			return EarthResult.ok(result);
 		}
-		catch (EarthException e) {
-			if (DEBUG) LOGGER.log(Level.SEVERE, e.getMessage(), e);
-			else System.err.println(e.getMessage());
-
-			System.exit(1);
-			return null;
+		catch (SanityException e) {
+			errors.add(e.getMessage());
 		}
+		return EarthResult.err(errors);
 	}
 
-	@Override
-	public Void visitStmtList(StmtListContext ctx) {
-		ctx.stmt().forEach(this::visit);
-		return null;
+	private static StmtList typeStmts(StmtList stmts) {
+		return new StmtList(stmts.stream()
+			.map(SanityChecker::typeStmt)
+			.toList());
 	}
 
-	@Override
-	public Void visitDeclStmt(DeclStmtContext ctx) {
-		String name = ctx.typedIdentExpr().name.getText();
-		String type = ctx.typedIdentExpr().type.getText();
-		int line = ctx.getStart().getLine();
-
-		EarthType exprType = checkDeclValidity(name, type, line, ctx.expr());
-		table.addSymbol(name, line, Kind.VarDecl, exprType);
-		return null;
+	private static Stmt typeStmt(Stmt stmt) {
+		return switch (stmt) {
+			case DeclStmt s -> typeDeclStmt(s);
+			case FnDefStmt s -> fnDefStmt(s);
+			case LoopStmt s -> typedLoopStmt(s);
+			case ReassignStmt s -> typeReassignStmt(s);
+			case UnnamedStmt s -> typeUnnamedStmt(s);
+			case WhenStmt s -> typedWhenStmt(s);
+			case YeetStmt s -> typedYeetStmt(s);
+		};
 	}
 
-	@Override
-	public Void visitReassignStmt(ReassignStmtContext ctx) {
-		String name = ctx.ident.getText();
-		int line = ctx.getStart().getLine();
+	private static FnDefStmt fnDefStmt(FnDefStmt s) {
+		String name = s.name().name();
+		int line = s.line();
+		TypedIdentList params = s.params();
+		StmtList fnBody = s.body();
+		EarthType temp = EarthType.fromString(s.returnType().name(), line);
 
-		// first, check that the name is declared
-		Symbol variable = table.findInAllScopes(name)
-			.orElseThrow(() -> new EarthException(("`%s` is not a known identifier")
-				.formatted(name), line));
-
-		// second, resolve the type of the new expression
-		EarthType newType = exprResolver.visit(ctx.expr());
-
-		// third, check that the type of the new expression matches the type of the
-		// variable being reassigned
-		if (!newType.equals(variable.type())) {
-			var msg = "`%s` has type `%s` but the expression has type `%s`"
-				.formatted(name, variable.type(), newType);
-			throw new EarthException(msg, line);
-		}
-		return null;
-	}
-
-	@Override
-	public Void visitWhenElseStmt(WhenElseStmtContext ctx) {
-		// First, check the when condition
-		ExprContext whenCondition = ctx.when().condition;
-		assertSameType(exprResolver.visit(whenCondition),
-			BOOL, "when condition",
-			whenCondition.getStart().getLine()
-		);
-
-		// Second, validate the body of the when stmt
-		table.enterScope();
-		visit(ctx.when().body);
-		table.exitScope();
-
-		// Third, check the else-when conditions and bodies
-		ctx.elseWhen().forEach(elseWhenCtx -> {
-			ExprContext elseWhenCondition = elseWhenCtx.condition;
-			assertSameType(exprResolver.visit(elseWhenCondition),
-				BOOL, "elseWhen condition",
-				elseWhenCondition.getStart().getLine()
+		if (!(temp instanceof EarthType.Base returnType))
+			throw new SanityException(
+				"Uhh, I don't wanna implement functions returning functions" + s.returnType().name(),
+				line
 			);
 
-			table.enterScope();
-			visit(elseWhenCtx.body);
-			table.exitScope();
-		});
-
-		// Fourth, handle the else condition (if it exists)
-		ElseContext elseCtx = ctx.else_();
-		if (elseCtx != null && elseCtx.body != null) {
-			table.enterScope();
-			visit(elseCtx.body);
-			table.exitScope();
-		}
-		return null;
-	}
-
-	@Override
-	public Void visitYeetStmt(YeetStmtContext ctx) {
-		// yeet stmt -> return stmt -> yeet 23
-		// simply validate that the expression is a valid expression
-		exprResolver.visit(ctx.expr());
-		return null;
-	}
-
-	@Override
-	public Void visitFnDefStmt(FnDefStmtContext ctx) {
-		String name = ctx.name.getText();
-		TypedIdentListContext paramsCtx = ctx.params;
-		String temp;
-		if (ctx.retType != null) temp = ctx.retType.getText();
-		else temp = "void";
-		EarthType retType = assertValidType(temp, ctx.start.getLine());
-
-		// First, check that the name has not been declared AS A FUNCTION
-		table.findInCurrentScope(name)
+		// First, check that the name has not been declared as a function
+		SymbolTable.instance.findInCurrentScope(name)
 			.ifPresent(symbol -> {
-				if (symbol.kind() != Kind.FnDecl) return;
-
-				var msg = "";
-				if (symbol.declaredOn() == 0)
-					msg = "`%s` is a builtin function".formatted(name);
-				else
-					msg = "%s has already been declared as a function on line %d"
+				if (symbol.kind() == Kind.FnDecl) {
+					var msg = "";
+					if (symbol.declaredOn() == 0)
+						msg = "`%s` is a builtin function".formatted(name);
+					else msg = "`%s` has already been declared as a function on line %s"
 						.formatted(name, symbol.declaredOn());
-				throw new EarthException(msg, ctx.getStart().getLine());
+
+					throw new SanityException(msg, line);
+				}
 			});
 
-		// Second, enter a new scope
-		table.enterScope();
-		// Third, add the parameters to the symbol table. It's a new scope, so no
-		// need to check if the parameters have been declared before.
-		paramsCtx.typedIdentExpr().forEach(typedIdentExprContext -> {
-			String paramName = typedIdentExprContext.name.getText();
-			String paramType = typedIdentExprContext.type.getText();
-			int line = typedIdentExprContext.getStart().getLine();
+		// If the name of the function is main, the function must take no
+		// parameters and return nada
+		if (name.equals("main")) {
+			if (!params.isEmpty())
+				throw new SanityException(
+					"Function `main` must take no parameters", line
+				);
 
-			EarthType type = checkDeclValidity(paramName, paramType, line, null);
-			table.addSymbol(paramName, line, Kind.VarDecl, type);
+			if (returnType != EarthType.Base.NadaType)
+				throw new SanityException(
+					"Function `main` must return `nada`, but returns `%s`"
+						.formatted(returnType.string()),
+					line
+				);
+		}
+
+		SymbolTable.instance.enterScope();
+
+		// Second, add the parameters to the symbol table.
+		var typedParams = new TypedIdentList();
+		params.forEach(param -> {
+			String paramName = param.name().name();
+			String paramType = param.type().name();
+
+			EarthType type = getDeclTypeOrThrow(paramName, paramType, line);
+
+			SymbolTable.instance.addSymbol(paramName, line, VarDecl, type);
+
+			// Get the expression but with type information attached to it
+			TypedIdent typedParam = ExprTyper.typedIdentExpr(param);
+			typedParams.add(typedParam);
 		});
 
-		// Fourth, sanity check the function body
-		visit(ctx.body);
+		// Third, throw an exception if the statement body contains a `yeet`
+		// statement, but the yeet statement is not the last statement
+		fnBody.stream()
+			.filter(stmt -> stmt instanceof YeetStmt)
+			.findFirst()
+			.ifPresent(stmt -> {
+				if (stmt != fnBody.getLast())
+					throw new SanityException(
+						"Yeet statement must be the last statement in a function",
+						stmt.line()
+					);
+			});
 
-		List<StmtContext> fnBody = ctx.body.stmt();
-		// Fifth, if the function is empty, the return type must be void
-		if (fnBody.isEmpty() && !retType.is(VOID)) {
-			throw new EarthException(
-				"Function `%s` returns `%s` but has an empty body"
-					.formatted(name, temp), ctx.retType.getLine()
+		// Fourth, check the body
+		var typedBody = typeStmts(fnBody);
+
+
+		// Because a yeet statement is automatically added in the parser when
+		// there's none, the last statement is ALWAYS a yeet statement.
+		// Fifth, get the type of the expression in the yeet statement
+		YeetStmt last = (YeetStmt) typedBody.getLast();
+		EarthType lastType = last.yeetValue().dataType();
+
+		// Fifth, check that the type of the expression in the yeet statement
+		// matches the return type of the function
+		if (lastType != returnType)
+			throw new SanityException(
+				"Function `%s` returns `%s`, but the yeet statement has type `%s`"
+					.formatted(name, returnType.string(), lastType.string()),
+				last.line()
 			);
-		}
 
-		// Sixth, Function does not return anything, but the last statement is a
-		// return statement
-		if (retType.is(VOID) && !fnBody.isEmpty()) {
-			StmtContext lastStmt = fnBody.getLast();
-			if (lastStmt.yeetStmt() != null) {
-				throw new EarthException("""
-					Function `%s` does not return anything, but the last statement
-					is a yeet statement"""
-					.formatted(name), lastStmt.yeetStmt().getStart().getLine()
-				);
-			}
-		}
+		SymbolTable.instance.exitScope();
 
-		// Seventh, check that the type of the expression in return is the same as
-		// the return type
-		if (!fnBody.isEmpty()) {
-			StmtContext lastStmt = fnBody.getLast();
-			if (lastStmt.yeetStmt() != null) { // there is a return stmt
-				YeetStmtContext yeetStmt = lastStmt.yeetStmt();
-				EarthType returnType = exprResolver.visit(yeetStmt.expr());
-				if (!returnType.equals(retType)) {
-					var msg = """
-						Function `%s` returns `%s` but the yeet statement has type `%s`"""
-						.formatted(name, temp, returnType);
-					throw new EarthException(msg, yeetStmt.getStart().getLine());
-				}
-			}
-			else {
-				// no return stmt
-				// TODO: What to do?
-			}
-		}
-		// happy path
-		table.exitScope();
+		// Sixth, add the function to the symbol table
 
-		// Eighth, add the function to the symbol table
-		List<EarthType.Base> list = paramsCtx.typedIdentExpr()
-			.stream()
-			.map(context -> {
-				EarthType type = fromString(context.type.getText());
-				if (type instanceof EarthType.Base) return (EarthType.Base) type;
-
-				throw new EarthException("Function parameters must be base types",
-					context.getStart().getLine());
-			})
+		List<EarthType.Base> symbolParams = params.stream()
+			.map(param -> EarthType.fromString(param.type().name(), line))
+			.map(type -> (EarthType.Base) type)
 			.toList();
 
-		if (!(retType instanceof EarthType.Base retTypeBase))
-			throw new EarthException(
-				"Function return type must be a base type", ctx.retType.getLine()
+		SymbolTable.instance.addSymbol(name, line, Kind.FnDecl,
+			new EarthType.FuncType(symbolParams, returnType));
+
+
+		return new FnDefStmt(
+			ExprTyper.typeIdentExpr(s.name()),
+			typedParams,
+			ExprTyper.typeIdentExpr(s.returnType()),
+			typedBody,
+			line
+		);
+	}
+
+	private static WhenStmt typedWhenStmt(WhenStmt s) {
+		Function<WhenStmt.When, WhenStmt.When> whenMapper = when -> {
+			Expr typedCond = ExprTyper.typeExpr(when.condition());
+			if (typedCond.dataType() != BoolType)
+				throw new SanityException(
+					"Expected a boolean expression in when condition, but got `%s`"
+						.formatted(typedCond.dataType().string()),
+					s.line()
+				);
+
+			SymbolTable.instance.enterScope();
+			StmtList typedBody = typeStmts(when.body());
+			SymbolTable.instance.exitScope();
+
+			return new WhenStmt.When(typedCond, typedBody);
+		};
+
+		// First check the condition and the body of the when block.
+		WhenStmt.When newWhen = whenMapper.apply(s.when());
+
+		// Second check the else-when blocks. Repeat the same checks as above
+		List<WhenStmt.When> typedElseWhen = s.elseWhen().stream()
+			.map(whenMapper).toList();
+
+		// Finally, check the else block
+		SymbolTable.instance.enterScope();
+		StmtList typedElseBlock = typeStmts(s.elseBody());
+		SymbolTable.instance.exitScope();
+
+		return new WhenStmt(newWhen, typedElseWhen, typedElseBlock, s.line());
+	}
+
+	private static LoopStmt typedLoopStmt(LoopStmt s) {
+		SymbolTable.instance.enterScope();
+		// Check the initializer
+		DeclStmt typedDeclStmt = typeDeclStmt(s.initializer());
+
+		// Check that the condition has BoolType
+		Expr typedCond = ExprTyper.typeExpr(s.condition());
+		if (typedCond.dataType() != BoolType)
+			throw new SanityException(
+				"Expected a boolean expression in loop condition, but got `%s`"
+					.formatted(typedCond.dataType().string()),
+				s.line()
 			);
 
-		Func fnType = new Func(list, retTypeBase);
+		// Check the update statement
+		ReassignStmt typedReassignStmt = typeReassignStmt(s.update());
 
-		table.addSymbol(name, ctx.getStart().getLine(), Kind.FnDecl, fnType);
-		return null;
+		// Check the body
+		StmtList typedBody = typeStmts(s.body());
+
+		SymbolTable.instance.exitScope();
+
+		return new LoopStmt(
+			typedDeclStmt, typedCond, typedReassignStmt, typedBody, s.line()
+		);
 	}
 
-	@Override
-	public Void visitUnnamedStmt(UnnamedStmtContext ctx) {
-		// simply validate that the expression is a valid expression
-		exprResolver.visit(ctx.expr());
-		return null;
+	private static YeetStmt typedYeetStmt(YeetStmt s) {
+		Expr typedExpr = ExprTyper.typeExpr(s.yeetValue());
+		return new YeetStmt(typedExpr, s.line());
 	}
 
-	@Override
-	public Void visitLoopStmt(LoopStmtContext ctx) {
-		table.enterScope();
-		// Null check not needed because antlr will have reported an error
-		// First, validate the initializer.
-		visitDeclStmt(ctx.initializer);
+	private static UnnamedStmt typeUnnamedStmt(UnnamedStmt s) {
+		Expr typedExpr = ExprTyper.typeExpr(s.expr());
+		return new UnnamedStmt(typedExpr, s.line());
+	}
 
-		// Second, validate the condition
-		ExprContext condition = ctx.condition;
-		EarthType conditionType = exprResolver.visit(condition);
-		assertSameType(conditionType, BOOL, "loop condition",
-			condition.getStart().getLine()
+	private static ReassignStmt typeReassignStmt(ReassignStmt s) {
+		String name = s.name().name();
+		int line = s.line();
+
+		// Check that the name is declared as a variable
+		Symbol variable = SymbolTable.instance
+			.findInAllScopes(name)
+			.orElseThrow(() -> new SanityException(
+				"`%s` is not a known identifier".formatted(name), line
+			));
+
+		if (variable.kind() != VarDecl)
+			throw new SanityException(
+				"`%s` is not a variable".formatted(name), line
+			);
+
+		// Find the type of the new expression
+		Expr typedExpr = ExprTyper.typeExpr(s.newValue());
+
+		// Check that the type of the new expression matches the type of the
+		// variable being assigned
+		if (variable.type() != typedExpr.dataType())
+			throw new SanityException(
+				"`%s` has type `%s` but the expression has type `%s`"
+					.formatted(name, variable.type().string(),
+						typedExpr.dataType().string()),
+				line
+			);
+
+		IdentExpr typedName = ExprTyper.typeIdentExpr(s.name());
+		return new ReassignStmt(typedName, typedExpr, line);
+	}
+
+	private static DeclStmt typeDeclStmt(DeclStmt s) {
+		String name = s.nameAndType().name().name();
+		String strType = s.nameAndType().type().name();
+		int line = s.line();
+
+		EarthType type = getDeclTypeOrThrow(name, strType, line);
+
+		Expr toDeclare = validateDecl(name, type, line, s.value());
+
+		SymbolTable.instance.addSymbol(
+			name, line, VarDecl, toDeclare.dataType()
 		);
 
-
-		// Third, validate the reassignment stmt
-		visitReassignStmt(ctx.update);
-
-		// Fourth, validate the body
-		visitStmtList(ctx.body);
-
-		table.exitScope();
-		return null;
+		return new DeclStmt(
+			ExprTyper.typedIdentExpr(s.nameAndType()),
+			toDeclare,
+			line
+		);
 	}
 
-	private EarthType assertValidType(String type, int line) {
-		if (!EarthType.isKnown(type)) {
-			throw new EarthException("Unknown type `%s`".formatted(type), line);
-		}
-		// Doing double work here
-		return fromString(type);
+	private static Expr validateDecl(String name, EarthType expectedType,
+	                                 int line, Expr toDeclare) {
+		//  find the type of the expression
+		Expr typedExpr = ExprTyper.typeExpr(toDeclare);
+
+		// Fourth, check that the type of the expression matches the type of the
+		// declaration
+		if (typedExpr.dataType() != expectedType)
+			throw new SanityException(
+				"`%s` has type `%s`, but the expression has type `%s`"
+					.formatted(name, expectedType.string(),
+						typedExpr.dataType().string()),
+				line
+			);
+
+		return typedExpr; // happy path
 	}
 
-	/// Asserts that the type of the expression is the same as the expected type.
-	///
-	/// @throws EarthException if the types do not match
-	private void assertSameType(EarthType type, EarthType expected,
-	                            String in, int line) {
-		if (!type.equals(expected)) {
-			var msg = "Expected a `%s` in %s but got `%s`"
-				.formatted(expected, in, type);
-			throw new EarthException(msg, line);
-		}
-	}
+	/// Returns the type of the expression if a declaration with the name is
+	/// possible, or throws a `SanityException` if not
+	private static EarthType getDeclTypeOrThrow(String name, String strType,
+	                                            int line) {
+		// First, check that the type is known
+		EarthType declType = EarthType.fromString(strType, line);
+		if (declType == null)
+			throw new SanityException("Unknown type: " + strType, line);
 
-	/// Does a few checks to ensure that the variable can be declared.
-	/// Returns the type of the expression if it's valid or throws an exception
-	/// on any error.\
-	/// Note that if `exprCtx` is null, the type of the expression is not
-	/// resolved (because there's no expression). In this case, the `type`
-	/// parameter will be returned as a `EarthType`.
-	///
-	/// @throws EarthException if the variable cannot be declared
-	private EarthType checkDeclValidity(String name, String type,
-	                                    int line, ExprContext exprCtx) {
-		// first, check that the var name is not already declared
-		table.findInCurrentScope(name)
+		// Second, check that the name, and type does not already exist in the
+		// current scope
+		SymbolTable.instance.findInCurrentScope(name)
 			.ifPresent(symbol -> {
-				var msg = "";
-				if (symbol.declaredOn() == 0)
+				String msg;
+				if (symbol.kind() == Kind.Builtin || symbol.declaredOn() == 0)
 					msg = "`%s` is a builtin identifier".formatted(name);
-				else msg = "`%s` has already been declared on line %d"
+				else msg = "`%s` has already been declared on line %s"
 					.formatted(name, symbol.declaredOn());
-				throw new EarthException(msg, line);
+
+				throw new SanityException(msg, line);
 			});
 
-		// second, check that the type is a valid type
-		assertValidType(type, line);
-
-		if (exprCtx == null) { // most likely a var decl without an expression
-			// surely, I could do better than basically repeating the if stmt above
-			return fromString(type);
-		}
-
-		// third, resolve the type of the expression
-		EarthType exprType = exprResolver.visit(exprCtx);
-
-		// fourth, check that the type of the expression matches the type attached
-		// to the name
-		if (!exprType.stringEquals(type)) {
-			var msg = "`%s` has type `%s` but the expression has type `%s`"
-				.formatted(name, type, exprType);
-			throw new EarthException(msg, line);
-		}
-		return exprType;
+		return declType;
 	}
 }

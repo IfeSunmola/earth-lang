@@ -1,11 +1,11 @@
 package parser.exprs;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
-import static sanity2.NEarthType.Base.NadaType;
+import static sanity.EarthType.Base.NadaType;
 
 public record IdentExpr(String name, int line,
-                        NEarthType dataType) implements Expr {
+                        EarthType dataType) implements Expr {
 	public IdentExpr(String name, int line) {
 		this(name, line, null);
 	}

@@ -1,4 +1,4 @@
-package codegen2;
+package codegen;
 
 import earth.EarthResult;
 import earth.EarthUtils;
@@ -7,7 +7,7 @@ import parser.ast_helpers.TypedIdent;
 import parser.ast_helpers.TypedIdentList;
 import parser.exprs.Expr;
 import parser.stmts.*;
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 import java.lang.classfile.ClassBuilder;
 import java.lang.classfile.ClassFile;
@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static codegen2.CodegenUtils.*;
+import static codegen.CodegenUtils.*;
 import static java.lang.classfile.ClassFile.*;
 import static java.lang.constant.ConstantDescs.*;
-import static sanity2.NEarthType.Base.*;
-import static sanity2.NEarthType.FuncType;
+import static sanity.EarthType.Base.*;
+import static sanity.EarthType.FuncType;
 
 @SuppressWarnings("preview")
 public class StmtCodegen {
@@ -35,8 +35,8 @@ public class StmtCodegen {
 	private Method currentMethod;
 	static final Map<String, Method> methods = new HashMap<>();
 
-	public StmtCodegen(Path path) {
-		srcPath = EarthUtils.removeExt(path);
+	public StmtCodegen(String src) {
+		srcPath = EarthUtils.removeExt(Path.of(src));
 		thisClass = ClassDesc.of(srcPath.getFileName().toString());
 	}
 
@@ -145,7 +145,7 @@ public class StmtCodegen {
 					for (int i = 0; i < params.size(); i++) {
 						TypedIdent param = params.get(i);
 						String name = param.name().name();
-						NEarthType paramType = param.type().dataType();
+						EarthType paramType = param.type().dataType();
 
 						TypeKind typeKind = earthTypeToTypeKind(paramType);
 
@@ -269,7 +269,7 @@ public class StmtCodegen {
 	}
 
 	private MethodTypeDesc createSignature(TypedIdentList params,
-	                                       NEarthType retType) {
+	                                       EarthType retType) {
 		ClassDesc retTypeDesc = earthTypeToDesc(retType);
 
 		// params are in form: name1:type1,name2:type2,...name9:type9

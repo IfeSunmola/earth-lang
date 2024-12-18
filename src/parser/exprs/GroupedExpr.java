@@ -1,15 +1,15 @@
 package parser.exprs;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 public record GroupedExpr(Expr expr, int line,
-                          NEarthType dataType) implements Expr {
+                          EarthType dataType) implements Expr {
 	public GroupedExpr(Expr expr, int line) {
 		this(expr, line, null);
 	}
 
 	@Override
-	public NEarthType dataType() {
+	public EarthType dataType() {
 		return expr.dataType();
 	}
 }

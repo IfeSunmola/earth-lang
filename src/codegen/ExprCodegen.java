@@ -1,8 +1,8 @@
-package codegen2;
+package codegen;
 
 import lexer.TokenType;
 import parser.exprs.*;
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.Opcode;
@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static codegen2.CodegenUtils.*;
+import static codegen.CodegenUtils.*;
 import static java.lang.constant.ConstantDescs.*;
 import static lexer.TokenType.*;
 import static parser.exprs.BinaryExpr.*;
-import static sanity2.NEarthType.Base.*;
+import static sanity.EarthType.Base.*;
 
 /// This class simply loads the expression onto the stack, and returns the
 /// type of the expression that was loaded
@@ -56,8 +56,8 @@ class ExprCodegen {
 	}
 
 	private void loadRelationalExpr(RelationalExpr e) {
-		NEarthType leftType = e.left().dataType();
-		NEarthType rightType = e.right().dataType();
+		EarthType leftType = e.left().dataType();
+		EarthType rightType = e.right().dataType();
 
 		if (leftType == IntType && rightType == IntType) {
 			loadExpr(e.left());
@@ -104,9 +104,9 @@ class ExprCodegen {
 	/// integer or a float, depending on the combination.\
 	/// Any operation involving a float results in a float.\
 	private void loadProductExpr(ProductExpr e) {
-		NEarthType leftType = e.left().dataType();
+		EarthType leftType = e.left().dataType();
 		TokenType op = e.op();
-		NEarthType rightType = e.right().dataType();
+		EarthType rightType = e.right().dataType();
 
 		if (leftType == IntType && rightType == IntType) {
 			loadExpr(e.left());
@@ -171,8 +171,8 @@ class ExprCodegen {
 	/// or an exception is thrown.
 	private void loadEqualityExpr(EqualityExpr e) {
 		boolean isEquals = e.op() == EqEq;
-		NEarthType leftType = e.left().dataType();
-		NEarthType rightType = e.right().dataType();
+		EarthType leftType = e.left().dataType();
+		EarthType rightType = e.right().dataType();
 
 		if (leftType == rightType) {
 			loadExpr(e.left());
@@ -215,8 +215,8 @@ class ExprCodegen {
 	/// int (+ | -) float = float\
 	/// str + str = str
 	private void loadAdditiveExpr(AdditiveExpr e) {
-		NEarthType leftType = e.left().dataType();
-		NEarthType rightType = e.right().dataType();
+		EarthType leftType = e.left().dataType();
+		EarthType rightType = e.right().dataType();
 
 		Consumer<TokenType> doNumbersOp = op -> {
 			if (leftType == IntType && rightType == IntType) {

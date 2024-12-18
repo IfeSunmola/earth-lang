@@ -39,23 +39,11 @@ public class EarthUtils {
 	}
 
 	/// Ensures that a condition is true, otherwise throws an AssertionError
-	/// with the message "Assertion Failed"
-	///
-	/// @param condition The condition to check
-	/// @throws AssertionError If the condition is false
-	/// @see #ensure(boolean, String)
-	public static void ensure(boolean condition) {
-		if (!condition)
-			throw new AssertionError("Assertion Failed");
-	}
-
-	/// Ensures that a condition is true, otherwise throws an AssertionError
 	/// with the given message
 	///
 	/// @param condition The condition to check
 	/// @param msg       The message to include in the AssertionError
 	/// @throws AssertionError If the condition is false
-	/// @see #ensure(boolean)
 	public static void ensure(boolean condition, String msg) {
 		if (!condition)
 			throw new AssertionError("Assertion Failed: " + msg);
@@ -69,11 +57,15 @@ public class EarthUtils {
 	/// but with a .class extension
 	///
 	/// @param bytes The bytes to write to the file
-	/// @param path  The path to write to; will be appended with .class
+	/// @param fpath The path str to write to; will be appended with .class
 	/// @return The path to the written file
-	public static Path writeToFile(byte[] bytes, Path path, boolean printMsg) {
+	public static Path writeToFile(byte[] bytes, String fpath,
+	                               boolean printMsg) {
 		try {
+			Path path = Path.of(fpath);
+			path = removeExt(path);
 			path = path.resolveSibling(path.getFileName() + ".class");
+
 			Files.write(path, bytes);
 			if (printMsg) System.out.printf("""
 				Compiled to: %s
@@ -159,6 +151,7 @@ public class EarthUtils {
 		}
 	}
 
+	/// Removes the extension from a path
 	public static Path removeExt(Path path) {
 		String temp = path.getFileName().toString();
 		temp = temp.substring(0, temp.lastIndexOf('.'));

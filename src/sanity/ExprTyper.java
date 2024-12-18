@@ -1,4 +1,4 @@
-package sanity2;
+package sanity;
 
 import lexer.TokenType;
 import parser.ast_helpers.ExprList;
@@ -8,7 +8,7 @@ import parser.exprs.*;
 import static earth.EarthUtils.ordinal;
 import static lexer.TokenType.PLus;
 import static parser.exprs.BinaryExpr.*;
-import static sanity2.NEarthType.Base.*;
+import static sanity.EarthType.Base.*;
 
 class ExprTyper {
 	/// Returns a new expression with the type set, or throws an exception if
@@ -88,8 +88,8 @@ class ExprTyper {
 			Expr typedExpr = typeExpr(params.get(i));
 			typedParams.add(typedExpr);
 
-			NEarthType argType = typedExpr.dataType(); // from source code
-			NEarthType paramType = fnType.params().get(i); // from symbol table
+			EarthType argType = typedExpr.dataType(); // from source code
+			EarthType paramType = fnType.params().get(i); // from symbol table
 
 			if (argType != paramType) {
 				throw new SanityException(
@@ -119,9 +119,9 @@ class ExprTyper {
 		Expr right = typeExpr(e.right());
 		int line = e.line();
 
-		NEarthType leftType = left.dataType();
+		EarthType leftType = left.dataType();
 		TokenType op = e.op();
-		NEarthType rightType = right.dataType();
+		EarthType rightType = right.dataType();
 
 
 		if (op == PLus && leftType == StrType && rightType == StrType)
@@ -147,8 +147,8 @@ class ExprTyper {
 		Expr left = typeExpr(e.left());
 		Expr right = typeExpr(e.right());
 
-		NEarthType leftType = left.dataType();
-		NEarthType rightType = right.dataType();
+		EarthType leftType = left.dataType();
+		EarthType rightType = right.dataType();
 
 
 		if ((leftType == rightType) || (leftType.isOneOf(IntType, FloatType) &&
@@ -169,9 +169,9 @@ class ExprTyper {
 		Expr left = typeExpr(e.left());
 		Expr right = typeExpr(e.right());
 
-		NEarthType leftType = left.dataType();
+		EarthType leftType = left.dataType();
 		TokenType op = e.op();
-		NEarthType rightType = right.dataType();
+		EarthType rightType = right.dataType();
 
 		if (leftType.isOneOf(IntType, FloatType) &&
 		    rightType.isOneOf(IntType, FloatType)) {
@@ -193,9 +193,9 @@ class ExprTyper {
 		Expr right = typeExpr(e.right());
 		int line = e.line();
 
-		NEarthType leftType = left.dataType();
+		EarthType leftType = left.dataType();
 		TokenType op = e.op();
-		NEarthType rightType = right.dataType();
+		EarthType rightType = right.dataType();
 
 		if (!leftType.isOneOf(IntType, FloatType) ||
 		    !rightType.isOneOf(IntType, FloatType)) {
@@ -247,7 +247,7 @@ class ExprTyper {
 	/// a boolean
 	static NotExpr typeNotExpr(NotExpr e) {
 		Expr expr = typeExpr(e.expr());
-		NEarthType exprType = expr.dataType();
+		EarthType exprType = expr.dataType();
 
 		if (exprType == BoolType) {
 			return new NotExpr(expr, e.line());
@@ -263,7 +263,7 @@ class ExprTyper {
 	/// the type is neither
 	static NegExpr typeNegExpr(NegExpr e) {
 		Expr expr = typeExpr(e.expr());
-		NEarthType exprType = expr.dataType();
+		EarthType exprType = expr.dataType();
 
 		if (exprType == IntType || exprType == FloatType) {
 			return new NegExpr(expr, e.line(), exprType);
@@ -280,9 +280,9 @@ class ExprTyper {
 		Expr left = typeExpr(e.left());
 		Expr right = typeExpr(e.right());
 
-		NEarthType leftType = left.dataType();
+		EarthType leftType = left.dataType();
 		TokenType op = e.op();
-		NEarthType rightType = right.dataType();
+		EarthType rightType = right.dataType();
 
 		if (leftType == BoolType && rightType == BoolType) {
 			return new LogicalExpr(left, op, right, e.line());

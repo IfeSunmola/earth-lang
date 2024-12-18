@@ -2,71 +2,61 @@ package sanity;
 
 import java.util.List;
 
-@SuppressWarnings("preview")
 public sealed interface EarthType {
-	static EarthType fromString(String type) {
-		return switch (type) {
-			case "int" -> Base.INT;
-			case "float" -> Base.FLOAT;
-			case "str" -> Base.STRING;
-			case "bool" -> Base.BOOL;
-			case "void" -> Base.VOID;
-			default -> throw new IllegalArgumentException("Unknown type: " + type);
+	static EarthType fromString(String s, int line) {
+		return switch (s) {
+			case "int" -> Base.IntType;
+			case "float" -> Base.FloatType;
+			case "str" -> Base.StrType;
+			case "bool" -> Base.BoolType;
+			case "nada" -> Base.NadaType;
+			// TODO: Implement function type
+			default -> throw new SanityException(
+				"Invalid type: `%s`".formatted(s),
+				line);
 		};
 	}
 
-	default boolean stringEquals(String strType) {
-		return toString().equals(strType);
+	default boolean isOneOf(EarthType... types) {
+		for (EarthType t : types) {
+			if (this == t) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	default boolean isBase() {
-		return this instanceof Base;
-	}
-
-	default boolean is(EarthType type) {
-		return switch (type) {
-			case Base base -> base == this;
-			case Func func -> func.equals(this);
-		};
-	}
-
-	static boolean isKnown(String strType) {
-		return switch (strType) {
-			case "int", "float", "str", "bool", "void" -> true;
-			default -> false;
+	default String string() {
+		return switch (this) {
+			case Base b -> b.type;
+			case FuncType funcType -> funcType.toString();
 		};
 	}
 
 	enum Base implements EarthType {
-		INT("int"),
-		FLOAT("float"),
-		STRING("str"),
-		BOOL("bool"),
-		VOID("void");
+		IntType("int"),
+		FloatType("float"),
+		BoolType("bool"),
+		StrType("str"),
+		NadaType("nada");
 
-		private final String type; // access with toString() for consistency
+		public final String type;
 
-		Base(String type) {
-			this.type = type;
-		}
-
-		@Override
-		public String toString() {
-			return type;
+		Base(String s) {
+			this.type = s;
 		}
 	}
 
-	record Func(List<Base> params, Base returnType) implements EarthType {
+	record FuncType(List<Base> params, Base returnType) implements EarthType {
 		@Override
 		public String toString() {
 			return "fn(%s)%s".formatted(
 				params.stream()
-					.map(EarthType::toString)
+					.map(base -> base.type)
 					.reduce((a, b) -> a + ", " + b)
 					.orElse(""),
-				returnType
+				returnType.type
 			);
 		}
 	}
 }
-

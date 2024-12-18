@@ -1,6 +1,6 @@
-package codegen2;
+package codegen;
 
-import sanity2.NEarthType;
+import sanity.EarthType;
 
 import java.lang.classfile.CodeBuilder;
 import java.lang.classfile.TypeKind;
@@ -9,8 +9,8 @@ import java.lang.constant.MethodTypeDesc;
 import java.util.function.Consumer;
 
 import static java.lang.constant.ConstantDescs.*;
-import static sanity2.NEarthType.Base;
-import static sanity2.NEarthType.FuncType;
+import static sanity.EarthType.Base;
+import static sanity.EarthType.FuncType;
 
 @SuppressWarnings("preview")
 public class CodegenUtils {
@@ -28,7 +28,7 @@ public class CodegenUtils {
 
 	record ClassVariable(String name, ClassDesc type, ClassDesc owner) {}
 
-	record MethodVariable(String name, NEarthType earthType, TypeKind typeKind,
+	record MethodVariable(String name, EarthType earthType, TypeKind typeKind,
 	                      int slot) {}
 
 	static final class Method {
@@ -47,7 +47,7 @@ public class CodegenUtils {
 		}
 	}
 
-	static ClassDesc earthTypeToDesc(NEarthType type) {
+	static ClassDesc earthTypeToDesc(EarthType type) {
 		return switch (type) {
 			case Base.IntType -> CD_int;
 			case Base.FloatType -> CD_float;
@@ -58,7 +58,7 @@ public class CodegenUtils {
 		};
 	}
 
-	static TypeKind earthTypeToTypeKind(NEarthType type) {
+	static TypeKind earthTypeToTypeKind(EarthType type) {
 		return switch (type) {
 			case Base.IntType -> TypeKind.IntType;
 			case Base.FloatType -> TypeKind.FloatType;
