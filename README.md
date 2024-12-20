@@ -5,38 +5,64 @@ A toy compiler written in Java and generates JVM bytecode.
 Most of the decisions made was based off vibes and feelings so don't ask why
 something is the way it is.
 
-## Valid sample code
+## Sample code
 
+See [the samples directory](./samples)
+
+---
+
+## Installation
+
+I didn't want to mess with paths and all that so "installation" simply
+downloads the needed files to a directory named `earth-compiler` in the
+current working directory. The script downloads everything it needs to work,
+so no other setup is needed.
+
+### Linux
+
+```shell
+curl  "file:/home/ifesunmola/Documents/dev/java/earth-lang/scripts/install_linux.sh" | bash
 ```
-var name: str = "John"
-var age: int = 20
-age = 21
-var isAdult: bool = age >= 18
-when name == "John" {
-    /*
-    function calls are expressions, and all expressions must be bound to a 
-    statement. Since println returns void, we can just ignore it with an unnamed
-    statement.
-    */
-    _ = println("Hello John")
-}
-else when name == "Doe" {
-    _ = println("Hello Doe")
-}  
-else {
-    var greeting: str = "Hello" + name
-    _ = println(greeting)  
-}
 
-fn add(a: int, b: int) int {
-    yeet a + b // return statement
-}
+### Windows
 
-var sum: int = add(1, 2)
-// println can only take a string, so convert. There's floatToStr and boolToStr. 
-_ = println(intToStr(sum))
+`windows todo`
 
-loop var i : int = 0, i < 23, i = i + 1 {
-    // code
-}
+### Mac
+
+Womp womp. Build from source yourself.
+
+---
+
+## Building from source
+
+### Creating the runtime
+
+JDK 23 is needed to create the runtime. Run:
+
+```shell
+./scripts/build-runtime.sh
 ```
+
+A directory named `earth-jre` will be created in the root of the project.
+
+### Without native binary
+
+Java 23 is needed to use the compiler without compiling to native:
+
+1. Run the jar file in the root of the project (preferred):
+   `java -jar --enable-preview earth.jar <cmd_line_args>` OR
+
+2. Run the script: `./scripts/run.sh <cmd_line_args`
+
+In both cases, you will see some warnings
+
+### Compiling to native
+
+GraalVM 23 is needed to compile to native. Run:
+
+```shell
+./scripts/build-native.sh
+```
+
+A binary named `earth` will be created in the root of the project.

@@ -10,4 +10,4 @@
 modules=("java.base")
 
 # Create a custom runtime image
-jlink --add-modules "${modules[@]}" --output java-runtime
+jlink --add-modules "${modules[@]}" --output earth-jre

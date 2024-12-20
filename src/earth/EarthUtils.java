@@ -12,7 +12,7 @@ import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("preview")
 public class EarthUtils {
-	private static final String JAVA_PATH = "java-runtime/bin/java";
+	private static final String JAVA_PATH = "earth-jre/bin/java";
 	public static final String COMPILER_NAME_VERSION = "Earth Compiler V0.0.1";
 	public static final String COMPILER_NAME = "earth";
 	public static final Logger LOGGER = Logger.getGlobal();

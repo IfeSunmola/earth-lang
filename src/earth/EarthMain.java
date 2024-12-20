@@ -21,7 +21,7 @@ import static earth.EarthUtils.COMPILER_NAME_VERSION;
 public class EarthMain {
 	public static boolean DEBUG = false; // Can't make this final :(
 
-	void main(String... args) {
+	public static void main(String... args) {
 		EarthUtils.validateJavaRuntime();
 
 		CommandLine parsed;
@@ -72,7 +72,7 @@ public class EarthMain {
 		}
 	}
 
-	private Options createOptions() {
+	private static Options createOptions() {
 		var options = new Options();
 		options.addOption("d", "debug", false,
 			"Print stack trace of any error that happened during compilation");
@@ -105,7 +105,7 @@ public class EarthMain {
 
 	/// Compiles the code at the given file path, and returns the path to the
 	/// class file
-	private Path compile(String fPath, boolean printMsg) {
+	private static Path compile(String fPath, boolean printMsg) {
 		// Lex
 		EarthResult<List<Token>> lexResult = new Lexer(fPath).lex();
 		lexResult.quitOnError();
