@@ -23,7 +23,7 @@ public class SanityChecker {
 		var errors = new ArrayList<String>();
 
 		try {
-			// Stop if there's no main method
+			// Stop if there's no main method. Probably a very stupid thing to do.
 			stmts.stream()
 				.filter(stmt -> stmt instanceof FnDefStmt)
 				.map(stmt -> (FnDefStmt) stmt)
@@ -32,6 +32,17 @@ public class SanityChecker {
 				.orElseThrow(() -> new SanityException(
 					"Main function not found", 0
 				));
+			// Only declaration statements are allowed outside functions. Every
+			// other statement must be inside a function
+			stmts.stream()
+				.filter(s -> !(s instanceof DeclStmt || s instanceof FnDefStmt))
+				.findAny()
+				.ifPresent(stmt -> {
+					throw new SanityException(
+						"Only var statements are allowed outside functions",
+						stmt.line()
+					);
+				});
 			StmtList result = typeStmts(stmts);
 			return EarthResult.ok(result);
 		}
