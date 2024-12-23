@@ -56,7 +56,7 @@ public class StmtCodegen {
 				// static constructor
 				.withMethodBody(CLASS_INIT_NAME, MTD_void, ACC_STATIC,
 					builder -> {
-						this.currentMethod = new Method(builder, MTD_void, thisClass);
+						currentMethod = new Method(builder, MTD_void, thisClass);
 						methods.put(CLASS_INIT_NAME, currentMethod);
 						generateStmts(stmts);
 						builder.return_();
@@ -87,27 +87,32 @@ public class StmtCodegen {
 		String name = s.nameAndType().name().name();
 		Expr toDeclare = s.value();
 		ClassDesc desc = earthTypeToDesc(toDeclare.dataType());
+		boolean isStatic = methods.get(CLASS_INIT_NAME).equals(currentMethod);
 
-		if (isStaticContext()) {
+		if (toDeclare.dataType() == NadaType) {
+			currentMethod.exprCodegen().loadExpr(toDeclare);
+			return;
+		}
+
+		if (isStatic) {
 			classBuilder.withField(name, desc, ACC_STATIC | ACC_PRIVATE);
-			currentMethod.exprCodegen.loadExpr(toDeclare);
-			currentMethod.builder.putstatic(thisClass, name, desc);
+			currentMethod.exprCodegen().loadExpr(toDeclare);
+			currentMethod.builder().putstatic(thisClass, name, desc);
 
 			ExprCodegen.classVariables
 				.put(name, new ClassVariable(name, desc, thisClass));
 			return;
 		}
 
-		currentMethod.exprCodegen.loadExpr(toDeclare);
-		int slot = currentMethod.slot++;
+		currentMethod.exprCodegen().loadExpr(toDeclare);
+		currentMethod = currentMethod.incrementSlot();
+		int slot = currentMethod.slot();
 		TypeKind typeKind = earthTypeToTypeKind(toDeclare.dataType());
-		currentMethod.builder.storeLocal(typeKind, slot);
+		currentMethod.builder().storeLocal(typeKind, slot);
 
-		currentMethod.exprCodegen.methodVariables
+		currentMethod.exprCodegen().methodVariables
 			.put(name,
 				new MethodVariable(name, toDeclare.dataType(), typeKind, slot));
-
-
 	}
 
 	private void generateFnDefStmt(FnDefStmt s) {
@@ -149,7 +154,7 @@ public class StmtCodegen {
 
 						TypeKind typeKind = earthTypeToTypeKind(paramType);
 
-						currentMethod.exprCodegen.methodVariables
+						currentMethod.exprCodegen().methodVariables
 							.put(name, new MethodVariable(name, paramType, typeKind, i));
 					}
 
@@ -161,21 +166,21 @@ public class StmtCodegen {
 	}
 
 	private void generateLoopStmt(LoopStmt s) {
-		Label loopStart = currentMethod.builder.newLabel();
-		Label loopEnd = currentMethod.builder.newLabel();
+		Label loopStart = currentMethod.builder().newLabel();
+		Label loopEnd = currentMethod.builder().newLabel();
 
 		generateDeclStmt(s.initializer()); // create the loop variable
-		currentMethod.builder.labelBinding(loopStart);
-		currentMethod.exprCodegen.loadExpr(s.condition());
+		currentMethod.builder().labelBinding(loopStart);
+		currentMethod.exprCodegen().loadExpr(s.condition());
 		// Here, the stack contains 1 if the loop should keep going, 0 if not.
 		// if condition is false, jump to loopEnd
-		currentMethod.builder.ifeq(loopEnd);
+		currentMethod.builder().ifeq(loopEnd);
 
 		generateStmts(s.body());
 		generateReassignStmt(s.update());
-		currentMethod.builder.goto_(loopStart);
+		currentMethod.builder().goto_(loopStart);
 
-		currentMethod.builder.labelBinding(loopEnd);
+		currentMethod.builder().labelBinding(loopEnd);
 	}
 
 	private void generateReassignStmt(ReassignStmt s) {
@@ -183,17 +188,18 @@ public class StmtCodegen {
 
 		// First check if the variable is in the current method
 		MethodVariable methodVar =
-			currentMethod.exprCodegen.methodVariables.get(name);
+			currentMethod.exprCodegen().methodVariables.get(name);
 		if (methodVar != null) {
-			currentMethod.exprCodegen.loadExpr(s.newValue());
-			currentMethod.builder.storeLocal(methodVar.typeKind(), methodVar.slot());
+			currentMethod.exprCodegen().loadExpr(s.newValue());
+			currentMethod.builder().storeLocal(methodVar.typeKind(),
+				methodVar.slot());
 		}
 		else {
 			// not in method, check if it's a class variable
 			ClassVariable classVar = ExprCodegen.classVariables.get(name);
 			if (classVar != null) {
-				currentMethod.exprCodegen.loadExpr(s.newValue());
-				currentMethod.builder.putstatic(classVar.owner(), classVar.name(),
+				currentMethod.exprCodegen().loadExpr(s.newValue());
+				currentMethod.builder().putstatic(classVar.owner(), classVar.name(),
 					classVar.type());
 				return;
 			}
@@ -202,28 +208,28 @@ public class StmtCodegen {
 	}
 
 	private void generateUnnamedStmt(UnnamedStmt s) {
-		currentMethod.exprCodegen.loadExpr(s.expr());
+		currentMethod.exprCodegen().loadExpr(s.expr());
 	}
 
 	private void generateWhenStmt(WhenStmt s) {
-		Label end = currentMethod.builder.newLabel();
-		Label elseLabel = currentMethod.builder.newLabel();
+		Label end = currentMethod.builder().newLabel();
+		Label elseLabel = currentMethod.builder().newLabel();
 		var elseWhenLabels = new ArrayList<Label>();
 		for (int i = 0; i < s.elseWhen().size(); i++) {
-			elseWhenLabels.add(currentMethod.builder.newLabel());
+			elseWhenLabels.add(currentMethod.builder().newLabel());
 		}
 
 		// First, handle the when.
-		currentMethod.exprCodegen.loadExpr(s.when().condition());
+		currentMethod.exprCodegen().loadExpr(s.when().condition());
 		// Now, the stack contains 1 if the condition is true, 0 if false
 		// read the below as if equal to 0, jump to elseLabel
 		// Also, empty elseWhenLabels means that there are no elseWhen blocks,
 		// so jump to the else label
-		if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
-		else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+		if (elseWhenLabels.isEmpty()) currentMethod.builder().ifeq(elseLabel);
+		else currentMethod.builder().ifeq(elseWhenLabels.getFirst());
 		// condition is true
 		generateStmts(s.when().body());
-		currentMethod.builder.goto_(end);
+		currentMethod.builder().goto_(end);
 
 		// handle the elseWhen blocks. Surely, there are better ways to do this
 		s.elseWhen().forEach(elseWhen -> {
@@ -231,39 +237,39 @@ public class StmtCodegen {
 			// the elseWhenLabels list? Now, we're defining what goes there
 			// (for subsequent iterations): same as what we did above, but jumping
 			// is now done in the else below
-			currentMethod.builder.labelBinding(elseWhenLabels.removeFirst());
-			currentMethod.exprCodegen.loadExpr(elseWhen.condition());
+			currentMethod.builder().labelBinding(elseWhenLabels.removeFirst());
+			currentMethod.exprCodegen().loadExpr(elseWhen.condition());
 
-			if (elseWhenLabels.isEmpty()) currentMethod.builder.ifeq(elseLabel);
-			else currentMethod.builder.ifeq(elseWhenLabels.getFirst());
+			if (elseWhenLabels.isEmpty()) currentMethod.builder().ifeq(elseLabel);
+			else currentMethod.builder().ifeq(elseWhenLabels.getFirst());
 
 			generateStmts(elseWhen.body());
-			currentMethod.builder.goto_(end);
+			currentMethod.builder().goto_(end);
 		});
 
 		// Finally, handle the else block
-		currentMethod.builder.labelBinding(elseLabel);
+		currentMethod.builder().labelBinding(elseLabel);
 		generateStmts(s.elseBody());
 
-		currentMethod.builder.labelBinding(end);
+		currentMethod.builder().labelBinding(end);
 	}
 
 	private void generateYeetStmt(YeetStmt s) {
 		Expr expr = s.yeetValue();
 		switch (expr.dataType()) {
 			case IntType, BoolType -> {
-				currentMethod.exprCodegen.loadExpr(expr);
-				currentMethod.builder.ireturn();
+				currentMethod.exprCodegen().loadExpr(expr);
+				currentMethod.builder().ireturn();
 			}
 			case FloatType -> {
-				currentMethod.exprCodegen.loadExpr(expr);
-				currentMethod.builder.freturn();
+				currentMethod.exprCodegen().loadExpr(expr);
+				currentMethod.builder().freturn();
 			}
 			case StrType -> {
-				currentMethod.exprCodegen.loadExpr(expr);
-				currentMethod.builder.areturn();
+				currentMethod.exprCodegen().loadExpr(expr);
+				currentMethod.builder().areturn();
 			}
-			case NadaType -> currentMethod.builder.return_();
+			case NadaType -> currentMethod.builder().return_();
 			case FuncType _ -> throw new AssertionError();
 		}
 	}
@@ -327,9 +333,5 @@ public class StmtCodegen {
 				.aload(0)
 				.invokevirtual(CD_PrintStream, "println", printlnDesc)
 				.return_());
-	}
-
-	private boolean isStaticContext() {
-		return (methods.get(CLASS_INIT_NAME) == currentMethod);
 	}
 }

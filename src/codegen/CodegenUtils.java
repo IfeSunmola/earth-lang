@@ -31,20 +31,20 @@ public class CodegenUtils {
 	record MethodVariable(String name, EarthType earthType, TypeKind typeKind,
 	                      int slot) {}
 
-	static final class Method {
-		final CodeBuilder builder;
-		int slot; // this is literally the only reason I didn't use a record
-		final ExprCodegen exprCodegen;
-		final MethodTypeDesc signature;
-		final ClassDesc owner;
+	record Method(CodeBuilder builder, int slot, ExprCodegen exprCodegen,
+	              MethodTypeDesc signature, ClassDesc owner) {
 
 		Method(CodeBuilder builder, MethodTypeDesc sig, ClassDesc owner) {
-			this.builder = builder;
-			this.slot = sig.parameterCount();
-			this.exprCodegen = new ExprCodegen(builder);
-			this.signature = sig;
-			this.owner = owner;
+			this(
+				builder, sig.parameterCount(),
+				new ExprCodegen(builder), sig, owner
+			);
 		}
+
+		Method incrementSlot() {
+			return new Method(builder, slot + 1, exprCodegen, signature, owner);
+		}
+
 	}
 
 	static ClassDesc earthTypeToDesc(EarthType type) {

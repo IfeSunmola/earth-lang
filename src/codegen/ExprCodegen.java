@@ -269,7 +269,7 @@ class ExprCodegen {
 		String fnName = e.name().name();
 		Method method = StmtCodegen.methods.get(fnName);
 
-		builder.invokestatic(method.owner, fnName, method.signature);
+		builder.invokestatic(method.owner(), fnName, method.signature());
 	}
 
 	private void loadIdentExpr(IdentExpr e) {
