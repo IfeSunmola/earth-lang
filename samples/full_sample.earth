@@ -1,33 +1,70 @@
-fn main(){
-    var name: str = "John"
-    var age: int = 20
-    age = 21
-    var isAdult: bool = age >= 18
-    when name == "John" {
-        /*
-        function calls are expressions, and all expressions must be bound to a
-        statement. Since println returns void, we can just ignore it with an unnamed
-        statement.
-        */
-        _ = println("Hello John")
-    }
-    else when name == "Doe" {
-        _ = println("Hello Doe")
+fn sayHello(name: str) {
+    var greeting: str = "Hello " + name
+    _ = yapln(greeting)
+}
+
+fn add(a: int, b: float)float {
+    yeet a + b // yeet is equivalent to `return`
+}
+
+fn findMin(a: int, b: int)int {
+    // When statements cannot directly yeet values, so we use a temp variable
+    var result: int = 0
+
+    when a < b {
+        result = a
     }
     else {
-        var greeting: str = "Hello" + name
-        _ = println(greeting)
+        result = b
+    }
+    yeet result
+}
+
+fn isDivisible(a: int, b: int)bool {
+    yeet a % b == 0
+}
+
+fn isBetween(a: int, b: float, c: int)bool {
+    yeet a < b && b < c
+}
+
+fn main(){
+    // All expressions must be attached to a statement. Since `yapln` returns
+    // `nada`, we can attach it to an unnamed statement with _.
+    // Below is equivalent to `var res: nada = yapln("Hello Cassi")`
+    _ = sayHello("Cassi")
+
+    var sum: float = add(1, 2.9)
+    // yapln only accepts strings, so we must convert.
+    // boolToStr intToStr are also available
+    _ = yapln(floatToStr(sum))
+
+    var min: int = findMin(1, 2)
+    var msg: str = "The minimum is: " + intToStr(min)
+    _ = yapln(msg)
+
+    var isDiv: bool = isDivisible(10, 5)
+    var divMsg: str = "10 is divisible by 5: " + boolToStr(isDiv)
+    _ = yapln(divMsg)
+
+    var isBet: bool = isBetween(1, 2.5, 3)
+    var betMsg: str = "2.5 is between 1 and 3: " + boolToStr(isBet)
+    _ = yapln(betMsg)
+
+    var age: int = 100
+    when age < 18 {
+        _ = yapln("You're still a kid")
     }
 
-    fn add(a: int, b: int) int {
-        yeet a + b // return statement
+    else when age < 30 {
+        _ = yapln("You're still young")
     }
 
-    var sum: int = add(1, 2)
-    // println can only take a string, so convert. There's floatToStr and boolToStr.
-    _ = println(intToStr(sum))
+    else when age < 50 {
+        _ = yapln("You're getting old")
+    }
 
-    loop var i : int = 0, i < 23, i = i + 1 {
-        // code
+    else {
+        _ = yapln("You're really old")
     }
 }

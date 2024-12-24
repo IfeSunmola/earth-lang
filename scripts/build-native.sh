@@ -3,6 +3,15 @@
 # Must be run from root directory i.e. ./scripts/build-native.sh
 # GraalVM that supports java 23 must be used
 
+# check if native-image is installed
+if ! command -v native-image &> /dev/null
+then
+    echo "native-image not be found"
+    echo "GraalVM 23+ is needed to build  native"
+    echo "Download from: https://www.graalvm.org/downloads/"
+    exit
+fi
+
 lib="lib/*" # Any used libraries goes in lib directory
 
 outDir="java_out" # stores .class files

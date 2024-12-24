@@ -1,3 +1,21 @@
+fn testWhenElse(){
+    var age: int = 100
+    when age < 18 {
+        _ = yapln("You're still a kid")
+    }
+
+    else when age < 30 {
+        _ = yapln("You're still young")
+    }
+
+    else when age < 50 {
+        _ = yapln("You're getting old")
+    }
+
+    else {
+        _ = yapln("You're really old")
+    }
+}
 fn main() {
-    _ = println("Hello world")
+    _ = testWhenElse()
 }

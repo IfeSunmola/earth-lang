@@ -12,7 +12,7 @@ import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("preview")
 public class EarthUtils {
-	private static final String JAVA_PATH = "earth-jre/bin/java";
+	private static final String JAVA_PATH = "earth_jre/bin/java";
 	public static final String COMPILER_NAME_VERSION = "Earth Compiler V0.0.1";
 	public static final String COMPILER_NAME = "earth";
 	public static final Logger LOGGER = Logger.getGlobal();
@@ -145,7 +145,7 @@ public class EarthUtils {
 				System.err.println("""
 					Earth's Java Runtime Environment not found.
 					Make sure it's in the same directory as the compiler binary, and is
-					named 'earth-jre'
+					named 'earth_jre'
 					""".strip()
 				);
 			}
