@@ -7,7 +7,12 @@
 # Only java.base for now. Later, use `jdeps --print-module-deps Output.class`
 # to get all the required modules. Where Output.class is a .class file that
 # contains code that uses all the required modules.
+
+# comma separated, no space
 modules=("java.base")
 
 # Create a custom runtime image
-jlink --add-modules "${modules[@]}" --output earth_jre
+jlink \
+  --no-header-files --no-man-pages \
+  --add-modules "${modules[@]}" \
+  --output earth_jre

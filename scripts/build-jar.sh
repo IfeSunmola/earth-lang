@@ -2,37 +2,33 @@
 
 # Must be run from root directory i.e. ./scripts/build-native.sh
 
-lib="lib/*" # Any used libraries goes in lib directory
+# Build a FAT jar with all dependencies. It's really just one dependency but eh.
+# Ya I could use maven or gradle but i'd rather not get tied down in
+# src/main/java and all that
 
-outDir="earth_java_out" # stores .class files
-rm -rf $outDir
+lib="lib/*" # Any used libraries goes here
+jar_name="earth.jar"
 
-jar_name="earth" # jar file name
+tmp_dir="tmp"
+rm -rf $tmp_dir
+mkdir -p $tmp_dir
 
-javaFiles=$(find "src" -name "*.java") # All .java files in src directory
+# First, extract all dependencies into tmp_dir
+cd $tmp_dir
+for f in "../$lib"; do
+  jar xf $f
+done
+cd ..
 
-# Compile to class files, save in outDir
+# Second, compile our code to .class files
 javac --enable-preview -source 23 \
-  -d $outDir \
-  -cp $lib \
-  $javaFiles
+  -d $tmp_dir \
+  -cp $tmp_dir \
+  $(find "src" -name "*.java")
 
-cp -r lib/ "$outDir/lib"
-# get all the libraries seperated by space
-libs=$(find "$outDir/lib" -name "*.jar" | tr '\n' ' ' | sed 's/ / /g')
-# remove $java_out prefix
-libs=$(echo $libs | sed "s/$outDir\///g")
+# Third, create the fat JAR
+# cfe -> CREATE jar FILE with ENTRY POINT
+jar cfe $jar_name earth.EarthMain -C $tmp_dir .
 
-manifest=$(cat <<EOF
-Main-Class: earth.EarthMain
-Class-Path: $libs
-EOF
-)
-
-jar \
-  --create \
-  --file $jar_name.jar \
-  --manifest <(echo "$manifest") \
-  -C $outDir .
-
-rm -rf $outDir
+# Clean up
+rm -rf $tmp_dir

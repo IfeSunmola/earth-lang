@@ -12,24 +12,12 @@ then
     exit
 fi
 
-lib="lib/*" # Any used libraries goes in lib directory
+# Need to build jar first
+./scripts/build-jar.sh
 
-outDir="java_out" # stores .class files
-
-bin="earth" # native image name
-
-javaFiles=$(find "src" -name "*.java") # All .java files in src directory
-
-# Compile to class files, save in outDir
-javac --enable-preview -source 23 \
-  -d $outDir \
-  -cp $lib \
-  $javaFiles
-
-# Use .class files to create native image
+# Build native image
 native-image --enable-preview \
-  -cp $lib:$outDir \
-  -o $bin \
+  -jar earth.jar \
+  -o earth \
+  -march=compatibility \
   -H:Class=earth.EarthMain
-
-rm -rf $outDir

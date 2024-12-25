@@ -15,3 +15,30 @@ methodBuilder.invokedynamic(
         MethodTypeDesc.of(CD_String, CD_String, CD_String)
     )
 );
+
+
+#!/bin/bash
+
+out_dir="earth_compiler"
+rm -rf $out_dir
+mkdir -p $out_dir
+cd $out_dir
+
+################ Download the runtime ################
+wget -q \
+  --show-progress \
+  -O earth_jre.tar.xz \
+  https://github.com/IfeSunmola/earth-lang/raw/refs/heads/main/earth_jre_linux_x64.tar.xz
+
+# Extract the runtime, and clean up
+tar -xf earth_jre.tar.xz
+rm earth_jre.tar.xz
+
+################ Download the compiler ################
+wget -q \
+  --show-progress \
+  -O earth.jar \
+  https://github.com/IfeSunmola/earth-lang/raw/refs/heads/main/earth.jar
+
+
+################ Download samples ################

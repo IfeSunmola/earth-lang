@@ -7,16 +7,16 @@ fn main(){
 
     loop var i: int = 1, i <= n, i = i + 1{
         when i % 3 == 0 && i % 5 == 0{
-            _ = println("FizzBuzz")
+            _ = yapln("FizzBuzz")
         }
         else when i % 3 == 0 {
-            _ = println("Fizz")
+            _ = yapln("Fizz")
         }
         else when i % 5 == 0 {
-            _ = println("Buzz")
+            _ = yapln("Buzz")
         }
         else {
-            _ = println(intToStr(i))
+            _ = yapln(intToStr(i))
         }
     }
 }
