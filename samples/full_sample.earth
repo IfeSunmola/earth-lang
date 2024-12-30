@@ -31,7 +31,7 @@ fn isBetween(a: int, b: float, c: int)bool {
 fn main(){
     // All expressions must be attached to a statement. Since `yapln` returns
     // `nada`, we can attach it to an unnamed statement with _.
-    // Below is equivalent to `var res: nada = yapln("Hello Cassi")`
+    // Below is equivalent to `var res: nada = sayHello("Cassi")`
     _ = sayHello("Cassi")
 
     var sum: float = add(1, 2.9)

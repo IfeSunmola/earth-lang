@@ -3,7 +3,7 @@
 An attempt at a compiler written in Java and generates JVM bytecode. No unit
 tests so I don't plan to keep working on this.
 
-It also has a shitty syntax but idc. I just waddnted to create something.
+It also has a shitty syntax but idc. I just wanted to create something.
 
 The lexer and parser are handwritten, but antlr was used at the beginning. I
 switched halfway because it was getting more problematic than helpful.
@@ -24,28 +24,22 @@ See [the samples directory](./samples)
 
 ## Running locally
 
-### Linux
+### Linux and Windows
 
-Download from the releases page or this
-link: https://github.com/IfeSunmola/earth-lang/releases/download/v0.0.1/earth_compiler_linux_x64.tar.xz,
+Download your OS archive file from
+the [release page](https://github.com/IfeSunmola/earth-lang/releases)
 and extract the contents.
-
-### Windows
-
-Download from the releases page or this
-link: https://github.com/IfeSunmola/earth-lang/releases/download/v0.0.1/earth_compiler_windows_x64.zip,
-and extract the contents.
-
-### Mac
-
-Burn your ***laptop*** or build from source
 
 After downloading/extracting, cd into the created directory and run the
 program. E.g.:
 
 ```shell
 ./earth samples/fizz_buzz.earth
-``` 
+```
+
+### Mac
+
+Burn your ***laptop*** or build from source
 
 ---
 
