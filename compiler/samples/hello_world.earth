@@ -1,0 +1,3 @@
+fn main(){
+    _ = yapln("Hello, World!")
+}
