@@ -4,23 +4,34 @@ A toy compiler that generates JVM bytecode
 
 ## Table of contents
 
-- [The earth language](#the-earth-language)
-- [Table of contents](#table-of-contents)
-- [Testing the compiler](#testing-the-compiler)
-    - [If you don't want to clone the repository](#if-you-dont-want-to-clone-the-repository)
-    - [(Docker Compose) If you want to clone the repository](#docker-compose-if-you-want-to-clone-the-repository)
-    - [Or individually](#or-individually)
+- [Downloading from the releases page](#downloading-from-the-releases-page)
+- [Using the (Docker) playground](#using-the-docker-playground)
+    - [If you don't want to clone the repository (Docker run)](#if-you-dont-want-to-clone-the-repository-docker-run)
+    - [If you want to clone the repository (Docker Compose)](#if-you-want-to-clone-the-repository-docker-compose)
+- [Run each part of the project individually](#run-each-part-of-the-project-individually)
 
-## Testing the compiler
+## Downloading from the releases page
 
-The easiest way to test the compiler is with the playground using docker.
-This is what it looks like:
+1. Download the corresponding release for your platform from the releases page
+   at: https://github.com/IfeSunmola/earth-lang/releases
+2. Extract the archive
+3. cd into the extracted directory and run a sample code:
+    ```bash
+    ./earth samples/fizz_buzz.earth
+    ``` 
+
+## Using the (Docker) playground
+
+I'm not saying you should be skeptical, but do you really wanna run a binary
+built by some random person on your PC? No? Good.
+
+This is what the playground looks like:
 
 ![Playground](./playground-image.png)
 
 ---
 
-### If you don't want to clone the repository
+### If you don't want to clone the repository (Docker run)
 
 Run the server image with:
 
@@ -49,7 +60,7 @@ Same command, but this time the container is named `playground-client` and it
 runs on port 5173. Open a browser and go to `http://localhost:5173` to see the
 playground
 
-### (Docker Compose) If you want to clone the repository
+### If you want to clone the repository (Docker Compose)
 
 Clone and run:
 
@@ -57,7 +68,7 @@ Clone and run:
 docker compose up
 ```
 
-### Or individually
+## Run each part of the project individually
 
 Using the docker image (or Dockerfile) would be the easiest way to run some
 code. But if you want to do it from scratch, steps for running each part of the

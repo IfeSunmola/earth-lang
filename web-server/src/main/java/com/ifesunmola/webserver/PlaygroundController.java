@@ -3,10 +3,7 @@ package com.ifesunmola.webserver;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +16,7 @@ import java.util.List;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class PlaygroundController {
 	private static final Logger log = getLogger(PlaygroundController.class);
 
