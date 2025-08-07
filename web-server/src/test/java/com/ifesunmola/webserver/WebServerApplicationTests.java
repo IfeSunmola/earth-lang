@@ -14,9 +14,6 @@ class WebServerApplicationTests {
 
 	@Test
 	void contextLoads() {
-		// This test will pass if the application context loads successfully
-		// and all beans are created without any issues.
-		// You can add more specific assertions if needed.
 		assertNotNull(appContext, "Application context should" + " not be null");
 	}
 
@@ -24,8 +21,5 @@ class WebServerApplicationTests {
 	void beansLoaded() {
 		assertNotNull(appContext.getBean(PlaygroundController.class),
 			"PlaygroundController bean should be loaded in the application context");
-
-		assertNotNull(appContext.getBean(ExceptionHandlers.class),
-			"ExceptionHandlers bean should be loaded in the application context");
 	}
 }

@@ -6,7 +6,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,10 +19,15 @@ class PlaygroundControllerTest {
 
 	@Test
 	void noCodeProvidedShouldFail() throws Exception {
-		mockMvc.perform(get("/run"))
+		mockMvc.perform(post("/run"))
 			.andDo(print())
-			.andExpect(status().isBadRequest())
-			.andExpect(content().string(containsString("Nothing to compile!")));
+			.andExpect(status().isOk())
+			.andExpect(content().json("""
+					{
+						"isSuccess": false,
+						"msg": "Nothing to compile!"
+					}
+				"""));
 	}
 
 	@Test
@@ -31,10 +37,15 @@ class PlaygroundControllerTest {
 				_ = yapln("Hello, World!")
 			}
 			""";
-		mockMvc.perform(get("/run").content(code))
+		mockMvc.perform(post("/run").content(code))
 			.andDo(print())
 			.andExpect(status().isOk())
-			.andExpect(content().string(containsString("Hello, World!")));
+			.andExpect(content().json("""
+					{
+						"isSuccess": true,
+						"msg": "Hello, World!"
+					}
+				"""));
 	}
 
 	@Test
@@ -44,9 +55,10 @@ class PlaygroundControllerTest {
 				_ = yapln("Hello, World!"
 			}
 			""";
-		mockMvc.perform(get("/run").content(code))
-			.andDo(print())
-			.andExpect(status().isBadRequest())
+		mockMvc.perform(post("/run").content(code))
+			.andExpect(status().isOk())
+			.andExpect(content().string(stringContainsInOrder("isSuccess", "false")))
 			.andExpect(content().string(containsString("on line 3")));
+
 	}
 }
