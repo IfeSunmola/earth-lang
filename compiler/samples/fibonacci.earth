@@ -1,0 +1,23 @@
+fn fibonacci(n: int) int {
+    var a: int = 0
+    var b: int = 1
+
+    loop var i: int = 0, i < n, i = i + 1 {
+        var temp: int = a
+        a = b
+        b = temp + b
+    }
+    yeet a
+}
+fn main () {
+    var num: int = 10
+    _ = yapln("Fibonacci of " + intToStr(num) + " is: " + intToStr(fibonacci(num)))
+
+     num = 46
+     _ = yapln("Fibonacci of " + intToStr(num) + " is: " + intToStr(fibonacci(num)))
+     _ = yapln("Any higher than " + intToStr(num) + " will cause an overflow in the current implementation. (:")
+
+    num = 19
+    _ = yapln("But we can do " + intToStr(num) + " without overflow: " +
+    intToStr(fibonacci(num)) + " :)")
+}

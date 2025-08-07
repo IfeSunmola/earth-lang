@@ -71,9 +71,11 @@ public class PlaygroundController {
 
 		return List.of(
 			new Sample("Select One", Samples.empty()),
+			new Sample("Fibonacci", Samples.fibonacci()),
 			new Sample("Hello World", Samples.helloWorld()),
 			new Sample("FizzBuzz", Samples.fizzBuzz()),
-			new Sample("When Else", Samples.whenElse())
+			new Sample("When Else", Samples.whenElse()),
+			new Sample("Full Code", Samples.full())
 		);
 	}
 

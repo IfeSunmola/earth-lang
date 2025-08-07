@@ -31,8 +31,9 @@ fn isBetween(a: int, b: float, c: int)bool {
 fn main(){
     // All expressions must be attached to a statement. Since `yapln` returns
     // `nada`, we can attach it to an unnamed statement with _.
-    // Below is equivalent to `var res: nada = sayHello("Cassi")`
+    // Below is equivalent to `var result: nada = sayHello("Cassi")`
     _ = sayHello("Cassi")
+    var result: nada = sayHello("Cassi")
 
     var sum: float = add(1, 2.9)
     // yapln only accepts strings, so we must convert.
@@ -47,9 +48,9 @@ fn main(){
     var divMsg: str = "10 is divisible by 5: " + boolToStr(isDiv)
     _ = yapln(divMsg)
 
-    var isBet: bool = isBetween(1, 2.5, 3)
-    var betMsg: str = "2.5 is between 1 and 3: " + boolToStr(isBet)
-    _ = yapln(betMsg)
+    var isBetween: bool = isBetween(1, 2.5, 3)
+    var betweenMsg: str = "2.5 is between 1 and 3: " + boolToStr(isBetween)
+    _ = yapln(betweenMsg)
 
     var age: int = 100
     when age < 18 {
