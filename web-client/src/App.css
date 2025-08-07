@@ -8,6 +8,10 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+
+    h3 {
+        margin: 1rem 0 0;
+    }
 }
 
 .above-code {
@@ -16,11 +20,26 @@
 
     .run-clear-btns {
         display: flex;
-        gap: 5px;
+        gap: 16px;
         flex-direction: row;
     }
 }
 
 .code-box {
     margin-top: 10px;
+}
+
+.output-box {
+    h5 {
+        margin-top: 1rem;
+    }
+
+    .success {
+        color: #4caf50; /*palette.success.light*/
+        white-space: pre-line; /*to preserve line breaks*/
+    }
+
+    .error {
+        color: #ef5350; /*palette.error.light*/
+    }
 }
