@@ -132,10 +132,10 @@ function App() {
 
 				<Box className="output-box">
 					<Typography variant="h5">Output</Typography>
-					{runResponse && <p
+					{runResponse && <Typography
                       className={runResponse.isSuccess ? 'success' : 'error'}>
 						{runResponse.msg}
-                    </p>
+                    </Typography>
 					}
 				</Box>
 			</Box>
