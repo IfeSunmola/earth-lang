@@ -1,0 +1,15 @@
+compiler/earth_jre
+compiler/scripts
+compiler/target
+compiler/.gitignore
+compiler/dump.txt
+compiler/earth
+compiler/README.md
+#################
+web-client/dist
+web-client/node_modules
+web-client/.gitignore
+web-client/.git
+#################
+web-server/earth_jre
+web-server/earth

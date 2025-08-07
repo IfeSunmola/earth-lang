@@ -1,0 +1,36 @@
+# docker build --tag ifesunmola/playground-server . --file Dockerfile-server
+# docker push ifesunmola/playground-server:latest
+FROM ghcr.io/graalvm/native-image-community:24 as serverBuilder
+
+WORKDIR /app/compiler
+COPY ./compiler .
+
+# Build jre
+RUN jlink --no-header-files --no-man-pages \
+      --add-modules "java.base" \
+      --output earth_jre
+# earth_jre now in app/compiler/earth_jre.
+
+# Next, earth binary
+RUN ./mvnw clean -Pnative package
+# earth binary is now in app/compiler/target/earth.
+
+# Next, build server binary
+WORKDIR /app/web-server
+COPY ./web-server .
+
+RUN ./mvnw clean -Pnative native:compile -DskipTests
+
+# At this point, we have
+# - earth_jre in app/compiler/earth_jre
+# - earth binary in app/compiler/target/earth
+# - web-server binary app/web-server/target/web-server
+
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY --from=serverBuilder /app/compiler/earth_jre earth_jre
+COPY --from=serverBuilder /app/compiler/target/earth earth
+COPY --from=serverBuilder /app/web-server/target/web-server web-server
+
+EXPOSE 8080
+CMD ["./web-server"]

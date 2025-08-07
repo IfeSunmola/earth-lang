@@ -1,0 +1,18 @@
+services:
+  playground-client:
+    container_name: playground-client
+    build:
+      dockerfile: Dockerfile-client
+    ports:
+      - "5173:80"
+    depends_on:
+      - playground-server
+
+  playground-server:
+    container_name: playground-server
+    build:
+      dockerfile: Dockerfile-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/samples" ]
