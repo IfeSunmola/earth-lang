@@ -6,8 +6,6 @@ A toy compiler that generates JVM bytecode
 
 - [Downloading from the releases page](#downloading-from-the-releases-page)
 - [Using the (Docker) playground](#using-the-docker-playground)
-    - [If you don't want to clone the repository (Docker run)](#if-you-dont-want-to-clone-the-repository-docker-run)
-    - [If you want to clone the repository (Docker Compose)](#if-you-want-to-clone-the-repository-docker-compose)
 - [Run each part of the project individually](#run-each-part-of-the-project-individually)
 
 ## Downloading from the releases page
@@ -29,49 +27,29 @@ This is what the playground looks like:
 
 ![Playground](./playground-image.png)
 
----
+And you can run it with:
 
-### If you don't want to clone the repository (Docker run)
+```shell
+# There's really no excuse to not have curl on your system
+# First download the docker compose file
+curl -o \
+  earth-docker-compose.yaml \
+  https://raw.githubusercontent.com/IfeSunmola/earth-lang/refs/heads/main/docker-compose-remote.yaml
 
-Run the server image with:
-
-```bash
-docker run --name playground-server \
-  -d \
-  -p 8080:8080 \
-  ifesunmola/playground-server
+# And run it
+docker compose \
+  -p earth-playground \
+  -f earth-docker-compose.yaml \
+  up 
 ```
 
-This creates a container named `playground-server`. The `-d` flag runs the
-container in detached mode. And the server will be available at
-`http://localhost:8080`. Open a browser and go to
-`http://localhost:8080/samples` to verify if the server is running.
-
-And, run the client image with:
-
-```bash
-docker run --name playground-client \
-  -d \
-  -p 5173:80 \
-  ifesunmola/playground-client
-```
-
-Same command, but this time the container is named `playground-client` and it
-runs on port 5173. Open a browser and go to `http://localhost:5173` to see the
-playground
-
-### If you want to clone the repository (Docker Compose)
-
-Clone and run:
-
-```bash
-docker compose up
-```
+The server will be available at `http://localhost:8080`, and the frontend
+(playground) will be available at `http://localhost:5173`.
 
 ## Run each part of the project individually
 
-Using the docker image (or Dockerfile) would be the easiest way to run some
-code. But if you want to do it from scratch, steps for running each part of the
+The two steps described above would be the easiest way to get started, but
+if you want to do it from scratch, steps for running each part of the
 project are located in the README.md in each directory:
 
 1. [Compiler](compiler) - Contains the actual compiler and runtime

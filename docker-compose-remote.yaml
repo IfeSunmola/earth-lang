@@ -1,0 +1,16 @@
+services:
+  playground-client:
+    image: ifesunmola/playground-client:latest
+    container_name: playground-client
+    ports:
+      - "5173:80"
+    depends_on:
+      - playground-server
+
+  playground-server:
+    container_name: playground-server
+    image: ifesunmola/playground-server:latest
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/samples" ]
